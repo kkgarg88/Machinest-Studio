@@ -39,10 +39,12 @@ useEffect(() => {
     return
   }
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
-  setLoading(false)
-  if (error) { setError(error.message); return }
-  router.push('/dashboard')
+const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+setLoading(false)
+if (error) { setError(error.message); return }
+
+const { data: profile } = await supabase.from('profiles').select('id').eq('id', data.user.id).maybeSingle()
+router.push(profile ? '/dashboard' : '/onboarding')
 }
 
   return (
