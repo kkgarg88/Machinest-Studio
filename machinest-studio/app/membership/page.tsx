@@ -33,26 +33,23 @@ export default function MembershipPage() {
     setSelected(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id])
   }
 
-  async function handleContinue() {
-    setError('')
-    if (selected.length === 0) {
-      handleSkip()
-      return
-    }
-    setSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { router.push('/'); return }
-
-    const rows = selected.map(toolId => ({
-      user_id: user.id,
-      tool_id: toolId,
-      status: 'active',
-    }))
-    const { error } = await supabase.from('subscriptions').upsert(rows, { onConflict: 'user_id,tool_id' })
-    setSaving(false)
-    if (error) { setError(error.message); return }
-    router.push('/dashboard')
+async function handleContinue() {
+  setError('')
+  if (selected.length === 0) {
+    handleSkip()
+    return
   }
+  setSaving(true)
+  const res = await fetch('/api/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ toolIds: selected }),
+  })
+  const data = await res.json().catch(() => ({}))
+  setSaving(false)
+  if (!res.ok) { setError(data.error || 'Something went wrong'); return }
+  router.push('/dashboard')
+}
 
   function handleSkip() {
     router.push('/dashboard')

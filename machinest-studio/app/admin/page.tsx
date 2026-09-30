@@ -37,14 +37,16 @@ const user = session.user
     load()
   }, [])
 
-  async function toggleSub(userId: string, toolId: string, active: boolean) {
-    await supabase.from('subscriptions').upsert(
-      { user_id: userId, tool_id: toolId, status: active ? 'active' : 'cancelled' },
-      { onConflict: 'user_id,tool_id' }
-    )
-    const { data: s } = await supabase.from('subscriptions').select('*')
-    setSubs(s || [])
-  }
+async function toggleSub(userId: string, toolId: string, active: boolean) {
+  const res = await fetch('/api/admin/subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, toolId, status: active ? 'active' : 'cancelled' }),
+  })
+  if (!res.ok) { alert('Could not update subscription'); return }
+  const { data: s } = await supabase.from('subscriptions').select('*')
+  setSubs(s || [])
+}
 
   async function addTool() {
     if (!newTool.name || !newTool.slug || !newTool.monthly_price) return
