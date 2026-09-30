@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -11,17 +11,39 @@ export default function HomePage() {
   const [error, setError] = useState('')
   const supabase = createClient()
   const router = useRouter()
+  const [info, setInfo] = useState('')
+useEffect(() => {
+  async function checkSession() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { data: profile } = await supabase.from('profiles').select('id').eq('id', user.id).maybeSingle()
+    router.push(profile ? '/dashboard' : '/onboarding')
+  }
+  checkSession()
+}, [])
+ async function handleSubmit() {
+  setLoading(true)
+  setError('')
+  setInfo('')
 
-  async function handleSubmit() {
-    setLoading(true)
-    setError('')
-    const { error } = isSignUp
-      ? await supabase.auth.signUp({ email, password })
-      : await supabase.auth.signInWithPassword({ email, password })
+  if (isSignUp) {
+    const { data, error } = await supabase.auth.signUp({ email, password })
     setLoading(false)
     if (error) { setError(error.message); return }
-    router.push(isSignUp ? '/onboarding' : '/dashboard')
+    if (!data.session) {
+      setInfo('Account created. Please check your email and click the verification link, then log in.')
+      setIsSignUp(false)
+      return
+    }
+    router.push('/onboarding')
+    return
   }
+
+  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  setLoading(false)
+  if (error) { setError(error.message); return }
+  router.push('/dashboard')
+}
 
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', minHeight: '100vh', fontFamily: 'Segoe UI, sans-serif' }}>
@@ -94,6 +116,7 @@ export default function HomePage() {
   {loading ? 'Please wait...' : isSignUp ? 'Sign Up' : 'Login'}
 </button>
 {error && <p style={{ color: '#ff6b6b', fontSize: 13, marginTop: 12 }}>{error}</p>}
+{info && <p style={{ color: '#2fbf71', fontSize: 13, marginTop: 12 }}>{info}</p>}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#666', fontSize: 12, margin: '22px 0' }}>
             <div style={{ flex: 1, height: 1, background: '#3a3733' }}></div>OR<div style={{ flex: 1, height: 1, background: '#3a3733' }}></div>
