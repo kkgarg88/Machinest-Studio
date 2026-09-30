@@ -123,6 +123,11 @@ useEffect(() => {
           </div>
           <div style={{ textAlign: 'center', fontSize: 12, color: '#888', marginTop: 18 }}>
             {isSignUp ? 'Already have an account? ' : 'New to Machinest Studio? '}
+            <div style={{ textAlign: 'center', fontSize: 11, color: '#666', marginTop: 24 }}>
+  <a href="/terms" style={{ color: '#888', marginRight: 12 }}>Terms</a>
+  <a href="/privacy" style={{ color: '#888', marginRight: 12 }}>Privacy</a>
+  <a href="/refund" style={{ color: '#888' }}>Refund Policy</a>
+</div>
             <span onClick={() => setIsSignUp(!isSignUp)} style={{ color: '#F0801E', cursor: 'pointer', fontWeight: 600 }}>
               {isSignUp ? 'Login' : 'Create an account'}
             </span>
