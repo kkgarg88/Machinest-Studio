@@ -14,7 +14,7 @@ export default function ProfilePage() {
   const [phone, setPhone] = useState('')
   const [machineType, setMachineType] = useState('CNC Turning')
   const [experience, setExperience] = useState('')
-  const [activeTools, setActiveTools] = useState<string[]>([])
+  const [activeTools, setActiveTools] = useState<{ name: string; expiresAt: string | null }[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -37,13 +37,16 @@ export default function ProfilePage() {
         setExperience(p.experience_years || '')
       }
 
-      const { data: subs } = await supabase
-        .from('subscriptions')
-        .select('tools(name)')
-        .eq('user_id', user.id)
-        .eq('status', 'active')
-      const names = (subs || []).map((s: any) => (Array.isArray(s.tools) ? s.tools[0]?.name : s.tools?.name)).filter(Boolean)
-      setActiveTools(names)
+     const { data: subs } = await supabase
+  .from('subscriptions')
+  .select('tool_id, expires_at, tools(name)')
+  .eq('user_id', user.id)
+  .eq('status', 'active')
+const list = (subs || []).map((s: any) => ({
+  name: Array.isArray(s.tools) ? s.tools[0]?.name : s.tools?.name,
+  expiresAt: s.expires_at,
+})).filter(t => t.name)
+setActiveTools(list)
       setLoading(false)
     }
     load()
@@ -140,15 +143,24 @@ export default function ProfilePage() {
 
         <div style={{ ...card, marginTop: 20 }}>
           <div style={{ color: '#ccc', fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Your active tools</div>
-          {activeTools.length === 0 ? (
-            <p style={{ color: '#777', fontSize: 13, margin: 0 }}>No active tools yet.</p>
-          ) : (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {activeTools.map(n => (
-                <span key={n} style={{ background: 'rgba(240,128,30,0.15)', border: '1px solid rgba(240,128,30,0.5)', color: '#F0801E', fontSize: 12, fontWeight: 700, padding: '5px 12px', borderRadius: 999 }}>{n}</span>
-              ))}
-            </div>
-          )}
+        {activeTools.length === 0 ? (
+  <p style={{ color: '#777', fontSize: 13, margin: 0 }}>No active tools yet.</p>
+) : (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    {activeTools.map(t => {
+      const expiry = t.expiresAt ? new Date(t.expiresAt) : null
+      const daysLeft = expiry ? Math.ceil((expiry.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null
+      return (
+        <div key={t.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(240,128,30,0.1)', border: '1px solid rgba(240,128,30,0.4)', borderRadius: 8, padding: '10px 14px' }}>
+          <span style={{ color: '#F0801E', fontSize: 13, fontWeight: 700 }}>{t.name}</span>
+          <span style={{ color: daysLeft !== null && daysLeft <= 5 ? '#ff6b6b' : '#aaa', fontSize: 12 }}>
+            {expiry ? `Expires ${expiry.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} (${daysLeft} days left)` : 'No expiry set'}
+          </span>
+        </div>
+      )
+    })}
+  </div>
+)}
           <button onClick={() => router.push('/membership')} style={{ marginTop: 16, background: 'transparent', border: '1px solid #3a3733', color: '#ddd', borderRadius: 6, padding: '9px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
             Manage tools
           </button>
