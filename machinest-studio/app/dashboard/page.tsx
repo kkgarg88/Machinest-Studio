@@ -33,11 +33,13 @@ export default function Dashboard() {
       }
 
       const { data: toolsData } = await supabase.from('tools').select('*').order('created_at')
-      const { data: subsData } = await supabase
-        .from('subscriptions')
-        .select('tool_id')
-        .eq('user_id', user.id)
-        .eq('status', 'active')
+      const nowIso = new Date().toISOString()
+const { data: subsData } = await supabase
+  .from('subscriptions')
+  .select('tool_id')
+  .eq('user_id', user.id)
+  .eq('status', 'active')
+  .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
 
       setTools(toolsData || [])
       setActiveIds((subsData || []).map(s => s.tool_id))

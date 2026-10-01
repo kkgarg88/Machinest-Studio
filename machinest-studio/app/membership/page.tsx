@@ -36,12 +36,14 @@ export default function MembershipPage() {
 
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        const { data: subs } = await supabase
-          .from('subscriptions')
-          .select('tool_id')
-          .eq('user_id', user.id)
-          .eq('status', 'active')
-        setActiveIds((subs || []).map(s => s.tool_id))
+const nowIso = new Date().toISOString()
+const { data: subs } = await supabase
+  .from('subscriptions')
+  .select('tool_id')
+  .eq('user_id', user.id)
+  .eq('status', 'active')
+  .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
+setActiveIds((subs || []).map(s => s.tool_id))
       }
 
       setLoading(false)

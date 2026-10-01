@@ -36,13 +36,15 @@ export default function StudioPage() {
       const { data: toolData } = await supabase.from('tools').select('*').eq('slug', slug).single()
       if (!toolData) { router.push('/dashboard'); return }
 
-      const { data: sub } = await supabase
-        .from('subscriptions')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('tool_id', toolData.id)
-        .eq('status', 'active')
-        .maybeSingle()
+     const nowIso = new Date().toISOString()
+const { data: sub } = await supabase
+  .from('subscriptions')
+  .select('id')
+  .eq('user_id', user.id)
+  .eq('tool_id', toolData.id)
+  .eq('status', 'active')
+  .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
+  .maybeSingle()
 
       if (!sub) {
         setNotAllowed(true)

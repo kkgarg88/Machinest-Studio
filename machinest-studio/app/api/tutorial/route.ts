@@ -21,12 +21,14 @@ export async function POST(req: Request) {
 
   const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).maybeSingle()
   if (!profile?.is_admin) {
+    const nowIso = new Date().toISOString()
     const { data: sub } = await supabase
       .from('subscriptions')
       .select('id')
       .eq('user_id', user.id)
       .eq('tool_id', cycle.tool_id)
       .eq('status', 'active')
+      .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
       .maybeSingle()
     if (!sub) return NextResponse.json({ error: 'You do not have access to this tool' }, { status: 403 })
   }
