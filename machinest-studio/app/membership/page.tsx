@@ -27,11 +27,23 @@ export default function MembershipPage() {
   const [error, setError] = useState('')
   const supabase = createClient()
   const router = useRouter()
+  const [activeIds, setActiveIds] = useState<string[]>([])
 
   useEffect(() => {
     async function loadTools() {
       const { data } = await supabase.from('tools').select('*')
       setTools(data || [])
+
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: subs } = await supabase
+          .from('subscriptions')
+          .select('tool_id')
+          .eq('user_id', user.id)
+          .eq('status', 'active')
+        setActiveIds((subs || []).map(s => s.tool_id))
+      }
+
       setLoading(false)
     }
     loadTools()
@@ -43,6 +55,7 @@ export default function MembershipPage() {
   }, [])
 
   function toggleTool(id: string) {
+    if (activeIds.includes(id)) return
     setSelected(prev => (prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]))
   }
 
@@ -137,6 +150,7 @@ export default function MembershipPage() {
 
         <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 24 }}>
           {tools.map(tool => {
+            const isActive = activeIds.includes(tool.id)
             const isSelected = selected.includes(tool.id)
             const price = cycle === 'monthly' ? tool.monthly_price : tool.annual_price
             return (
@@ -146,8 +160,10 @@ export default function MembershipPage() {
                 style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   padding: '16px 18px', border: `1px solid ${isSelected ? '#F0801E' : '#3a3733'}`,
-                  borderRadius: 8, marginBottom: 12, cursor: 'pointer',
+                  borderRadius: 8, marginBottom: 12,
+                  cursor: isActive ? 'default' : 'pointer',
                   background: isSelected ? '#2a241b' : 'transparent',
+                  opacity: isActive ? 0.55 : 1,
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -161,9 +177,15 @@ export default function MembershipPage() {
                     <div style={{ color: '#999', fontSize: 12, marginTop: 2 }}>{tool.description}</div>
                   </div>
                 </div>
-                <div style={{ color: '#F0801E', fontWeight: 700, fontSize: 15 }}>
-                  ₹{price}/{cycle === 'monthly' ? 'mo' : 'yr'}
-                </div>
+                {isActive ? (
+                  <span style={{ background: '#F0801E', color: '#fff', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 10 }}>
+                    Active
+                  </span>
+                ) : (
+                  <div style={{ color: '#F0801E', fontWeight: 700, fontSize: 15 }}>
+                    ₹{price}/{cycle === 'monthly' ? 'mo' : 'yr'}
+                  </div>
+                )}
               </div>
             )
           })}
