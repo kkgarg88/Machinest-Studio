@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { tutorialLimiter } from '@/lib/rate-limit'
 
 export async function POST(req: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Please login again' }, { status: 401 })
+
+  const { success } = await tutorialLimiter.limit(user.id)
+  if (!success) {
+    return NextResponse.json({ error: 'Too many requests. Please wait a moment and try again.' }, { status: 429 })
+  }
 
   const body = await req.json().catch(() => null)
   if (!body || typeof body.cycleId !== 'string') {

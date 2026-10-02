@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getCycleLogic, getCycleIntro } from '@/lib/cycles/logic'
+import { generateLimiter } from '@/lib/rate-limit'
 
 export async function POST(req: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Please login again' }, { status: 401 })
+
+  const { success } = await generateLimiter.limit(user.id)
+  if (!success) {
+    return NextResponse.json({ error: 'Too many requests. Please wait a moment and try again.' }, { status: 429 })
+  }
 
   const body = await req.json().catch(() => null)
   const isIntro = body?.intro === true
@@ -27,19 +33,18 @@ export async function POST(req: Request) {
   const rel: any = cycle.tools
   const toolSlug: string | undefined = Array.isArray(rel) ? rel[0]?.slug : rel?.slug
 
-  // access check: admin ya active subscription
   const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).maybeSingle()
   if (!profile?.is_admin) {
-const nowIso = new Date().toISOString()
-const { data: sub } = await supabase
-  .from('subscriptions')
-  .select('id')
-  .eq('user_id', user.id)
-  .eq('tool_id', cycle.tool_id)
-  .eq('status', 'active')
-  .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
-  .maybeSingle()
-if (!sub) return NextResponse.json({ error: 'You do not have access to this tool' }, { status: 403 })
+    const nowIso = new Date().toISOString()
+    const { data: sub } = await supabase
+      .from('subscriptions')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('tool_id', cycle.tool_id)
+      .eq('status', 'active')
+      .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
+      .maybeSingle()
+    if (!sub) return NextResponse.json({ error: 'You do not have access to this tool' }, { status: 403 })
   }
 
   const key = `${toolSlug}:${cycle.code}`
