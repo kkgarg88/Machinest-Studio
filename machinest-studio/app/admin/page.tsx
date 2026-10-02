@@ -4,8 +4,10 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
 type Profile = { id: string; full_name: string; company_name: string; phone: string; email: string }
-type Tool = { id: string; name: string; slug: string; description: string; monthly_price: number }
-type Sub = { user_id: string; tool_id: string; status: string }
+type Tool = { id: string; name: string; slug: string; description: string; monthly_price: number; annual_price: number; features: string[] | null }
+type Sub = { user_id: string; tool_id: string; status: string; expires_at: string | null }
+
+const emptyForm = { id: '', name: '', slug: '', description: '', monthly_price: '', annual_price: '', features: '' }
 
 export default function AdminPage() {
   const [tab, setTab] = useState<'users' | 'tools'>('users')
@@ -13,55 +15,87 @@ export default function AdminPage() {
   const [tools, setTools] = useState<Tool[]>([])
   const [subs, setSubs] = useState<Sub[]>([])
   const [loading, setLoading] = useState(true)
-  const [newTool, setNewTool] = useState({ name: '', slug: '', description: '', monthly_price: '' })
+  const [form, setForm] = useState(emptyForm)
+  const [search, setSearch] = useState('')
+  const [toolFilter, setToolFilter] = useState('all')
   const supabase = createClient()
   const router = useRouter()
 
+  async function loadAll() {
+    const { data: p } = await supabase.from('profiles').select('*')
+    const { data: t } = await supabase.from('tools').select('*')
+    const { data: s } = await supabase.from('subscriptions').select('*')
+    setProfiles(p || [])
+    setTools(t || [])
+    setSubs(s || [])
+  }
+
   useEffect(() => {
     async function load() {
-      const { data: { session } } = await supabase.auth.getSession()
-if (!session) { router.push('/'); return }
-const user = session.user
-
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/'); return }
       const { data: myProfile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
       if (!myProfile?.is_admin) { router.push('/dashboard'); return }
-
-      const { data: p } = await supabase.from('profiles').select('*')
-      const { data: t } = await supabase.from('tools').select('*')
-      const { data: s } = await supabase.from('subscriptions').select('*')
-      setProfiles(p || [])
-      setTools(t || [])
-      setSubs(s || [])
+      await loadAll()
       setLoading(false)
     }
     load()
   }, [])
 
-async function toggleSub(userId: string, toolId: string, active: boolean) {
-  const res = await fetch('/api/admin/subscribe', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId, toolId, status: active ? 'active' : 'cancelled' }),
-  })
-  if (!res.ok) { alert('Could not update subscription'); return }
-  const { data: s } = await supabase.from('subscriptions').select('*')
-  setSubs(s || [])
-}
-
-  async function addTool() {
-    if (!newTool.name || !newTool.slug || !newTool.monthly_price) return
-    await supabase.from('tools').insert({
-      name: newTool.name, slug: newTool.slug,
-      description: newTool.description, monthly_price: Number(newTool.monthly_price),
+  async function toggleSub(userId: string, toolId: string, active: boolean) {
+    const res = await fetch('/api/admin/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, toolId, status: active ? 'active' : 'cancelled' }),
     })
-    const { data: t } = await supabase.from('tools').select('*')
-    setTools(t || [])
-    setNewTool({ name: '', slug: '', description: '', monthly_price: '' })
+    if (!res.ok) { alert('Could not update subscription'); return }
+    await loadAll()
+  }
+
+  function startEdit(t: Tool) {
+    setForm({
+      id: t.id,
+      name: t.name,
+      slug: t.slug,
+      description: t.description || '',
+      monthly_price: String(t.monthly_price),
+      annual_price: String(t.annual_price ?? ''),
+      features: (t.features || []).join('\n'),
+    })
+  }
+
+  async function saveTool() {
+    if (!form.name || !form.slug || !form.monthly_price) return
+    const payload = {
+      id: form.id || undefined,
+      name: form.name,
+      slug: form.slug,
+      description: form.description,
+      monthly_price: Number(form.monthly_price),
+      annual_price: form.annual_price ? Number(form.annual_price) : null,
+      features: form.features.split('\n').map(f => f.trim()).filter(Boolean),
+    }
+    if (form.id) {
+      await supabase.from('tools').update(payload).eq('id', form.id)
+    } else {
+      await supabase.from('tools').insert(payload)
+    }
+    setForm(emptyForm)
+    await loadAll()
   }
 
   if (loading) return <div style={{ minHeight: '100vh', background: '#211f1d', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Segoe UI, sans-serif' }}>Loading...</div>
 
   const inputStyle = { background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 6, color: '#fff', padding: '9px 12px', fontSize: 13 }
+
+  const now = Date.now()
+  const filteredProfiles = profiles.filter(p => {
+    const matchesSearch = !search || (p.full_name || '').toLowerCase().includes(search.toLowerCase()) || (p.email || '').toLowerCase().includes(search.toLowerCase())
+    const matchesTool = toolFilter === 'all' || subs.some(s => s.user_id === p.id && s.tool_id === toolFilter && s.status === 'active')
+    return matchesSearch && matchesTool
+  })
+
+  const activeSubsCount = subs.filter(s => s.status === 'active' && (!s.expires_at || new Date(s.expires_at).getTime() > now)).length
 
   return (
     <div style={{ minHeight: '100vh', background: '#211f1d', fontFamily: 'Segoe UI, sans-serif' }}>
@@ -72,56 +106,112 @@ async function toggleSub(userId: string, toolId: string, active: boolean) {
         </button>
       </header>
 
-      <div style={{ padding: '32px', maxWidth: 1100, margin: '0 auto' }}>
+      <div style={{ padding: '32px', maxWidth: 1200, margin: '0 auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 14, marginBottom: 26 }}>
+          <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 16 }}>
+            <div style={{ color: '#999', fontSize: 12 }}>Total Users</div>
+            <div style={{ color: '#fff', fontSize: 24, fontWeight: 800 }}>{profiles.length}</div>
+          </div>
+          <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 16 }}>
+            <div style={{ color: '#999', fontSize: 12 }}>Active Subscriptions</div>
+            <div style={{ color: '#F0801E', fontSize: 24, fontWeight: 800 }}>{activeSubsCount}</div>
+          </div>
+          <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 16 }}>
+            <div style={{ color: '#999', fontSize: 12 }}>Tools Live</div>
+            <div style={{ color: '#fff', fontSize: 24, fontWeight: 800 }}>{tools.length}</div>
+          </div>
+        </div>
+
         <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
           <button onClick={() => setTab('users')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: tab === 'users' ? '#F0801E' : '#2b2a28', color: '#fff' }}>Users</button>
           <button onClick={() => setTab('tools')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: tab === 'tools' ? '#F0801E' : '#2b2a28', color: '#fff' }}>Tools</button>
         </div>
 
         {tab === 'users' && (
-          <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, overflow: 'hidden' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: `1.5fr 1fr 1fr ${tools.map(() => '1fr').join(' ')}`, padding: '12px 16px', fontSize: 12, color: '#999', fontWeight: 700, borderBottom: '1px solid #3a3733' }}>
-              <span>Name / Email</span><span>Company</span><span>Phone</span>
-              {tools.map(t => <span key={t.id}>{t.name}</span>)}
+          <div>
+            <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+              <input placeholder="Search name or email..." value={search} onChange={e => setSearch(e.target.value)} style={{ ...inputStyle, flex: 1, minWidth: 220 }} />
+              <select value={toolFilter} onChange={e => setToolFilter(e.target.value)} style={inputStyle}>
+                <option value="all">All users</option>
+                {tools.map(t => <option key={t.id} value={t.id}>Has: {t.name}</option>)}
+              </select>
             </div>
-            {profiles.map(p => (
-              <div key={p.id} style={{ display: 'grid', gridTemplateColumns: `1.5fr 1fr 1fr ${tools.map(() => '1fr').join(' ')}`, padding: '12px 16px', fontSize: 13, color: '#ddd', borderBottom: '1px solid #3a3733', alignItems: 'center' }}>
-                <span>{p.full_name || p.email}</span>
-                <span style={{ color: '#999' }}>{p.company_name}</span>
-                <span style={{ color: '#999' }}>{p.phone}</span>
-                {tools.map(t => {
-                  const active = subs.find(s => s.user_id === p.id && s.tool_id === t.id && s.status === 'active')
-                  return (
-                    <button
-                      key={t.id}
-                      onClick={() => toggleSub(p.id, t.id, !active)}
-                      style={{ padding: '5px 10px', fontSize: 11, borderRadius: 12, border: 'none', cursor: 'pointer', fontWeight: 700, background: active ? '#F0801E' : '#4a4744', color: '#fff', width: 'fit-content' }}
-                    >
-                      {active ? 'Active' : 'Grant'}
-                    </button>
-                  )
-                })}
+
+            <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, overflow: 'auto' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: `1.3fr 1.3fr 1fr ${tools.map(() => '1.2fr').join(' ')}`, padding: '12px 16px', fontSize: 12, color: '#999', fontWeight: 700, borderBottom: '1px solid #3a3733', minWidth: 700 }}>
+                <span>Name</span><span>Email</span><span>Phone</span>
+                {tools.map(t => <span key={t.id}>{t.name}</span>)}
               </div>
-            ))}
+              {filteredProfiles.map(p => (
+                <div key={p.id} style={{ display: 'grid', gridTemplateColumns: `1.3fr 1.3fr 1fr ${tools.map(() => '1.2fr').join(' ')}`, padding: '12px 16px', fontSize: 13, color: '#ddd', borderBottom: '1px solid #3a3733', alignItems: 'center', minWidth: 700 }}>
+                  <span>{p.full_name || '—'}</span>
+                  <span style={{ color: '#999', fontSize: 12 }}>{p.email}</span>
+                  <span style={{ color: '#999' }}>{p.phone}</span>
+                  {tools.map(t => {
+                    const sub = subs.find(s => s.user_id === p.id && s.tool_id === t.id && s.status === 'active')
+                    const expired = sub?.expires_at && new Date(sub.expires_at).getTime() < now
+                    return (
+                      <div key={t.id} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        <button
+                          onClick={() => toggleSub(p.id, t.id, !sub)}
+                          style={{ padding: '5px 10px', fontSize: 11, borderRadius: 12, border: 'none', cursor: 'pointer', fontWeight: 700, background: sub && !expired ? '#F0801E' : '#4a4744', color: '#fff', width: 'fit-content' }}
+                        >
+                          {sub && !expired ? 'Active' : expired ? 'Expired' : 'Grant'}
+                        </button>
+                        {sub?.expires_at && (
+                          <span style={{ fontSize: 10, color: expired ? '#ff6b6b' : '#888' }}>
+                            till {new Date(sub.expires_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' })}
+                          </span>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              ))}
+              {filteredProfiles.length === 0 && <p style={{ color: '#777', padding: 16, fontSize: 13 }}>No users match this filter.</p>}
+            </div>
           </div>
         )}
 
         {tab === 'tools' && (
           <div>
             <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 20, marginBottom: 20 }}>
-              <h4 style={{ color: '#fff', marginTop: 0 }}>Add New Tool</h4>
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <input placeholder="Name" value={newTool.name} onChange={e => setNewTool({ ...newTool, name: e.target.value })} style={inputStyle} />
-                <input placeholder="Slug (e.g. calibration-tracker)" value={newTool.slug} onChange={e => setNewTool({ ...newTool, slug: e.target.value })} style={inputStyle} />
-                <input placeholder="Description" value={newTool.description} onChange={e => setNewTool({ ...newTool, description: e.target.value })} style={inputStyle} />
-                <input placeholder="Price/mo" type="number" value={newTool.monthly_price} onChange={e => setNewTool({ ...newTool, monthly_price: e.target.value })} style={{ ...inputStyle, width: 90 }} />
-                <button onClick={addTool} style={{ background: '#F0801E', color: '#fff', border: 'none', borderRadius: 6, padding: '9px 18px', fontWeight: 700, cursor: 'pointer' }}>Add</button>
+              <h4 style={{ color: '#fff', marginTop: 0 }}>{form.id ? 'Edit Tool' : 'Add New Tool'}</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+                <input placeholder="Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} style={inputStyle} />
+                <input placeholder="Slug (e.g. calibration-tracker)" value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} style={inputStyle} disabled={!!form.id} />
+                <input placeholder="Monthly Price" type="number" value={form.monthly_price} onChange={e => setForm({ ...form, monthly_price: e.target.value })} style={inputStyle} />
+                <input placeholder="Annual Price" type="number" value={form.annual_price} onChange={e => setForm({ ...form, annual_price: e.target.value })} style={inputStyle} />
+              </div>
+              <input placeholder="Short description (shown on dashboard tile)" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} style={{ ...inputStyle, width: '100%', marginBottom: 10 }} />
+              <textarea
+                placeholder={'Feature bullet points, one per line\ne.g.\nG71 Rough Turning\nOD Threading cycle'}
+                value={form.features}
+                onChange={e => setForm({ ...form, features: e.target.value })}
+                rows={4}
+                style={{ ...inputStyle, width: '100%', marginBottom: 12, fontFamily: 'inherit' }}
+              />
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={saveTool} style={{ background: '#F0801E', color: '#fff', border: 'none', borderRadius: 6, padding: '9px 18px', fontWeight: 700, cursor: 'pointer' }}>
+                  {form.id ? 'Save Changes' : 'Add Tool'}
+                </button>
+                {form.id && (
+                  <button onClick={() => setForm(emptyForm)} style={{ background: 'transparent', color: '#ddd', border: '1px solid #3a3733', borderRadius: 6, padding: '9px 18px', cursor: 'pointer' }}>
+                    Cancel
+                  </button>
+                )}
               </div>
             </div>
+
             <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 20 }}>
               {tools.map(t => (
-                <div key={t.id} style={{ padding: '10px 0', borderBottom: '1px solid #3a3733', color: '#ddd', fontSize: 13 }}>
-                  <b style={{ color: '#fff' }}>{t.name}</b> — {t.description} — ₹{t.monthly_price}/mo
+                <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #3a3733' }}>
+                  <div style={{ color: '#ddd', fontSize: 13 }}>
+                    <b style={{ color: '#fff' }}>{t.name}</b> — ₹{t.monthly_price}/mo, ₹{t.annual_price}/yr
+                  </div>
+                  <button onClick={() => startEdit(t)} style={{ background: 'transparent', border: '1px solid #3a3733', color: '#F0801E', borderRadius: 6, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                    Edit
+                  </button>
                 </div>
               ))}
             </div>
