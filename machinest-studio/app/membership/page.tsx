@@ -10,6 +10,7 @@ type Tool = {
   description: string
   monthly_price: number
   annual_price: number
+  features: string[] | null
 }
 
 declare global {
@@ -22,12 +23,12 @@ export default function MembershipPage() {
   const [tools, setTools] = useState<Tool[]>([])
   const [selected, setSelected] = useState<string[]>([])
   const [cycle, setCycle] = useState<'monthly' | 'annual'>('monthly')
+  const [activeIds, setActiveIds] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [paying, setPaying] = useState(false)
   const [error, setError] = useState('')
   const supabase = createClient()
   const router = useRouter()
-  const [activeIds, setActiveIds] = useState<string[]>([])
 
   useEffect(() => {
     async function loadTools() {
@@ -36,14 +37,14 @@ export default function MembershipPage() {
 
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-const nowIso = new Date().toISOString()
-const { data: subs } = await supabase
-  .from('subscriptions')
-  .select('tool_id')
-  .eq('user_id', user.id)
-  .eq('status', 'active')
-  .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
-setActiveIds((subs || []).map(s => s.tool_id))
+        const nowIso = new Date().toISOString()
+        const { data: subs } = await supabase
+          .from('subscriptions')
+          .select('tool_id')
+          .eq('user_id', user.id)
+          .eq('status', 'active')
+          .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
+        setActiveIds((subs || []).map(s => s.tool_id))
       }
 
       setLoading(false)
@@ -130,83 +131,96 @@ setActiveIds((subs || []).map(s => s.tool_id))
   if (loading) return <p style={{ padding: 40, color: '#fff', background: '#211f1d', minHeight: '100vh' }}>Loading...</p>
 
   return (
-    <div style={{ minHeight: '100vh', background: '#211f1d', padding: '48px 24px', fontFamily: 'Segoe UI, sans-serif' }}>
-      <div style={{ maxWidth: 600, margin: '0 auto' }}>
-        <h2 style={{ color: '#fff', fontSize: 26, margin: '0 0 6px' }}>Choose your tools</h2>
-        <p style={{ color: '#999', fontSize: 14, marginBottom: 20 }}>Pay only for what you use — pick any tools, or skip for now and add later</p>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(180deg, #211f1d 0%, #2a2724 100%)', padding: '48px 24px', fontFamily: 'Segoe UI, sans-serif' }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: 30 }}>
+          <h2 style={{ color: '#fff', fontSize: 30, margin: '0 0 8px', fontWeight: 800 }}>Choose your tools</h2>
+          <p style={{ color: '#999', fontSize: 15 }}>Pay only for what you use — pick any tools, or skip for now and add later</p>
 
-        <div style={{ display: 'flex', background: '#2b2a28', borderRadius: 8, padding: 4, marginBottom: 20, width: 'fit-content' }}>
-          <button
-            onClick={() => setCycle('monthly')}
-            style={{ padding: '8px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: cycle === 'monthly' ? '#F0801E' : 'transparent', color: '#fff' }}
-          >
-            Monthly
-          </button>
-          <button
-            onClick={() => setCycle('annual')}
-            style={{ padding: '8px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: cycle === 'annual' ? '#F0801E' : 'transparent', color: '#fff' }}
-          >
-            Annual
-          </button>
+          <div style={{ display: 'inline-flex', background: '#2b2a28', borderRadius: 8, padding: 4, marginTop: 20 }}>
+            <button
+              onClick={() => setCycle('monthly')}
+              style={{ padding: '9px 20px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: cycle === 'monthly' ? '#F0801E' : 'transparent', color: '#fff' }}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setCycle('annual')}
+              style={{ padding: '9px 20px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: cycle === 'annual' ? '#F0801E' : 'transparent', color: '#fff' }}
+            >
+              Annual <span style={{ opacity: 0.8, fontWeight: 400 }}>(save more)</span>
+            </button>
+          </div>
         </div>
 
-        <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))', gap: 22, marginBottom: 28 }}>
           {tools.map(tool => {
             const isActive = activeIds.includes(tool.id)
             const isSelected = selected.includes(tool.id)
             const price = cycle === 'monthly' ? tool.monthly_price : tool.annual_price
+
             return (
               <div
                 key={tool.id}
                 onClick={() => toggleTool(tool.id)}
                 style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '16px 18px', border: `1px solid ${isSelected ? '#F0801E' : '#3a3733'}`,
-                  borderRadius: 8, marginBottom: 12,
-                  cursor: isActive ? 'default' : 'pointer',
-                  background: isSelected ? '#2a241b' : 'transparent',
-                  opacity: isActive ? 0.55 : 1,
+                  background: isSelected ? 'linear-gradient(160deg, #2e2920 0%, #262320 100%)' : '#2b2a28',
+                  border: `2px solid ${isSelected ? '#F0801E' : '#3a3733'}`,
+                  borderRadius: 14, padding: 26, cursor: isActive ? 'default' : 'pointer',
+                  opacity: isActive ? 0.6 : 1, position: 'relative', display: 'flex', flexDirection: 'column',
+                  boxShadow: isSelected ? '0 8px 24px rgba(240,128,30,0.15)' : 'none',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <span style={{
-                    width: 18, height: 18, borderRadius: 4, marginRight: 12, flexShrink: 0,
-                    border: `2px solid ${isSelected ? '#F0801E' : '#666'}`,
-                    background: isSelected ? '#F0801E' : 'transparent',
-                  }}></span>
-                  <div>
-                    <div style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>{tool.name}</div>
-                    <div style={{ color: '#999', fontSize: 12, marginTop: 2 }}>{tool.description}</div>
-                  </div>
-                </div>
-                {isActive ? (
-                  <span style={{ background: '#F0801E', color: '#fff', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 10 }}>
-                    Active
+                {isActive && (
+                  <span style={{ position: 'absolute', top: 16, right: 16, background: '#F0801E', color: '#fff', fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 10 }}>
+                    ACTIVE
                   </span>
-                ) : (
-                  <div style={{ color: '#F0801E', fontWeight: 700, fontSize: 15 }}>
-                    ₹{price}/{cycle === 'monthly' ? 'mo' : 'yr'}
-                  </div>
                 )}
+
+                <h3 style={{ color: '#fff', fontSize: 19, fontWeight: 800, margin: '0 0 6px' }}>{tool.name}</h3>
+                <p style={{ color: '#999', fontSize: 13, marginBottom: 18, minHeight: 36 }}>{tool.description}</p>
+
+                <div style={{ marginBottom: 20 }}>
+                  <span style={{ color: '#F0801E', fontSize: 32, fontWeight: 800 }}>₹{price}</span>
+                  <span style={{ color: '#999', fontSize: 13 }}>/{cycle === 'monthly' ? 'month' : 'year'}</span>
+                </div>
+
+                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 22px', flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {(tool.features || []).map((f, i) => (
+                    <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#ddd' }}>
+                      <span style={{ color: '#2fbf71', fontWeight: 700, flexShrink: 0 }}>✓</span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+
+                <div style={{
+                  textAlign: 'center', padding: '10px', borderRadius: 8, fontSize: 13, fontWeight: 700,
+                  background: isActive ? '#3a3733' : isSelected ? '#F0801E' : 'transparent',
+                  border: isActive || isSelected ? 'none' : '1px solid #3a3733',
+                  color: isActive ? '#aaa' : isSelected ? '#fff' : '#ddd',
+                }}>
+                  {isActive ? 'Already Active' : isSelected ? 'Selected ✓' : 'Select this tool'}
+                </div>
               </div>
             )
           })}
+        </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 20, paddingTop: 16, borderTop: '1px solid #3a3733' }}>
-            <span style={{ color: '#999', fontSize: 13 }}>
-              {selected.length > 0 ? `Total: ₹${total}/${cycle === 'monthly' ? 'mo' : 'yr'}` : 'No tools selected'}
-            </span>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={handleSkip} style={{ background: 'transparent', border: '1px solid #3a3733', color: '#ddd', borderRadius: 6, padding: '10px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-                Skip for now
-              </button>
-              <button onClick={handlePay} disabled={paying} style={{ background: '#F0801E', border: 'none', color: '#fff', borderRadius: 6, padding: '10px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                {paying ? 'Processing...' : selected.length === 0 ? 'Continue' : 'Pay & Continue'}
-              </button>
-            </div>
+        <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 12, padding: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
+          <span style={{ color: '#999', fontSize: 14 }}>
+            {selected.length > 0 ? `Total: ₹${total}/${cycle === 'monthly' ? 'mo' : 'yr'} for ${selected.length} tool${selected.length > 1 ? 's' : ''}` : 'No tools selected'}
+          </span>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={handleSkip} style={{ background: 'transparent', border: '1px solid #3a3733', color: '#ddd', borderRadius: 6, padding: '11px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              Skip for now
+            </button>
+            <button onClick={handlePay} disabled={paying} style={{ background: '#F0801E', border: 'none', color: '#fff', borderRadius: 6, padding: '11px 24px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+              {paying ? 'Processing...' : selected.length === 0 ? 'Continue' : 'Pay & Continue'}
+            </button>
           </div>
         </div>
-        {error && <p style={{ color: '#ff6b6b', fontSize: 13, marginTop: 12 }}>{error}</p>}
+        {error && <p style={{ color: '#ff6b6b', fontSize: 13, marginTop: 12, textAlign: 'center' }}>{error}</p>}
       </div>
     </div>
   )
