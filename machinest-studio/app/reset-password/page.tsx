@@ -13,15 +13,30 @@ export default function ResetPasswordPage() {
   const supabase = createClient()
   const router = useRouter()
 
-  useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') setReady(true)
-    })
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setReady(true)
-    })
-    return () => listener.subscription.unsubscribe()
-  }, [])
+useEffect(() => {
+  async function init() {
+    const url = new URL(window.location.href)
+    const code = url.searchParams.get('code')
+
+    if (code) {
+      const { error } = await supabase.auth.exchangeCodeForSession(code)
+      if (error) {
+        setError('This reset link is invalid or has expired. Please request a new one.')
+        return
+      }
+      setReady(true)
+      return
+    }
+
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) {
+      setReady(true)
+    } else {
+      setError('This reset link is invalid or has expired. Please request a new one.')
+    }
+  }
+  init()
+}, [])
 
   async function handleSubmit() {
     setError('')
@@ -41,9 +56,13 @@ export default function ResetPasswordPage() {
       <div style={{ width: '100%', maxWidth: 380, background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 12, padding: 32 }}>
         <h2 style={{ color: '#fff', fontSize: 22, margin: '0 0 6px' }}>Set a new password</h2>
 
-        {!ready ? (
-          <p style={{ color: '#999', fontSize: 14 }}>Verifying your reset link...</p>
-        ) : done ? (
+    {!ready ? (
+  error ? (
+    <p style={{ color: '#ff6b6b', fontSize: 14 }}>{error}</p>
+  ) : (
+    <p style={{ color: '#999', fontSize: 14 }}>Verifying your reset link...</p>
+  )
+) : done ? (
           <p style={{ color: '#2fbf71', fontSize: 14 }}>Password updated! Redirecting to login...</p>
         ) : (
           <>
