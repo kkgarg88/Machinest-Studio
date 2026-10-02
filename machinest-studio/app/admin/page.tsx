@@ -7,10 +7,11 @@ type Profile = { id: string; full_name: string; company_name: string; phone: str
 type Tool = { id: string; name: string; slug: string; description: string; monthly_price: number; annual_price: number; features: string[] | null }
 type Sub = { user_id: string; tool_id: string; status: string; expires_at: string | null }
 type Order = { id: string; user_id: string; tool_ids: string[]; billing_cycle: string; amount: number; status: string; created_at: string }
+
 const emptyForm = { id: '', name: '', slug: '', description: '', monthly_price: '', annual_price: '', features: '' }
 
 export default function AdminPage() {
- const [tab, setTab] = useState<'users' | 'tools' | 'payments'>('users')
+  const [tab, setTab] = useState<'users' | 'tools' | 'payments'>('users')
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [tools, setTools] = useState<Tool[]>([])
   const [subs, setSubs] = useState<Sub[]>([])
@@ -22,16 +23,16 @@ export default function AdminPage() {
   const supabase = createClient()
   const router = useRouter()
 
-async function loadAll() {
-  const { data: p } = await supabase.from('profiles').select('*')
-  const { data: t } = await supabase.from('tools').select('*')
-  const { data: s } = await supabase.from('subscriptions').select('*')
-  const { data: o } = await supabase.from('payment_orders').select('*').order('created_at', { ascending: false })
-  setProfiles(p || [])
-  setTools(t || [])
-  setSubs(s || [])
-  setOrders(o || [])
-}
+  async function loadAll() {
+    const { data: p } = await supabase.from('profiles').select('*')
+    const { data: t } = await supabase.from('tools').select('*')
+    const { data: s } = await supabase.from('subscriptions').select('*')
+    const { data: o } = await supabase.from('payment_orders').select('*').order('created_at', { ascending: false })
+    setProfiles(p || [])
+    setTools(t || [])
+    setSubs(s || [])
+    setOrders(o || [])
+  }
 
   useEffect(() => {
     async function load() {
@@ -99,10 +100,11 @@ async function loadAll() {
   })
 
   const activeSubsCount = subs.filter(s => s.status === 'active' && (!s.expires_at || new Date(s.expires_at).getTime() > now)).length
-const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime()
-const monthRevenue = orders
-  .filter(o => o.status === 'paid' && new Date(o.created_at).getTime() >= monthStart)
-  .reduce((sum, o) => sum + Number(o.amount), 0)
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime()
+  const monthRevenue = orders
+    .filter(o => o.status === 'paid' && new Date(o.created_at).getTime() >= monthStart)
+    .reduce((sum, o) => sum + Number(o.amount), 0)
+
   return (
     <div style={{ minHeight: '100vh', background: '#211f1d', fontFamily: 'Segoe UI, sans-serif' }}>
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 32px', background: '#161513', borderBottom: '2px solid #F0801E' }}>
@@ -113,30 +115,30 @@ const monthRevenue = orders
       </header>
 
       <div style={{ padding: '32px', maxWidth: 1200, margin: '0 auto' }}>
-       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 14, marginBottom: 26 }}>
-  <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 16 }}>
-    <div style={{ color: '#999', fontSize: 12 }}>Total Users</div>
-    <div style={{ color: '#fff', fontSize: 24, fontWeight: 800 }}>{profiles.length}</div>
-  </div>
-  <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 16 }}>
-    <div style={{ color: '#999', fontSize: 12 }}>Active Subscriptions</div>
-    <div style={{ color: '#F0801E', fontSize: 24, fontWeight: 800 }}>{activeSubsCount}</div>
-  </div>
-  <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 16 }}>
-    <div style={{ color: '#999', fontSize: 12 }}>Tools Live</div>
-    <div style={{ color: '#fff', fontSize: 24, fontWeight: 800 }}>{tools.length}</div>
-  </div>
-  <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 16 }}>
-    <div style={{ color: '#999', fontSize: 12 }}>This Month's Revenue</div>
-    <div style={{ color: '#2fbf71', fontSize: 24, fontWeight: 800 }}>₹{monthRevenue}</div>
-  </div>
-</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 14, marginBottom: 26 }}>
+          <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 16 }}>
+            <div style={{ color: '#999', fontSize: 12 }}>Total Users</div>
+            <div style={{ color: '#fff', fontSize: 24, fontWeight: 800 }}>{profiles.length}</div>
+          </div>
+          <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 16 }}>
+            <div style={{ color: '#999', fontSize: 12 }}>Active Subscriptions</div>
+            <div style={{ color: '#F0801E', fontSize: 24, fontWeight: 800 }}>{activeSubsCount}</div>
+          </div>
+          <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 16 }}>
+            <div style={{ color: '#999', fontSize: 12 }}>Tools Live</div>
+            <div style={{ color: '#fff', fontSize: 24, fontWeight: 800 }}>{tools.length}</div>
+          </div>
+          <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 16 }}>
+            <div style={{ color: '#999', fontSize: 12 }}>This Month's Revenue</div>
+            <div style={{ color: '#2fbf71', fontSize: 24, fontWeight: 800 }}>₹{monthRevenue}</div>
+          </div>
+        </div>
 
         <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
-  <button onClick={() => setTab('users')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: tab === 'users' ? '#F0801E' : '#2b2a28', color: '#fff' }}>Users</button>
-  <button onClick={() => setTab('tools')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: tab === 'tools' ? '#F0801E' : '#2b2a28', color: '#fff' }}>Tools</button>
-  <button onClick={() => setTab('payments')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: tab === 'payments' ? '#F0801E' : '#2b2a28', color: '#fff' }}>Payments</button>
-</div>
+          <button onClick={() => setTab('users')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: tab === 'users' ? '#F0801E' : '#2b2a28', color: '#fff' }}>Users</button>
+          <button onClick={() => setTab('tools')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: tab === 'tools' ? '#F0801E' : '#2b2a28', color: '#fff' }}>Tools</button>
+          <button onClick={() => setTab('payments')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: tab === 'payments' ? '#F0801E' : '#2b2a28', color: '#fff' }}>Payments</button>
+        </div>
 
         {tab === 'users' && (
           <div>
@@ -211,33 +213,6 @@ const monthRevenue = orders
                     Cancel
                   </button>
                 )}
-                {tab === 'payments' && (
-  <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, overflow: 'auto' }}>
-    <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 1fr 1fr 1fr 1fr', padding: '12px 16px', fontSize: 12, color: '#999', fontWeight: 700, borderBottom: '1px solid #3a3733', minWidth: 700 }}>
-      <span>Date</span><span>User</span><span>Tools</span><span>Cycle</span><span>Amount</span><span>Status</span>
-    </div>
-    {orders.map(o => {
-      const userEmail = profiles.find(p => p.id === o.user_id)?.email || o.user_id
-      const toolNames = o.tool_ids.map(id => tools.find(t => t.id === id)?.name || '—').join(', ')
-      return (
-        <div key={o.id} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 1fr 1fr 1fr 1fr', padding: '12px 16px', fontSize: 13, color: '#ddd', borderBottom: '1px solid #3a3733', minWidth: 700 }}>
-          <span style={{ color: '#999', fontSize: 12 }}>{new Date(o.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
-          <span style={{ fontSize: 12 }}>{userEmail}</span>
-          <span style={{ fontSize: 12 }}>{toolNames}</span>
-          <span style={{ fontSize: 12, textTransform: 'capitalize' }}>{o.billing_cycle}</span>
-          <span style={{ color: '#2fbf71', fontWeight: 700 }}>₹{o.amount}</span>
-          <span style={{
-            fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 10, width: 'fit-content',
-            color: '#fff', background: o.status === 'paid' ? '#2fbf71' : '#555',
-          }}>
-            {o.status}
-          </span>
-        </div>
-      )
-    })}
-    {orders.length === 0 && <p style={{ color: '#777', padding: 16, fontSize: 13 }}>No payments yet.</p>}
-  </div>
-)}
               </div>
             </div>
 
@@ -253,6 +228,34 @@ const monthRevenue = orders
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {tab === 'payments' && (
+          <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, overflow: 'auto' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 1fr 1fr 1fr 1fr', padding: '12px 16px', fontSize: 12, color: '#999', fontWeight: 700, borderBottom: '1px solid #3a3733', minWidth: 700 }}>
+              <span>Date</span><span>User</span><span>Tools</span><span>Cycle</span><span>Amount</span><span>Status</span>
+            </div>
+            {orders.map(o => {
+              const userEmail = profiles.find(p => p.id === o.user_id)?.email || o.user_id
+              const toolNames = o.tool_ids.map(id => tools.find(t => t.id === id)?.name || '—').join(', ')
+              return (
+                <div key={o.id} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 1fr 1fr 1fr 1fr', padding: '12px 16px', fontSize: 13, color: '#ddd', borderBottom: '1px solid #3a3733', minWidth: 700 }}>
+                  <span style={{ color: '#999', fontSize: 12 }}>{new Date(o.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                  <span style={{ fontSize: 12 }}>{userEmail}</span>
+                  <span style={{ fontSize: 12 }}>{toolNames}</span>
+                  <span style={{ fontSize: 12, textTransform: 'capitalize' }}>{o.billing_cycle}</span>
+                  <span style={{ color: '#2fbf71', fontWeight: 700 }}>₹{o.amount}</span>
+                  <span style={{
+                    fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 10, width: 'fit-content',
+                    color: '#fff', background: o.status === 'paid' ? '#2fbf71' : '#555',
+                  }}>
+                    {o.status}
+                  </span>
+                </div>
+              )
+            })}
+            {orders.length === 0 && <p style={{ color: '#777', padding: 16, fontSize: 13 }}>No payments yet.</p>}
           </div>
         )}
       </div>
