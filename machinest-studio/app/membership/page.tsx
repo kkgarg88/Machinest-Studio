@@ -27,6 +27,9 @@ export default function MembershipPage() {
   const [loading, setLoading] = useState(true)
   const [paying, setPaying] = useState(false)
   const [error, setError] = useState('')
+  const [couponCode, setCouponCode] = useState('')
+const [couponApplied, setCouponApplied] = useState<{ discount: number; subtotal: number } | null>(null)
+const [couponMsg, setCouponMsg] = useState('')
   const supabase = createClient()
   const router = useRouter()
 
@@ -74,17 +77,20 @@ export default function MembershipPage() {
     }
     setPaying(true)
 
-    const res = await fetch('/api/payment/create-order', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ toolIds: selected, cycle }),
-    })
+  const res = await fetch('/api/payment/create-order', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ toolIds: selected, cycle, couponCode }),
+})
     const data = await res.json().catch(() => ({}))
     if (!res.ok) {
       setPaying(false)
       setError(data.error || 'Could not start payment')
       return
     }
+    if (data.discount > 0) {
+  setCouponApplied({ discount: data.discount, subtotal: data.subtotal })
+}
 
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -206,7 +212,16 @@ export default function MembershipPage() {
             )
           })}
         </div>
-
+<div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+  <input
+    type="text"
+    placeholder="Have a coupon code?"
+    value={couponCode}
+    onChange={e => { setCouponCode(e.target.value.toUpperCase()); setCouponMsg('') }}
+    style={{ background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 6, color: '#fff', padding: '10px 14px', fontSize: 13, flex: '1 1 200px' }}
+  />
+  <span style={{ color: '#888', fontSize: 12 }}>Coupon applies automatically at checkout</span>
+</div>
         <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 12, padding: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
           <span style={{ color: '#999', fontSize: 14 }}>
             {selected.length > 0 ? `Total: ₹${total}/${cycle === 'monthly' ? 'mo' : 'yr'} for ${selected.length} tool${selected.length > 1 ? 's' : ''}` : 'No tools selected'}

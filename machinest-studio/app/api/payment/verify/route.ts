@@ -51,7 +51,12 @@ export async function POST(req: Request) {
     if (subError) return NextResponse.json({ error: subError.message }, { status: 500 })
 
     await admin.from('payment_orders').update({ status: 'paid' }).eq('id', order.id)
-
+if (order.coupon_code) {
+  const { data: coupon } = await admin.from('coupons').select('used_count').eq('code', order.coupon_code).maybeSingle()
+  if (coupon) {
+    await admin.from('coupons').update({ used_count: coupon.used_count + 1 }).eq('code', order.coupon_code)
+  }
+}
     return NextResponse.json({ ok: true })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Server error' }, { status: 500 })

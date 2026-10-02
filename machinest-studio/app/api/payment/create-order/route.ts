@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import Razorpay from 'razorpay'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function POST(req: Request) {
   try {
@@ -11,6 +12,8 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => null)
     const cycle = body?.cycle
     const toolIds = body?.toolIds
+    const couponCode = typeof body?.couponCode === 'string' ? body.couponCode.trim().toUpperCase() : ''
+
     if (!Array.isArray(toolIds) || toolIds.length === 0 || !['monthly', 'annual'].includes(cycle)) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
     }
@@ -20,10 +23,33 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'One or more tools are invalid' }, { status: 400 })
     }
 
-    const amount = tools.reduce(
+    const subtotal = tools.reduce(
       (sum, t) => sum + Number(cycle === 'monthly' ? t.monthly_price : t.annual_price),
       0
     )
+
+    let discount = 0
+    const admin = createAdminClient()
+
+    if (couponCode) {
+      const { data: coupon } = await admin.from('coupons').select('*').eq('code', couponCode).eq('active', true).maybeSingle()
+      if (!coupon) {
+        return NextResponse.json({ error: 'Invalid coupon code' }, { status: 400 })
+      }
+      if (coupon.expires_at && new Date(coupon.expires_at).getTime() < Date.now()) {
+        return NextResponse.json({ error: 'This coupon has expired' }, { status: 400 })
+      }
+      if (coupon.max_uses !== null && coupon.used_count >= coupon.max_uses) {
+        return NextResponse.json({ error: 'This coupon has reached its usage limit' }, { status: 400 })
+      }
+      discount = coupon.discount_type === 'percent'
+        ? Math.round((subtotal * Number(coupon.discount_value)) / 100)
+        : Number(coupon.discount_value)
+      discount = Math.min(discount, subtotal - 1) // kam se kam ₹1 to charge karna hi hai
+      if (discount < 0) discount = 0
+    }
+
+    const amount = subtotal - discount
 
     const razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID!,
@@ -31,9 +57,9 @@ export async function POST(req: Request) {
     })
 
     const order = await razorpay.orders.create({
-      amount: Math.round(amount * 100), // paise mein
+      amount: Math.round(amount * 100),
       currency: 'INR',
-      notes: { user_id: user.id, cycle },
+      notes: { user_id: user.id, cycle, coupon: couponCode || 'none' },
     })
 
     const { error } = await supabase.from('payment_orders').insert({
@@ -42,6 +68,8 @@ export async function POST(req: Request) {
       tool_ids: toolIds,
       billing_cycle: cycle,
       amount,
+      coupon_code: couponCode || null,
+      discount,
     })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
@@ -49,6 +77,8 @@ export async function POST(req: Request) {
       orderId: order.id,
       amount: order.amount,
       keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+      subtotal,
+      discount,
     })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Server error' }, { status: 500 })

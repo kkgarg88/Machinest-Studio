@@ -7,11 +7,14 @@ type Profile = { id: string; full_name: string; company_name: string; phone: str
 type Tool = { id: string; name: string; slug: string; description: string; monthly_price: number; annual_price: number; features: string[] | null }
 type Sub = { user_id: string; tool_id: string; status: string; expires_at: string | null }
 type Order = { id: string; user_id: string; tool_ids: string[]; billing_cycle: string; amount: number; status: string; created_at: string }
+type Coupon = { id: string; code: string; discount_type: string; discount_value: number; max_uses: number | null; used_count: number; expires_at: string | null; active: boolean }
 
 const emptyForm = { id: '', name: '', slug: '', description: '', monthly_price: '', annual_price: '', features: '' }
 
 export default function AdminPage() {
-  const [tab, setTab] = useState<'users' | 'tools' | 'payments'>('users')
+  const [tab, setTab] = useState<'users' | 'tools' | 'payments' | 'coupons'>('users')
+  const [coupons, setCoupons] = useState<Coupon[]>([])
+  const [couponForm, setCouponForm] = useState({ code: '', discount_type: 'percent', discount_value: '', max_uses: '', expires_at: '' })
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [tools, setTools] = useState<Tool[]>([])
   const [subs, setSubs] = useState<Sub[]>([])
@@ -32,6 +35,8 @@ export default function AdminPage() {
     setTools(t || [])
     setSubs(s || [])
     setOrders(o || [])
+    const { data: c } = await supabase.from('coupons').select('*').order('created_at', { ascending: false })
+    setCoupons(c || [])
   }
 
   useEffect(() => {
@@ -88,6 +93,24 @@ export default function AdminPage() {
     await loadAll()
   }
 
+  async function createCoupon() {
+    if (!couponForm.code || !couponForm.discount_value) return
+    await supabase.from('coupons').insert({
+      code: couponForm.code.toUpperCase(),
+      discount_type: couponForm.discount_type,
+      discount_value: Number(couponForm.discount_value),
+      max_uses: couponForm.max_uses ? Number(couponForm.max_uses) : null,
+      expires_at: couponForm.expires_at || null,
+    })
+    setCouponForm({ code: '', discount_type: 'percent', discount_value: '', max_uses: '', expires_at: '' })
+    await loadAll()
+  }
+
+  async function toggleCoupon(id: string, active: boolean) {
+    await supabase.from('coupons').update({ active }).eq('id', id)
+    await loadAll()
+  }
+
   if (loading) return <div style={{ minHeight: '100vh', background: '#211f1d', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Segoe UI, sans-serif' }}>Loading...</div>
 
   const inputStyle = { background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 6, color: '#fff', padding: '9px 12px', fontSize: 13 }
@@ -138,6 +161,7 @@ export default function AdminPage() {
           <button onClick={() => setTab('users')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: tab === 'users' ? '#F0801E' : '#2b2a28', color: '#fff' }}>Users</button>
           <button onClick={() => setTab('tools')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: tab === 'tools' ? '#F0801E' : '#2b2a28', color: '#fff' }}>Tools</button>
           <button onClick={() => setTab('payments')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: tab === 'payments' ? '#F0801E' : '#2b2a28', color: '#fff' }}>Payments</button>
+          <button onClick={() => setTab('coupons')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: tab === 'coupons' ? '#F0801E' : '#2b2a28', color: '#fff' }}>Coupons</button>
         </div>
 
         {tab === 'users' && (
@@ -256,6 +280,46 @@ export default function AdminPage() {
               )
             })}
             {orders.length === 0 && <p style={{ color: '#777', padding: 16, fontSize: 13 }}>No payments yet.</p>}
+          </div>
+        )}
+
+        {tab === 'coupons' && (
+          <div>
+            <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 20, marginBottom: 20 }}>
+              <h4 style={{ color: '#fff', marginTop: 0 }}>Create Coupon</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
+                <input placeholder="Code (e.g. DIWALI20)" value={couponForm.code} onChange={e => setCouponForm({ ...couponForm, code: e.target.value })} style={inputStyle} />
+                <select value={couponForm.discount_type} onChange={e => setCouponForm({ ...couponForm, discount_type: e.target.value })} style={inputStyle}>
+                  <option value="percent">Percent (%)</option>
+                  <option value="flat">Flat (₹)</option>
+                </select>
+                <input placeholder="Discount value" type="number" value={couponForm.discount_value} onChange={e => setCouponForm({ ...couponForm, discount_value: e.target.value })} style={inputStyle} />
+                <input placeholder="Max uses (optional)" type="number" value={couponForm.max_uses} onChange={e => setCouponForm({ ...couponForm, max_uses: e.target.value })} style={inputStyle} />
+                <input placeholder="Expiry date (optional)" type="date" value={couponForm.expires_at} onChange={e => setCouponForm({ ...couponForm, expires_at: e.target.value })} style={inputStyle} />
+              </div>
+              <button onClick={createCoupon} style={{ background: '#F0801E', color: '#fff', border: 'none', borderRadius: 6, padding: '9px 18px', fontWeight: 700, cursor: 'pointer' }}>
+                Create Coupon
+              </button>
+            </div>
+
+            <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 20 }}>
+              {coupons.map(c => (
+                <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #3a3733' }}>
+                  <div style={{ color: '#ddd', fontSize: 13 }}>
+                    <b style={{ color: '#F0801E' }}>{c.code}</b> — {c.discount_type === 'percent' ? `${c.discount_value}%` : `₹${c.discount_value}`} off
+                    {' · '}used {c.used_count}{c.max_uses ? `/${c.max_uses}` : ''}
+                    {c.expires_at ? ` · expires ${new Date(c.expires_at).toLocaleDateString('en-IN')}` : ''}
+                  </div>
+                  <button
+                    onClick={() => toggleCoupon(c.id, !c.active)}
+                    style={{ padding: '5px 12px', fontSize: 11, borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 700, background: c.active ? '#2fbf71' : '#555', color: '#fff' }}
+                  >
+                    {c.active ? 'Active' : 'Disabled'}
+                  </button>
+                </div>
+              ))}
+              {coupons.length === 0 && <p style={{ color: '#777', fontSize: 13, margin: 0 }}>No coupons yet.</p>}
+            </div>
           </div>
         )}
       </div>
