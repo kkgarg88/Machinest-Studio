@@ -113,7 +113,11 @@ router.push(profile ? '/dashboard' : '/onboarding')
          <input type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} style={{ width: '100%', background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 6, color: '#fff', padding: '12px 14px', fontSize: 14, marginBottom: 16 }} />
           <label style={{ display: 'block', fontSize: 13, color: '#ccc', marginBottom: 6, fontWeight: 600 }}>Password</label>
           <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} style={{ width: '100%', background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 6, color: '#fff', padding: '12px 14px', fontSize: 14, marginBottom: 16 }} />
-          {!isSignUp && <div style={{ textAlign: 'right', fontSize: 12, color: '#999', margin: '-8px 0 20px', cursor: 'pointer' }}>Forgot password?</div>}
+          {!isSignUp && (
+  <div style={{ textAlign: 'right', fontSize: 12, margin: '-8px 0 20px' }}>
+    <a href="/forgot-password" style={{ color: '#F0801E', textDecoration: 'none' }}>Forgot password?</a>
+  </div>
+)}
 <button onClick={handleSubmit} disabled={loading} style={{ width: '100%', background: '#F0801E', color: '#fff', border: 'none', borderRadius: 6, padding: 13, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
   {loading ? 'Please wait...' : isSignUp ? 'Sign Up' : 'Login'}
 </button>
