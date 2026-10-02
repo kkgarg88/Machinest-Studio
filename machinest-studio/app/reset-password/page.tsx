@@ -18,6 +18,7 @@ useEffect(() => {
     const url = new URL(window.location.href)
     const code = url.searchParams.get('code')
 
+    // Case 1: naya PKCE style — ?code=...
     if (code) {
       const { error } = await supabase.auth.exchangeCodeForSession(code)
       if (error) {
@@ -28,6 +29,23 @@ useEffect(() => {
       return
     }
 
+    // Case 2: purana style — #access_token=...&refresh_token=...&type=recovery
+    const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash
+    const hashParams = new URLSearchParams(hash)
+    const accessToken = hashParams.get('access_token')
+    const refreshToken = hashParams.get('refresh_token')
+
+    if (accessToken && refreshToken) {
+      const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
+      if (error) {
+        setError('This reset link is invalid or has expired. Please request a new one.')
+        return
+      }
+      setReady(true)
+      return
+    }
+
+    // Case 3: pehle se koi session hai (link already use ho chuki thi, par page reload hua)
     const { data: { session } } = await supabase.auth.getSession()
     if (session) {
       setReady(true)
