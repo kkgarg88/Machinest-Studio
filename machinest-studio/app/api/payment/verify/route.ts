@@ -52,9 +52,23 @@ export async function POST(req: Request) {
 
     await admin.from('payment_orders').update({ status: 'paid' }).eq('id', order.id)
 if (order.coupon_code) {
-  const { data: coupon } = await admin.from('coupons').select('used_count').eq('code', order.coupon_code).maybeSingle()
-  if (coupon) {
-    await admin.from('coupons').update({ used_count: coupon.used_count + 1 }).eq('code', order.coupon_code)
+  const cleanCode = order.coupon_code.trim().toUpperCase()
+  const { data: coupon, error: couponFetchErr } = await admin
+    .from('coupons')
+    .select('id, used_count')
+    .ilike('code', cleanCode)
+    .maybeSingle()
+
+  if (couponFetchErr) {
+    console.error('Coupon fetch error:', couponFetchErr.message)
+  } else if (coupon) {
+    const { error: couponUpdateErr } = await admin
+      .from('coupons')
+      .update({ used_count: coupon.used_count + 1 })
+      .eq('id', coupon.id)
+    if (couponUpdateErr) console.error('Coupon update error:', couponUpdateErr.message)
+  } else {
+    console.error('Coupon not found for code:', cleanCode)
   }
 }
     return NextResponse.json({ ok: true })
