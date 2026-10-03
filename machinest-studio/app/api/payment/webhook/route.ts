@@ -17,7 +17,7 @@ export async function POST(req: Request) {
 
   const payload = JSON.parse(rawBody)
   if (payload.event !== 'payment.captured') {
-    return NextResponse.json({ ok: true }) // baaki events ignore
+    return NextResponse.json({ ok: true })
   }
 
   const orderId = payload.payload.payment.entity.order_id
@@ -29,8 +29,8 @@ export async function POST(req: Request) {
     .eq('razorpay_order_id', orderId)
     .single()
 
-  if (!order) return NextResponse.json({ ok: true }) // order hi nahi mila, kuch nahi karna
-  if (order.status === 'paid') return NextResponse.json({ ok: true }) // already ho chuka
+  if (!order) return NextResponse.json({ ok: true })
+  if (order.status === 'paid') return NextResponse.json({ ok: true })
 
   const days = order.billing_cycle === 'monthly' ? 30 : 365
   const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString()
@@ -45,6 +45,14 @@ export async function POST(req: Request) {
 
   await admin.from('subscriptions').upsert(rows, { onConflict: 'user_id,tool_id' })
   await admin.from('payment_orders').update({ status: 'paid' }).eq('id', order.id)
+
+  if (order.coupon_code) {
+    const cleanCode = order.coupon_code.trim().toUpperCase()
+    const { data: coupon } = await admin.from('coupons').select('id, used_count').ilike('code', cleanCode).maybeSingle()
+    if (coupon) {
+      await admin.from('coupons').update({ used_count: coupon.used_count + 1 }).eq('id', coupon.id)
+    }
+  }
 
   return NextResponse.json({ ok: true })
 }
