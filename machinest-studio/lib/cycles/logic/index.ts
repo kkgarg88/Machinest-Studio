@@ -4,6 +4,7 @@ import { millingG81 } from './milling-g81'
 import { millingPeck } from './milling-peck'
 import { millingEllipse } from './milling-ellipse'
 import { buildPeckIntroSvg } from './peck-svg'
+import { turningChamfer } from './turning-chamfer'
 
 type Logic = (v: Record<string, unknown>) => CycleResult
 type Intro = () => string
@@ -12,6 +13,7 @@ const registry: Record<string, Logic> = {
   'milling-studio:G81': millingG81,
   'milling-studio:G83/G73': millingPeck,
   'milling-studio:ELLIPSE': millingEllipse,
+  'turning-studio:CHAMFER': turningChamfer,
 }
 
 // page khulte hi dikhne wala example / animation (optional, har cycle ke liye)

@@ -70,4 +70,32 @@ export const definitions: Record<string, Field[]> = {
     { key: 'feed', label: 'Cutting Feed', type: 'number', step: '0.1' },
     { key: 'rpm', label: 'RPM', type: 'number', step: '1' },
   ],
+    'turning-studio:CHAMFER': [
+    { key: 'progNum', label: 'Program No', type: 'number', step: '1' },
+    { key: 'od', label: 'OD (Outer Diameter)', type: 'number', step: '0.001' },
+    { key: 'noseRadius', label: 'Tool Nose Radius (R)', type: 'number', step: '0.01', default: '0.4' },
+    {
+      key: 'mode', label: 'Input Mode', type: 'select', default: 'a_angle',
+      options: [
+        { value: 'a_angle', label: 'A (Z-leg) + Angle' },
+        { value: 'b_angle', label: 'B (X-leg) + Angle' },
+        { value: 'ab', label: 'A + B (angle unknown)' },
+      ],
+    },
+    { key: 'a', label: 'A (Z-direction leg)', type: 'number', step: '0.001' },
+    { key: 'b', label: 'B (X-direction leg)', type: 'number', step: '0.001' },
+    { key: 'angle', label: 'Angle (deg, if using A+angle or B+angle)', type: 'number', step: '0.1' },
+    {
+      key: 'spindleMode', label: 'Spindle Mode', type: 'select', default: 'G96',
+      options: [
+        { value: 'G96', label: 'G96 - Constant Surface Speed' },
+        { value: 'G97', label: 'G97 - Direct RPM' },
+      ],
+    },
+    { key: 'speed', label: 'Speed (S value)', type: 'number', step: '1' },
+    { key: 'feed', label: 'Feed (mm/rev)', type: 'number', step: '0.01' },
+    { key: 'workOffset', label: 'Work Offset', type: 'select', default: 'G54', options: ['G54','G55','G56','G57','G58','G59'].map(v => ({ value: v, label: v })) },
+    { key: 'safeX', label: 'Safe X Clearance (from OD)', type: 'number', step: '0.1', default: '3' },
+    { key: 'safeZ', label: 'Safe Z Clearance (from face)', type: 'number', step: '0.1', default: '5' },
+  ],
 }
