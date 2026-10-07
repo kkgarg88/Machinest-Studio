@@ -2,17 +2,19 @@ import 'server-only'
 import { CycleResult, fail, num } from './common'
 import { buildChamferSvg } from './chamfer-svg'
 
-const LIMITS = { progMax: 7999, feedMax: 5, rpmMax: 4000, odMax: 500 }
+const LIMITS = { progMax: 7999, feedMax: 5, rpmMax: 4000, diaMax: 500 }
 const OFFSETS = ['G54', 'G55', 'G56', 'G57', 'G58', 'G59']
 const MODES = ['a_angle', 'b_angle', 'ab']
 const SPINDLE = ['G96', 'G97']
+const TYPES = ['od', 'id']
 
 const toRad = (deg: number) => (deg * Math.PI) / 180
 
 export function turningChamfer(v: Record<string, unknown>): CycleResult {
+  const type = String(v.type)
   const mode = String(v.mode)
   const progNum = num(v.progNum)
-  const od = num(v.od)
+  const dia = num(v.od) // form se 'od' hi aata hai, ID ke liye bore diameter isi field mein
   const r = num(v.noseRadius)
   const a = num(v.a)
   const b = num(v.b)
@@ -24,11 +26,12 @@ export function turningChamfer(v: Record<string, unknown>): CycleResult {
   const safeX = num(v.safeX)
   const safeZ = num(v.safeZ)
 
+  if (!TYPES.includes(type)) return fail('Invalid chamfer type')
   if (!MODES.includes(mode)) return fail('Invalid input mode')
   if (!Number.isInteger(progNum) || progNum < 1 || progNum > LIMITS.progMax)
     return fail(`Program number must be a whole number between 0001 and ${LIMITS.progMax}`)
-  if (!Number.isFinite(od) || od <= 0 || od > LIMITS.odMax)
-    return fail(`OD must be between 0 and ${LIMITS.odMax} mm`)
+  if (!Number.isFinite(dia) || dia <= 0 || dia > LIMITS.diaMax)
+    return fail(`Diameter must be between 0 and ${LIMITS.diaMax} mm`)
   if (!Number.isFinite(r) || r < 0 || r > 3.2)
     return fail('Nose radius must be between 0 and 3.2 mm')
   if (!Number.isFinite(feed) || feed <= 0 || feed > LIMITS.feedMax)
@@ -65,18 +68,22 @@ export function turningChamfer(v: Record<string, unknown>): CycleResult {
     bEff = aEff * Math.tan(toRad(angleUsed))
   }
 
-  const startX = od - 2 * bEff
-  if (startX <= 0) return fail('Chamfer B dimension is too large for this OD')
   if (aEff <= 0 || bEff <= 0) return fail('Calculated chamfer dimensions are invalid, please check inputs')
+
+  // Sirf ye hissa OD/ID ke beech mirror hota hai
+  const startX = type === 'od' ? dia - 2 * bEff : dia + 2 * bEff
+  if (type === 'od' && startX <= 0) return fail('Chamfer B dimension is too large for this OD')
+
+  const clearX = type === 'od' ? (dia + 2 * safeX) : (dia - 2 * safeX)
+  if (type === 'id' && clearX <= 0) return fail('Safe X clearance is too large for this bore diameter')
 
   const programName = 'O' + String(progNum).padStart(4, '0')
   const sBlock = spindleMode === 'G96' ? `G96 S${speed} M03;` : `G97 S${speed} M03;`
-  const clearX = (od + 2 * safeX).toFixed(3)
 
   const out: string[] = [
     '%',
     `${programName};`,
-    '(OD CHAMFER - TURNING);',
+    `(${type.toUpperCase()} CHAMFER - TURNING);`,
     '(Powered by MACHINEST);',
     '(SUPPORT-7988277215);',
     `(A=${aEff.toFixed(3)} B=${bEff.toFixed(3)} ANGLE=${angleUsed.toFixed(2)} NOSE R=${r});`,
@@ -86,11 +93,11 @@ export function turningChamfer(v: Record<string, unknown>): CycleResult {
     'T0101;',
     `G90 ${workOffset};`,
     sBlock,
-    `G00 X${clearX} Z${safeZ.toFixed(3)};`,
+    `G00 X${clearX.toFixed(3)} Z${safeZ.toFixed(3)};`,
     `G00 X${startX.toFixed(3)};`,
     'G00 Z0;',
-    `G01 X${od.toFixed(3)} Z-${aEff.toFixed(3)} F${feed.toFixed(3)};`,
-    `G00 X${clearX};`,
+    `G01 X${dia.toFixed(3)} Z-${aEff.toFixed(3)} F${feed.toFixed(3)};`,
+    `G00 X${clearX.toFixed(3)};`,
     `G00 Z${safeZ.toFixed(3)};`,
     'G28 U0 W0;',
     'M05;',
@@ -101,7 +108,7 @@ export function turningChamfer(v: Record<string, unknown>): CycleResult {
   return {
     ok: true,
     gcode: out.join('\n'),
-    svg: buildChamferSvg({ od, startX, aEff, bEff, angleUsed, r }),
+    svg: buildChamferSvg({ od: dia, startX, aEff, bEff, angleUsed, r }),
     programName,
   }
 }

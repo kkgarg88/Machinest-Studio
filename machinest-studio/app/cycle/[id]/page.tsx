@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
 import { definitions, Field } from '@/lib/cycles/definitions'
+import ChamferTool from '@/components/cycles/ChamferTool'
 
 const card = { background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 12, padding: 24 } as const
 const inputStyle = { width: '100%', background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 6, color: '#fff', padding: '10px 12px', fontSize: 15 } as const
@@ -21,6 +22,7 @@ export default function CyclePage() {
   const [busy, setBusy] = useState(false)
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState<'' | 'ok' | 'fail'>('')
+  const [selectedType, setSelectedType] = useState<'od' | 'id' | null>(null)
   const supabase = createClient()
   const router = useRouter()
   const params = useParams()
@@ -46,7 +48,6 @@ export default function CyclePage() {
         defs.forEach(f => { init[f.key] = f.default ?? '' })
         setValues(init)
 
-        // page khulte hi example / animation (agar is cycle ke liye bana ho)
         fetch('/api/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -68,6 +69,22 @@ export default function CyclePage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cycleId: id, values }),
+    })
+    const data = await res.json().catch(() => ({}))
+    setBusy(false)
+    if (!res.ok) { setError(data.error || 'Something went wrong'); return }
+    setGcode(data.gcode)
+    setSvg(data.svg)
+    setProgramName(data.programName)
+  }
+
+  async function handleChamferGenerate(chamferValues: Record<string, string>) {
+    setBusy(true)
+    setError('')
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cycleId: id, values: chamferValues }),
     })
     const data = await res.json().catch(() => ({}))
     setBusy(false)
@@ -115,7 +132,63 @@ export default function CyclePage() {
       <div style={{ padding: '32px 24px', maxWidth: 1200, margin: '0 auto' }}>
         <h2 style={{ color: '#fff', fontSize: 24, margin: '0 0 22px', fontWeight: 800 }}>{cycle.code} - {cycle.name}</h2>
 
-        {!fields ? (
+        {cycle.code === 'CHAMFER' && !selectedType ? (
+          <div>
+            <p style={{ color: '#999', fontSize: 14, marginBottom: 20 }}>Select chamfer type</p>
+            <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+              <div
+                onClick={() => setSelectedType('od')}
+                style={{ background: '#2b2a28', border: '2px solid #F0801E', borderRadius: 12, padding: 28, width: 180, textAlign: 'center', cursor: 'pointer' }}
+              >
+                <div style={{ fontSize: 34, marginBottom: 10 }}>⬡</div>
+                <div style={{ color: '#fff', fontWeight: 700 }}>OD Chamfer</div>
+              </div>
+              <div
+                onClick={() => setSelectedType('id')}
+                style={{ background: '#2b2a28', border: '2px solid #F0801E', borderRadius: 12, padding: 28, width: 180, textAlign: 'center', cursor: 'pointer' }}
+              >
+                <div style={{ fontSize: 34, marginBottom: 10 }}>⬡</div>
+                <div style={{ color: '#fff', fontWeight: 700 }}>ID Chamfer</div>
+              </div>
+            </div>
+          </div>
+        ) : cycle.code === 'CHAMFER' && selectedType ? (
+          <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+            <div style={{ flex: '1 1 420px' }}>
+              <ChamferTool onGenerate={handleChamferGenerate} busy={busy} error={error} type={selectedType} />
+            </div>
+            <div style={{ flex: '1 1 380px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div style={card}>
+                {svg
+                  ? <div dangerouslySetInnerHTML={{ __html: svg }} />
+                  : <p style={{ color: '#777', fontSize: 14, margin: 0 }}>Diagram will appear here after you generate.</p>}
+              </div>
+              <div style={{ background: '#0e0d0c', border: '1px solid #3a3733', borderRadius: 12, padding: 20 }}>
+                <pre style={{ margin: 0, minHeight: 200, color: '#F0801E', fontFamily: 'Consolas, monospace', fontSize: 13.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                  {gcode || '// Fill the values and click Generate'}
+                </pre>
+                {gcode && (
+                  <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+                    <button
+                      onClick={copy}
+                      style={{
+                        flex: 1, padding: 11, borderRadius: 6, fontWeight: 600, cursor: 'pointer',
+                        border: `1px solid ${copied === 'ok' ? '#2fbf71' : '#3a3733'}`,
+                        background: copied === 'ok' ? 'rgba(47,191,113,0.15)' : 'transparent',
+                        color: copied === 'ok' ? '#2fbf71' : copied === 'fail' ? '#ff6b6b' : '#ddd',
+                      }}
+                    >
+                      {copied === 'ok' ? '✓ Copied' : copied === 'fail' ? 'Copy failed' : 'Copy'}
+                    </button>
+                    <button onClick={download} style={{ flex: 1, padding: 11, borderRadius: 6, border: 'none', background: '#F0801E', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
+                      Download .nc
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : !fields ? (
           <p style={{ color: '#999' }}>This cycle is coming soon.</p>
         ) : (
           <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'flex-start' }}>
