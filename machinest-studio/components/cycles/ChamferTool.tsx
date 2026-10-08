@@ -23,6 +23,7 @@ export default function ChamferTool({ onGenerate, busy, error, type }: {
   const [workOffset, setWorkOffset] = useState('G54')
   const [safeX, setSafeX] = useState('3')
   const [safeZ, setSafeZ] = useState('5')
+  const [maxRpm, setMaxRpm] = useState('')
 
   const vals = { x, y, angle1, angle2 }
   const filledKeys = Object.keys(vals).filter(k => (vals as any)[k].trim() !== '')
@@ -51,15 +52,15 @@ export default function ChamferTool({ onGenerate, busy, error, type }: {
   }
 
   const payload = resolvePayload()
-  const ready = !!payload && !!od && !!progNum && !!feed && !!speed
+  const ready = !!payload && !!od && !!progNum && !!feed && !!speed && (spindleMode === 'G97' || !!maxRpm)
 
-  function handleGenerate() {
-    if (!payload) return
-    onGenerate({
-      progNum, od, noseRadius, feed, speed, spindleMode, workOffset, safeX, safeZ, type,
-      mode: payload.mode, a: payload.a, b: payload.b, angle: payload.angle,
-    })
-  }
+function handleGenerate() {
+  if (!payload) return
+  onGenerate({
+    progNum, od, noseRadius, feed, speed, spindleMode, workOffset, safeX, safeZ, type, maxRpm,
+    mode: payload.mode, a: payload.a, b: payload.b, angle: payload.angle,
+  })
+}
 
   // ---- SVG geometry: OD (chamfer goes down) vs ID (chamfer goes up, mirrored vertically) ----
   const isOd = type === 'od'
@@ -215,10 +216,16 @@ export default function ChamferTool({ onGenerate, busy, error, type }: {
             <option value="G97">G97 - Direct RPM</option>
           </select>
         </div>
-        <div>
-          <label style={label}>Speed (S)</label>
-          <input style={input} type="number" value={speed} onChange={e => setSpeed(e.target.value)} />
-        </div>
+       <div>
+  <label style={label}>{spindleMode === 'G96' ? 'Surface Speed (m/min)' : 'Speed (RPM)'}</label>
+  <input style={input} type="number" value={speed} onChange={e => setSpeed(e.target.value)} />
+</div>
+{spindleMode === 'G96' && (
+  <div>
+    <label style={label}>Max Spindle RPM (G50)</label>
+    <input style={input} type="number" value={maxRpm} onChange={e => setMaxRpm(e.target.value)} placeholder="e.g. 2000" />
+  </div>
+)}
         <div>
           <label style={label}>Feed (mm/rev)</label>
           <input style={input} type="number" value={feed} onChange={e => setFeed(e.target.value)} />

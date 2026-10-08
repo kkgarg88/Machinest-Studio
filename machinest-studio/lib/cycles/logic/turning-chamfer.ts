@@ -21,6 +21,7 @@ export function turningChamfer(v: Record<string, unknown>): CycleResult {
   const feed = num(v.feed)
   const speed = num(v.speed)
   const spindleMode = String(v.spindleMode)
+  const maxRpm = num(v.maxRpm)
   const workOffset = String(v.workOffset)
   const safeX = num(v.safeX)
   const safeZ = num(v.safeZ)
@@ -38,6 +39,8 @@ export function turningChamfer(v: Record<string, unknown>): CycleResult {
   if (!Number.isFinite(speed) || speed <= 0 || speed > LIMITS.rpmMax)
     return fail(`Speed must be greater than 0 and up to ${LIMITS.rpmMax}`)
   if (!SPINDLE.includes(spindleMode)) return fail('Invalid spindle mode')
+  if (spindleMode === 'G96' && (!Number.isFinite(maxRpm) || maxRpm <= 0 || maxRpm > LIMITS.rpmMax))
+  return fail('Max Spindle RPM (for G50) is required when using G96')
   if (!OFFSETS.includes(workOffset)) return fail('Invalid work offset')
   if (!Number.isFinite(safeX) || safeX <= 0) return fail('Safe X clearance must be greater than 0')
   if (!Number.isFinite(safeZ) || safeZ <= 0) return fail('Safe Z clearance must be greater than 0')
@@ -77,7 +80,9 @@ export function turningChamfer(v: Record<string, unknown>): CycleResult {
   if (type === 'id' && clearX <= 0) return fail('Safe X clearance is too large for this bore diameter')
 
   const programName = 'O' + String(progNum).padStart(4, '0')
-  const sBlock = spindleMode === 'G96' ? `G96 S${speed} M03;` : `G97 S${speed} M03;`
+  const sBlock = spindleMode === 'G96'
+  ? `G50 S${maxRpm};\nG96 S${speed} M03;`
+  : `G97 S${speed} M03;`
 
   const out: string[] = [
     '%',
