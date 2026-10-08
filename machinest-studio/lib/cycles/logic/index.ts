@@ -6,6 +6,7 @@ import { millingEllipse } from './milling-ellipse'
 import { buildPeckIntroSvg } from './peck-svg'
 import { turningChamfer } from './turning-chamfer'
 import { turningRadius } from './turning-radius'
+import { millingEngrave } from './milling-engrave'
 
 type Logic = (v: Record<string, unknown>) => CycleResult
 type Intro = () => string
@@ -16,6 +17,7 @@ const registry: Record<string, Logic> = {
   'milling-studio:ELLIPSE': millingEllipse,
   'turning-studio:CHAMFER': turningChamfer,
   'turning-studio:RADIUS': turningRadius,
+  'milling-studio:ENGRAVE': millingEngrave,
 }
 
 // page khulte hi dikhne wala example / animation (optional, har cycle ke liye)

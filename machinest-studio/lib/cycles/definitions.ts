@@ -1,7 +1,7 @@
 export type Field = {
   key: string
   label: string
-  type: 'number' | 'select'
+  type: 'number' | 'select' | 'text'
   step?: string
   default?: string
   options?: { value: string; label: string }[]
@@ -27,6 +27,21 @@ export const definitions: Record<string, Field[]> = {
     { key: 'retractMode', label: 'Retract Mode', type: 'select', default: 'G99', options: retractModes },
     { key: 'feed', label: 'Feed', type: 'number', step: '0.1' },
     { key: 'rpm', label: 'RPM', type: 'number', step: '1' },
+  ],
+    'milling-studio:ENGRAVE': [
+    { key: 'progNum', label: 'Program No', type: 'number', step: '1' },
+    { key: 'text', label: 'Text to Engrave', type: 'text' },
+    { key: 'startX', label: 'Start X', type: 'number', step: '0.001', default: '0' },
+    { key: 'startY', label: 'Start Y', type: 'number', step: '0.001', default: '0' },
+    { key: 'charHeight', label: 'Char Height (mm)', type: 'number', step: '0.1', default: '10' },
+    { key: 'charSpacing', label: 'Char Spacing (mm)', type: 'number', step: '0.1', default: '1.5' },
+    { key: 'depth', label: 'Depth (Minus)', type: 'number', step: '0.001' },
+    { key: 'retractlevel', label: 'Retract Level (R)', type: 'number', step: '0.001' },
+    { key: 'safeZ', label: 'Safe Z', type: 'number', step: '0.1', default: '30' },
+    { key: 'feed', label: 'Cutting Feed', type: 'number', step: '0.1' },
+    { key: 'plungeFeed', label: 'Plunge Feed', type: 'number', step: '0.1' },
+    { key: 'rpm', label: 'RPM', type: 'number', step: '1' },
+    { key: 'workOffset', label: 'Work Offset', type: 'select', default: 'G54', options: ['G54','G55','G56','G57','G58','G59'].map(v => ({ value: v, label: v })) },
   ],
 
   'milling-studio:G83/G73': [

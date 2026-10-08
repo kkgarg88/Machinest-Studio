@@ -243,11 +243,12 @@ export default function CyclePage() {
                       {f.options!.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </select>
                   ) : (
-                    <input
-                      type="number"
-                      step={f.step ?? 'any'}
+                                       <input
+                      type={f.type === 'text' ? 'text' : 'number'}
+                      step={f.type === 'number' ? (f.step ?? 'any') : undefined}
+                      maxLength={f.type === 'text' ? 60 : undefined}
                       value={values[f.key]}
-                      onKeyDown={e => { if (e.key === 'e' || e.key === 'E') e.preventDefault() }}
+                      onKeyDown={e => { if (f.type === 'number' && (e.key === 'e' || e.key === 'E')) e.preventDefault() }}
                       onChange={e => setValues({ ...values, [f.key]: e.target.value })}
                       style={inputStyle}
                     />
