@@ -157,13 +157,8 @@ export default function CyclePage() {
             <div style={{ flex: '1 1 420px' }}>
               <ChamferTool onGenerate={handleChamferGenerate} busy={busy} error={error} type={selectedType} />
             </div>
-            <div style={{ flex: '1 1 380px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div style={card}>
-                {svg
-                  ? <div dangerouslySetInnerHTML={{ __html: svg }} />
-                  : <p style={{ color: '#777', fontSize: 14, margin: 0 }}>Diagram will appear here after you generate.</p>}
-              </div>
-              <div style={{ background: '#0e0d0c', border: '1px solid #3a3733', borderRadius: 12, padding: 20 }}>
+         <div style={{ flex: '1 1 380px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
+  <div style={{ background: '#0e0d0c', border: '1px solid #3a3733', borderRadius: 12, padding: 20 }}>
                 <pre style={{ margin: 0, minHeight: 200, color: '#F0801E', fontFamily: 'Consolas, monospace', fontSize: 13.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                   {gcode || '// Fill the values and click Generate'}
                 </pre>

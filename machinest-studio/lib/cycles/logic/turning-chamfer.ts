@@ -1,6 +1,5 @@
 import 'server-only'
 import { CycleResult, fail, num } from './common'
-import { buildChamferSvg } from './chamfer-svg'
 
 const LIMITS = { progMax: 7999, feedMax: 5, rpmMax: 4000, diaMax: 500 }
 const OFFSETS = ['G54', 'G55', 'G56', 'G57', 'G58', 'G59']
@@ -105,10 +104,10 @@ export function turningChamfer(v: Record<string, unknown>): CycleResult {
     '%',
   ]
 
-  return {
-    ok: true,
-    gcode: out.join('\n'),
-    svg: buildChamferSvg({ od: dia, startX, aEff, bEff, angleUsed, r }),
-    programName,
-  }
+return {
+  ok: true,
+  gcode: out.join('\n'),
+  svg: '',
+  programName,
+}
 }
