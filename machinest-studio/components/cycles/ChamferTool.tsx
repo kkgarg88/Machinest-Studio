@@ -12,9 +12,10 @@ export default function ChamferTool({ onGenerate, busy, error, type }: {
 }) {
   const [progNum, setProgNum] = useState('')
   const [od, setOd] = useState('')
-  const [a, setA] = useState('')
-  const [b, setB] = useState('')
-  const [angle, setAngle] = useState('')
+  const [x, setX] = useState('')
+  const [y, setY] = useState('')
+  const [angle1, setAngle1] = useState('')
+  const [angle2, setAngle2] = useState('')
   const [noseRadius, setNoseRadius] = useState('0.4')
   const [feed, setFeed] = useState('')
   const [speed, setSpeed] = useState('')
@@ -23,72 +24,189 @@ export default function ChamferTool({ onGenerate, busy, error, type }: {
   const [safeX, setSafeX] = useState('3')
   const [safeZ, setSafeZ] = useState('5')
 
-  function filledCount() {
-    return [a, b, angle].filter(v => v.trim() !== '').length
+  const vals = { x, y, angle1, angle2 }
+  const filledKeys = Object.keys(vals).filter(k => (vals as any)[k].trim() !== '')
+
+  function isLocked(key: string) {
+    return filledKeys.length >= 2 && !filledKeys.includes(key)
   }
 
-  function mode(): 'a_angle' | 'b_angle' | 'ab' | '' {
-    if (a && angle && !b) return 'a_angle'
-    if (b && angle && !a) return 'b_angle'
-    if (a && b && !angle) return 'ab'
-    return ''
+  // X/Y + angle1/angle2 -> backend ke a/b/angle/mode mein convert
+  function resolvePayload(): { mode: string; a: string; b: string; angle: string } | null {
+    if (filledKeys.length !== 2) return null
+
+    const effAngleFromA1 = angle1 ? Number(angle1) : angle2 ? 90 - Number(angle2) : null
+    const effAngleFromA2 = angle2 ? Number(angle2) : angle1 ? 90 - Number(angle1) : null
+
+    if (x && (angle1 || angle2)) {
+      return { mode: 'a_angle', a: x, b: '', angle: String(effAngleFromA1) }
+    }
+    if (y && (angle1 || angle2)) {
+      return { mode: 'b_angle', a: '', b: y, angle: String(effAngleFromA2) }
+    }
+    if (x && y) {
+      return { mode: 'ab', a: x, b: y, angle: '' }
+    }
+    return null
   }
+
+  const payload = resolvePayload()
+  const ready = !!payload && !!od && !!progNum && !!feed && !!speed
 
   function handleGenerate() {
-    onGenerate({ progNum, od, a, b, angle, noseRadius, mode: mode(), feed, speed, spindleMode, workOffset, safeX, safeZ, type })
+    if (!payload) return
+    onGenerate({
+      progNum, od, noseRadius, feed, speed, spindleMode, workOffset, safeX, safeZ, type,
+      mode: payload.mode, a: payload.a, b: payload.b, angle: payload.angle,
+    })
   }
 
-  const m = mode()
-  const ready = filledCount() === 2 && od && progNum && feed && speed
+  // ---- SVG geometry: OD (chamfer goes down) vs ID (chamfer goes up, mirrored vertically) ----
+  const isOd = type === 'od'
 
   return (
     <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 12, padding: 24 }}>
-      <h4 style={{ color: '#fff', margin: '0 0 4px', fontSize: 16 }}>{type === 'od' ? 'OD Chamfer' : 'ID Chamfer'}</h4>
-      <p style={{ color: '#999', fontSize: 12, marginBottom: 16 }}>Fill any 2 of: A, B, Angle — the third is calculated automatically.</p>
+      <h4 style={{ color: '#fff', margin: '0 0 4px', fontSize: 16 }}>{isOd ? 'OD Chamfer' : 'ID Chamfer'}</h4>
+      <p style={{ color: '#999', fontSize: 12, marginBottom: 16 }}>Fill {isOd ? 'OD' : 'ID'} (required) and any 2 of the 4 marked values below — the rest calculate automatically.</p>
 
-      <svg viewBox="0 0 420 260" width="100%" style={{ maxWidth: 420, marginBottom: 10 }}>
-        <line x1="30" y1="210" x2="260" y2="210" stroke="#8a8782" strokeWidth="2" />
-        <line x1="260" y1="210" x2="260" y2="40" stroke="#8a8782" strokeWidth="2" />
-        <line x1="260" y1="140" x2="330" y2="210" stroke="#F0801E" strokeWidth="3" />
-        <text x="35" y="228" fill="#999" fontSize="12">Face (Z0)</text>
-        <text x="268" y="40" fill="#999" fontSize="12">{type === 'od' ? 'OD line' : 'ID (bore) line'}</text>
-        <circle cx="260" cy="210" r="4" fill="#555" />
-        <text x="100" y="60" fill="#fff" fontSize="12">{type === 'od' ? 'OD →' : 'ID →'}</text>
-      </svg>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-        <div>
-          <label style={label}>{type === 'od' ? 'OD (diameter)' : 'ID (bore diameter)'}</label>
-          <input style={input} type="number" value={od} onChange={e => setOd(e.target.value)} placeholder="e.g. 50" />
-        </div>
-        <div>
-          <label style={label}>Nose Radius (R)</label>
-          <input style={input} type="number" value={noseRadius} onChange={e => setNoseRadius(e.target.value)} />
-        </div>
-        <div>
-          <label style={label}>A — length along {type === 'od' ? 'OD' : 'ID'} (Z-leg)</label>
-          <input style={input} type="number" value={a} onChange={e => setA(e.target.value)} placeholder="leave blank if not known" />
-        </div>
-        <div>
-          <label style={label}>B — length along Face (X-leg)</label>
-          <input style={input} type="number" value={b} onChange={e => setB(e.target.value)} placeholder="leave blank if not known" />
-        </div>
-        <div>
-          <label style={label}>Angle (deg)</label>
-          <input style={input} type="number" value={angle} onChange={e => setAngle(e.target.value)} placeholder="leave blank if not known" />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-          <span style={{ fontSize: 12, color: m ? '#2fbf71' : '#ff6b6b' }}>
-            {m ? `Mode: ${m === 'a_angle' ? 'A + Angle' : m === 'b_angle' ? 'B + Angle' : 'A + B'}` : 'Fill exactly 2 fields'}
-          </span>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
+        <label style={{ ...label, marginBottom: 0 }}>{isOd ? 'OD' : 'ID'}</label>
+        <input style={{ ...input, width: 110 }} type="number" value={od} onChange={e => setOd(e.target.value)} placeholder={isOd ? 'e.g. 50' : 'e.g. 30'} />
+        <span style={{ color: '#999', fontSize: 12 }}>mm</span>
       </div>
 
-      <h4 style={{ color: '#fff', margin: '20px 0 14px', fontSize: 15 }}>Machining Parameters</h4>
+      <div style={{ position: 'relative', width: '100%', marginBottom: 18 }}>
+        {isOd ? (
+          <svg viewBox="0 0 600 420" style={{ width: '100%', height: 'auto', display: 'block' }}>
+            <line x1="30" y1="140" x2="300" y2="140" stroke="#bdbab5" strokeWidth="2" />
+            <text x="40" y="120" fill="#ddd" fontSize="14" fontWeight="bold">OD</text>
+            <line x1="300" y1="140" x2="420" y2="140" stroke="#8a8782" strokeWidth="1.3" strokeDasharray="4 3" />
+            <line x1="420" y1="140" x2="420" y2="260" stroke="#8a8782" strokeWidth="1.3" strokeDasharray="4 3" />
+            <line x1="300" y1="140" x2="420" y2="260" stroke="#F0801E" strokeWidth="3" />
+            <line x1="420" y1="260" x2="420" y2="420" stroke="#bdbab5" strokeWidth="2" />
+            <text x="435" y="380" fill="#ddd" fontSize="14" fontWeight="bold">Face</text>
+            <text x="435" y="400" fill="#ddd" fontSize="14" fontWeight="bold">Z=0</text>
+            <line x1="300" y1="110" x2="420" y2="110" stroke="#4dabf7" strokeWidth="1.3" />
+            <polygon points="300,110 308,106 308,114" fill="#4dabf7" />
+            <polygon points="420,110 412,106 412,114" fill="#4dabf7" />
+            <line x1="450" y1="140" x2="450" y2="260" stroke="#4dabf7" strokeWidth="1.3" />
+            <polygon points="450,140 446,148 454,148" fill="#4dabf7" />
+            <polygon points="450,260 446,252 454,252" fill="#4dabf7" />
+            <path d="M 320 140 A 20 20 0 0 1 305.86 154.14" fill="none" stroke="#999" strokeWidth="1.3" />
+            <path d="M 420 240 A 20 20 0 0 1 405.86 245.86" fill="none" stroke="#999" strokeWidth="1.3" />
+            <g transform="translate(130,370)">
+              <line x1="0" y1="0" x2="0" y2="-30" stroke="#888" strokeWidth="1.3" />
+              <polygon points="0,-30 -4,-22 4,-22" fill="#888" />
+              <line x1="0" y1="0" x2="0" y2="20" stroke="#888" strokeWidth="1.3" />
+              <polygon points="0,20 -4,12 4,12" fill="#888" />
+              <line x1="-30" y1="0" x2="0" y2="0" stroke="#888" strokeWidth="1.3" />
+              <polygon points="-30,0 -22,-4 -22,4" fill="#888" />
+              <line x1="0" y1="0" x2="30" y2="0" stroke="#888" strokeWidth="1.3" />
+              <polygon points="30,0 22,-4 22,4" fill="#888" />
+              <text x="4" y="-32" fill="#888" fontSize="11">X+</text>
+              <text x="4" y="32" fill="#888" fontSize="11">X-</text>
+              <text x="-42" y="4" fill="#888" fontSize="11">-Z</text>
+              <text x="34" y="4" fill="#888" fontSize="11">Z+</text>
+            </g>
+          </svg>
+        ) : (
+          <svg viewBox="0 0 600 420" style={{ width: '100%', height: 'auto', display: 'block' }}>
+            <line x1="30" y1="260" x2="300" y2="260" stroke="#bdbab5" strokeWidth="2" />
+            <text x="40" y="245" fill="#ddd" fontSize="14" fontWeight="bold">ID</text>
+            <line x1="300" y1="260" x2="420" y2="260" stroke="#8a8782" strokeWidth="1.3" strokeDasharray="4 3" />
+            <line x1="420" y1="260" x2="420" y2="140" stroke="#8a8782" strokeWidth="1.3" strokeDasharray="4 3" />
+            <line x1="300" y1="260" x2="420" y2="140" stroke="#F0801E" strokeWidth="3" />
+            <line x1="420" y1="140" x2="420" y2="20" stroke="#bdbab5" strokeWidth="2" />
+            <text x="430" y="55" fill="#ddd" fontSize="14" fontWeight="bold">Face</text>
+            <text x="430" y="75" fill="#ddd" fontSize="14" fontWeight="bold">Z=0</text>
+            <line x1="300" y1="300" x2="420" y2="300" stroke="#4dabf7" strokeWidth="1.3" />
+            <polygon points="300,300 308,296 308,304" fill="#4dabf7" />
+            <polygon points="420,300 412,296 412,304" fill="#4dabf7" />
+            <line x1="450" y1="140" x2="450" y2="260" stroke="#4dabf7" strokeWidth="1.3" />
+            <polygon points="450,140 446,148 454,148" fill="#4dabf7" />
+            <polygon points="450,260 446,252 454,252" fill="#4dabf7" />
+            <path d="M 320 260 A 20 20 0 0 1 314.14 245.86" fill="none" stroke="#999" strokeWidth="1.3" />
+            <path d="M 420 160 A 20 20 0 0 1 405.86 154.14" fill="none" stroke="#999" strokeWidth="1.3" />
+            <g transform="translate(130,370)">
+              <line x1="0" y1="0" x2="0" y2="-30" stroke="#888" strokeWidth="1.3" />
+              <polygon points="0,-30 -4,-22 4,-22" fill="#888" />
+              <line x1="0" y1="0" x2="0" y2="20" stroke="#888" strokeWidth="1.3" />
+              <polygon points="0,20 -4,12 4,12" fill="#888" />
+              <line x1="-30" y1="0" x2="0" y2="0" stroke="#888" strokeWidth="1.3" />
+              <polygon points="-30,0 -22,-4 -22,4" fill="#888" />
+              <line x1="0" y1="0" x2="30" y2="0" stroke="#888" strokeWidth="1.3" />
+              <polygon points="30,0 22,-4 22,4" fill="#888" />
+              <text x="4" y="-32" fill="#888" fontSize="11">X+</text>
+              <text x="4" y="32" fill="#888" fontSize="11">X-</text>
+              <text x="-42" y="4" fill="#888" fontSize="11">-Z</text>
+              <text x="34" y="4" fill="#888" fontSize="11">Z+</text>
+            </g>
+          </svg>
+        )}
+
+        {/* overlay fields */}
+        <input
+          type="number" placeholder="X" value={x} disabled={isLocked('x')}
+          onChange={e => setX(e.target.value)}
+          style={{
+            position: 'absolute', width: 52, transform: 'translate(-50%,-50%)',
+            left: '60%', top: isOd ? '22.6%' : '71.4%',
+            background: '#1c1b19', border: `1px solid ${isLocked('x') ? '#555' : '#F0801E'}`,
+            borderRadius: 4, color: '#fff', fontSize: 12, textAlign: 'center', padding: '4px 2px',
+            opacity: isLocked('x') ? 0.35 : 1,
+          }}
+        />
+        <input
+          type="number" placeholder="∠1" value={angle1} disabled={isLocked('angle1')}
+          onChange={e => setAngle1(e.target.value)}
+          style={{
+            position: 'absolute', width: 52, transform: 'translate(-50%,-50%)',
+            left: '54.2%', top: isOd ? '40%' : '57.1%',
+            background: '#1c1b19', border: `1px solid ${isLocked('angle1') ? '#555' : '#F0801E'}`,
+            borderRadius: 4, color: '#fff', fontSize: 12, textAlign: 'center', padding: '4px 2px',
+            opacity: isLocked('angle1') ? 0.35 : 1,
+          }}
+        />
+        <input
+          type="number" placeholder="∠2" value={angle2} disabled={isLocked('angle2')}
+          onChange={e => setAngle2(e.target.value)}
+          style={{
+            position: 'absolute', width: 52, transform: 'translate(-50%,-50%)',
+            left: '65.3%', top: isOd ? '56.7%' : '39.3%',
+            background: '#1c1b19', border: `1px solid ${isLocked('angle2') ? '#555' : '#F0801E'}`,
+            borderRadius: 4, color: '#fff', fontSize: 12, textAlign: 'center', padding: '4px 2px',
+            opacity: isLocked('angle2') ? 0.35 : 1,
+          }}
+        />
+        <input
+          type="number" placeholder="Y" value={y} disabled={isLocked('y')}
+          onChange={e => setY(e.target.value)}
+          style={{
+            position: 'absolute', width: 52, transform: 'translate(-50%,-50%)',
+            left: '77.5%', top: '47.6%',
+            background: '#1c1b19', border: `1px solid ${isLocked('y') ? '#555' : '#F0801E'}`,
+            borderRadius: 4, color: '#fff', fontSize: 12, textAlign: 'center', padding: '4px 2px',
+            opacity: isLocked('y') ? 0.35 : 1,
+          }}
+        />
+      </div>
+
+      <p style={{ fontSize: 12, marginBottom: 4, color: filledKeys.length === 2 ? '#2fbf71' : '#ff6b6b' }}>
+        {filledKeys.length === 2 ? `✓ Ready — using: ${filledKeys.join(', ')}` : `Fill ${2 - filledKeys.length} more value(s) (X / ∠1 / ∠2 / Y)`}
+      </p>
+      <p style={{ color: '#888', fontSize: 11, marginBottom: 20 }}>
+        X = length along {isOd ? 'OD' : 'ID'} (Z-direction) · Y = length along Face (X-direction) · ∠1 = angle at {isOd ? 'OD' : 'ID'} corner · ∠2 = angle at Face corner
+      </p>
+
+      <h4 style={{ color: '#fff', margin: '0 0 14px', fontSize: 15 }}>Machining Parameters</h4>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
         <div>
           <label style={label}>Program No</label>
           <input style={input} type="number" value={progNum} onChange={e => setProgNum(e.target.value)} />
+        </div>
+        <div>
+          <label style={label}>Nose Radius (R)</label>
+          <input style={input} type="number" value={noseRadius} onChange={e => setNoseRadius(e.target.value)} />
         </div>
         <div>
           <label style={label}>Spindle Mode</label>
