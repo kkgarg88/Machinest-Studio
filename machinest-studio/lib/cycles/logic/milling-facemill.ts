@@ -157,7 +157,9 @@ function faceMillRect(v: Record<string, unknown>): CycleResult {
   const svg = buildFaceMillRectSvg({
     stockX, stockY, originCorner, pattern,
     depth: c.depth, rlevel: c.rlevel, safeZ: c.safeZ, depthPerPass: c.depthPerPass,
-    numRoughPasses: c.numRoughPasses, numRows: rowsY.length, stepoverDist,
+    numRoughPasses: c.numRoughPasses, numRows: rowsY.length, stepoverDist, overtravelMM,
+    finishCut: c.finishCut, finishMargin: c.finishMargin,
+    roughDepthTarget: c.finishCut ? Math.abs(c.depth) - c.finishMargin : Math.abs(c.depth),
   })
 
   return { ok: true, gcode: out.join('\n'), svg, programName }
@@ -284,11 +286,13 @@ function faceMillRound(v: Record<string, unknown>): CycleResult {
 
   out.push(`G00 Z${c.safeZ.toFixed(3)} M09;`, 'M05;', 'G91 G28 Z0;', 'G90;', 'M30;', '%')
 
-  const svg = buildFaceMillRoundSvg({
+   const svg = buildFaceMillRoundSvg({
     diameter, toolpathStyle,
     depth: c.depth, rlevel: c.rlevel, safeZ: c.safeZ, depthPerPass: c.depthPerPass,
-    numRoughPasses: c.numRoughPasses, stepoverDist,
+    numRoughPasses: c.numRoughPasses, stepoverDist, overtravelMM,
     numRings: toolpathStyle === 'SPIRAL' ? radii.length : rowsY.length,
+    finishCut: c.finishCut, finishMargin: c.finishMargin,
+    roughDepthTarget: c.finishCut ? Math.abs(c.depth) - c.finishMargin : Math.abs(c.depth),
   })
 
   return { ok: true, gcode: out.join('\n'), svg, programName }
