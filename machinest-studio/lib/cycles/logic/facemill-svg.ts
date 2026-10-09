@@ -2,6 +2,7 @@ import 'server-only'
 
 const INK = '#e8e6e3', MUTED = '#9a9691'
 const BLUE = '#4dabf7', ORANGE = '#F0801E', GREEN = '#51cf66'
+const TOOLPATH = '#ffd43b'
 
 const px = (n: number) => n.toFixed(1)
 
@@ -67,7 +68,6 @@ export function buildFaceMillRectSvg(s: {
 
   o.push(`<rect x="${px(rx)}" y="${px(ry)}" width="${px(rw)}" height="${px(rh)}" fill="none" stroke="${BLUE}" stroke-width="3"/>`)
 
-  // Front = bottom of screen, Back = top of screen
   const cornerX = s.originCorner.includes('R') ? rx + rw : rx
   const cornerY = s.originCorner.includes('F') ? ry + rh : ry
   o.push(`<circle cx="${px(cornerX)}" cy="${px(cornerY)}" r="7" fill="${ORANGE}" stroke="#111" stroke-width="1.5"/>`)
@@ -78,22 +78,19 @@ export function buildFaceMillRectSvg(s: {
     'ORIGIN (0,0)', ORANGE, { size: 13, anchor: labelRight ? 'start' : 'end' }
   ))
 
-  // Overtravel: short dashed extension + arrow, placed clear of everything else, above the rectangle
   const otY = ry - 36
   const otX1 = rx, otX2 = rx - s.overtravelMM * k
   o.push(dim(otX1, otY, otX2, otY, ORANGE))
   o.push(txt((otX1 + otX2) / 2, otY - 10, `OVERTRAVEL: ${s.overtravelMM.toFixed(2)} mm`, ORANGE, { size: 12, anchor: 'middle' }))
 
-  // Toolpath rows — draw at most 5, evenly spaced, with direction arrows
   const rowsToShow = Math.min(s.numRows, 5)
   for (let i = 0; i < rowsToShow; i++) {
     const y = ry + (rh * i) / Math.max(rowsToShow - 1, 1)
     const ltr = s.pattern === 'UNI' || i % 2 === 0
-    o.push(line(rx + 6, y, rx + rw - 6, y, BLUE, '', 1.6))
-    o.push(head(ltr ? rx + rw - 6 : rx + 6, y, ltr ? 0 : Math.PI, BLUE))
+    o.push(line(rx + 6, y, rx + rw - 6, y, TOOLPATH, '', 1.8))
+    o.push(head(ltr ? rx + rw - 6 : rx + 6, y, ltr ? 0 : Math.PI, TOOLPATH))
   }
 
-  // Stepover dimension, placed well clear to the right of the rectangle
   if (rowsToShow > 1) {
     const soX = rx + rw + 36
     const soY1 = ry, soY2 = ry + rh / Math.max(rowsToShow - 1, 1)
@@ -102,14 +99,12 @@ export function buildFaceMillRectSvg(s: {
     o.push(txt(soX + 10, (soY1 + soY2) / 2 + 20, `${s.stepoverDist.toFixed(2)} mm`, GREEN, { size: 12, bold: false }))
   }
 
-  // Length (X) dimension, clearly below the rectangle
   const dimYBottom = ry + rh + 36
   o.push(line(rx, ry + rh, rx, dimYBottom, '#555', '2 2', 1))
   o.push(line(rx + rw, ry + rh, rx + rw, dimYBottom, '#555', '2 2', 1))
   o.push(dim(rx, dimYBottom, rx + rw, dimYBottom, BLUE))
   o.push(txt(rx + rw / 2, dimYBottom + 20, `LENGTH (X): ${s.stockX.toFixed(2)} mm`, BLUE, { size: 14, anchor: 'middle' }))
 
-  // Width (Y) dimension, clearly left of the rectangle
   const dimXLeft = rx - 90
   o.push(line(rx, ry, dimXLeft, ry, '#555', '2 2', 1))
   o.push(line(rx, ry + rh, dimXLeft, ry + rh, '#555', '2 2', 1))
@@ -118,7 +113,7 @@ export function buildFaceMillRectSvg(s: {
   o.push(txt(dimXLeft - 10, ry + rh / 2 + 16, `${s.stockY.toFixed(2)} mm`, BLUE, { size: 13, bold: false, anchor: 'end' }))
 
   o.push(txt(30, 350, `Passes (rows): ${s.numRows}`, MUTED, { size: 13, bold: false }))
-  o.push(legendDot(30, 378, BLUE, 'Toolpath'))
+  o.push(legendDot(30, 378, TOOLPATH, 'Toolpath'))
   o.push(legendDot(150, 378, ORANGE, 'Overtravel / Origin'))
   o.push(legendDot(300, 378, GREEN, 'Stepover'))
 
@@ -155,7 +150,7 @@ export function buildFaceMillRoundSvg(s: {
     const rings = Math.min(s.numRings, 5)
     for (let i = 1; i <= rings; i++) {
       const r = (effRpx * i) / rings
-      o.push(`<circle cx="${px(cx)}" cy="${px(cy)}" r="${px(r)}" fill="none" stroke="${BLUE}" stroke-width="1.6"/>`)
+      o.push(`<circle cx="${px(cx)}" cy="${px(cy)}" r="${px(r)}" fill="none" stroke="${TOOLPATH}" stroke-width="1.8"/>`)
     }
     const r1 = s.stepoverDist * fitScale
     const r2 = Math.min(2 * s.stepoverDist, effRadiusMM) * fitScale
@@ -167,8 +162,8 @@ export function buildFaceMillRoundSvg(s: {
       const yOff = -effRpx + (2 * effRpx * i) / Math.max(rows - 1, 1)
       const half = Math.sqrt(Math.max(effRpx * effRpx - yOff * yOff, 0))
       const ltr = i % 2 === 0
-      o.push(line(cx - half + 4, cy + yOff, cx + half - 4, cy + yOff, BLUE, '', 1.6))
-      o.push(head(ltr ? cx + half - 4 : cx - half + 4, cy + yOff, ltr ? 0 : Math.PI, BLUE))
+      o.push(line(cx - half + 4, cy + yOff, cx + half - 4, cy + yOff, TOOLPATH, '', 1.8))
+      o.push(head(ltr ? cx + half - 4 : cx - half + 4, cy + yOff, ltr ? 0 : Math.PI, TOOLPATH))
     }
     if (rows > 1) {
       const soX = cx + effRpx + 36
@@ -184,7 +179,7 @@ export function buildFaceMillRoundSvg(s: {
   o.push(txt(cx, dimY + 20, `DIA \u2300 : ${s.diameter.toFixed(2)} mm`, BLUE, { size: 14, anchor: 'middle' }))
 
   o.push(txt(30, 350, `Style: ${s.toolpathStyle === 'SPIRAL' ? 'Spiral' : 'Linear Raster'}`, MUTED, { size: 13, bold: false }))
-  o.push(legendDot(30, 378, BLUE, 'Toolpath'))
+  o.push(legendDot(30, 378, TOOLPATH, 'Toolpath'))
   o.push(legendDot(150, 378, ORANGE, 'Overtravel / Origin'))
   o.push(legendDot(300, 378, GREEN, 'Stepover'))
 
