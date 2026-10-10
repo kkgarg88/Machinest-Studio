@@ -8,6 +8,7 @@ import { turningChamfer } from './turning-chamfer'
 import { turningRadius } from './turning-radius'
 import { millingEngrave } from './milling-engrave'
 import { millingFaceMill } from './milling-facemill'
+import { millingHelical } from './milling-helical'
 
 type Logic = (v: Record<string, unknown>) => CycleResult
 type Intro = () => string
@@ -19,6 +20,7 @@ const registry: Record<string, Logic> = {
   'turning-studio:CHAMFER': turningChamfer,
   'turning-studio:RADIUS': turningRadius,
   'milling-studio:ENGRAVE': millingEngrave,
+  'milling-studio:CIRC-INTERP': millingHelical,
   'milling-studio:FACE-MILL': millingFaceMill,
 }
 

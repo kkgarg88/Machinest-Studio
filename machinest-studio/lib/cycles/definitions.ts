@@ -65,7 +65,27 @@ export const definitions: Record<string, Field[]> = {
     { key: 'feed', label: 'Feed', type: 'number', step: '0.1' },
     { key: 'rpm', label: 'RPM', type: 'number', step: '1' },
   ],
-
+  'milling-studio:CIRC-INTERP': [
+    {
+      key: 'mode', label: 'Operation', type: 'select', default: '1',
+      options: [
+        { value: '1', label: 'ID Pocket (inside a hole)' },
+        { value: '2', label: 'OD Milling (around a boss)' },
+      ],
+    },
+    { key: 'progNum', label: 'Program No', type: 'number', step: '1' },
+    { key: 'dia', label: 'OD / ID Diameter', type: 'number', step: '0.001' },
+    { key: 'toolDia', label: 'Tool Diameter', type: 'number', step: '0.001' },
+    { key: 'toolNo', label: 'Tool Number', type: 'number', step: '1' },
+    { key: 'dNo', label: 'D Number (cutter comp offset)', type: 'number', step: '1' },
+    { key: 'rpm', label: 'RPM', type: 'number', step: '1' },
+    { key: 'feedXY', label: 'Feed XY', type: 'number', step: '0.1' },
+    { key: 'feedZ', label: 'Feed Z (plunge)', type: 'number', step: '0.1' },
+    { key: 'startZ', label: 'Start Z', type: 'number', step: '0.001' },
+    { key: 'endZ', label: 'End Z (final depth)', type: 'number', step: '0.001' },
+    { key: 'stepZ', label: 'Step Z (negative)', type: 'number', step: '0.001' },
+    { key: 'safeZ', label: 'Safe Z', type: 'number', step: '0.1', default: '30' },
+  ],
   'milling-studio:ELLIPSE': [
     {
       key: 'type', label: 'Type', type: 'select', default: 'ID',
