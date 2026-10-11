@@ -9,6 +9,7 @@ import { turningRadius } from './turning-radius'
 import { millingEngrave } from './milling-engrave'
 import { millingFaceMill } from './milling-facemill'
 import { millingHelical } from './milling-helical'
+import { millingTap } from './milling-tap'
 
 type Logic = (v: Record<string, unknown>) => CycleResult
 type Intro = () => string
@@ -22,6 +23,7 @@ const registry: Record<string, Logic> = {
   'milling-studio:ENGRAVE': millingEngrave,
   'milling-studio:CIRC-INTERP': millingHelical,
   'milling-studio:FACE-MILL': millingFaceMill,
+  'milling-studio:TAP': millingTap,
 }
 
 // page khulte hi dikhne wala example / animation (optional, har cycle ke liye)

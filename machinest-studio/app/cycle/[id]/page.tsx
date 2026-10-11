@@ -6,6 +6,7 @@ import { definitions, Field } from '@/lib/cycles/definitions'
 import ChamferTool from '@/components/cycles/ChamferTool'
 import RadiusTool from '@/components/cycles/RadiusTool'
 import FaceMillTool from '@/components/cycles/FaceMillTool'
+import TappingTool from '@/components/cycles/TappingTool'
 
 const card = { background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 12, padding: 24 } as const
 const inputStyle = { width: '100%', background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 6, color: '#fff', padding: '10px 12px', fontSize: 15 } as const
@@ -63,7 +64,21 @@ export default function CyclePage() {
     }
     load()
   }, [id])
-
+async function handleTapGenerate(tapValues: Record<string, string>) {
+  setBusy(true)
+  setError('')
+  const res = await fetch('/api/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ cycleId: id, values: tapValues }),
+  })
+  const data = await res.json().catch(() => ({}))
+  setBusy(false)
+  if (!res.ok) { setError(data.error || 'Something went wrong'); return }
+  setGcode(data.gcode)
+  setSvg(data.svg)
+  setProgramName(data.programName)
+}
   async function generate() {
     setBusy(true)
     setError('')
@@ -249,6 +264,42 @@ async function handleFaceMillGenerate(faceMillValues: Record<string, string>) {
   <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'flex-start' }}>
     <div style={{ flex: '1 1 460px' }}>
       <FaceMillTool onGenerate={handleFaceMillGenerate} busy={busy} error={error} />
+    </div>
+    <div style={{ flex: '1 1 380px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={card}>
+        {svg
+          ? <div dangerouslySetInnerHTML={{ __html: svg }} />
+          : <p style={{ color: '#777', fontSize: 14, margin: 0 }}>Diagram will appear here after you generate.</p>}
+      </div>
+      <div style={{ background: '#0e0d0c', border: '1px solid #3a3733', borderRadius: 12, padding: 20 }}>
+        <pre style={{ margin: 0, minHeight: 200, color: '#F0801E', fontFamily: 'Consolas, monospace', fontSize: 13.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+          {gcode || '// Fill the values and click Generate'}
+        </pre>
+        {gcode && (
+          <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+            <button
+              onClick={copy}
+              style={{
+                flex: 1, padding: 11, borderRadius: 6, fontWeight: 600, cursor: 'pointer',
+                border: `1px solid ${copied === 'ok' ? '#2fbf71' : '#3a3733'}`,
+                background: copied === 'ok' ? 'rgba(47,191,113,0.15)' : 'transparent',
+                color: copied === 'ok' ? '#2fbf71' : copied === 'fail' ? '#ff6b6b' : '#ddd',
+              }}
+            >
+              {copied === 'ok' ? '✓ Copied' : copied === 'fail' ? 'Copy failed' : 'Copy'}
+            </button>
+            <button onClick={download} style={{ flex: 1, padding: 11, borderRadius: 6, border: 'none', background: '#F0801E', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
+              Download .nc
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+  ) : cycle.code === 'TAP' ? (
+  <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+    <div style={{ flex: '1 1 460px' }}>
+      <TappingTool onGenerate={handleTapGenerate} busy={busy} error={error} />
     </div>
     <div style={{ flex: '1 1 380px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div style={card}>
