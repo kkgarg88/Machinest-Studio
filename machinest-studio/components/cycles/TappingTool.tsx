@@ -4,12 +4,56 @@ import { useState } from 'react'
 const label = { fontSize: 13, color: '#ccc', marginBottom: 6, fontWeight: 600, display: 'block' }
 const input = { width: '100%', background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 6, color: '#fff', padding: '10px 12px', fontSize: 14 }
 
-const STANDARD_THREADS: { label: string; pitch: number }[] = [
+type ThreadEntry = { label: string; pitch: number }
+
+const METRIC_COARSE: ThreadEntry[] = [
   { label: 'M3', pitch: 0.5 }, { label: 'M4', pitch: 0.7 }, { label: 'M5', pitch: 0.8 },
   { label: 'M6', pitch: 1.0 }, { label: 'M8', pitch: 1.25 }, { label: 'M10', pitch: 1.5 },
   { label: 'M12', pitch: 1.75 }, { label: 'M14', pitch: 2.0 }, { label: 'M16', pitch: 2.0 },
   { label: 'M18', pitch: 2.5 }, { label: 'M20', pitch: 2.5 }, { label: 'M24', pitch: 3.0 },
 ]
+const METRIC_FINE: ThreadEntry[] = [
+  { label: 'M8x1.0', pitch: 1.0 }, { label: 'M10x1.25', pitch: 1.25 }, { label: 'M10x1.0', pitch: 1.0 },
+  { label: 'M12x1.5', pitch: 1.5 }, { label: 'M12x1.25', pitch: 1.25 }, { label: 'M14x1.5', pitch: 1.5 },
+  { label: 'M16x1.5', pitch: 1.5 }, { label: 'M18x1.5', pitch: 1.5 }, { label: 'M20x1.5', pitch: 1.5 },
+  { label: 'M24x2.0', pitch: 2.0 },
+]
+const tpi = (t: number) => 25.4 / t
+const UNC: ThreadEntry[] = [
+  { label: '#4-40', pitch: tpi(40) }, { label: '#6-32', pitch: tpi(32) }, { label: '#8-32', pitch: tpi(32) },
+  { label: '#10-24', pitch: tpi(24) }, { label: '1/4-20', pitch: tpi(20) }, { label: '5/16-18', pitch: tpi(18) },
+  { label: '3/8-16', pitch: tpi(16) }, { label: '7/16-14', pitch: tpi(14) }, { label: '1/2-13', pitch: tpi(13) },
+  { label: '9/16-12', pitch: tpi(12) }, { label: '5/8-11', pitch: tpi(11) }, { label: '3/4-10', pitch: tpi(10) },
+  { label: '7/8-9', pitch: tpi(9) }, { label: '1-8', pitch: tpi(8) },
+]
+const UNF: ThreadEntry[] = [
+  { label: '#4-48', pitch: tpi(48) }, { label: '#6-40', pitch: tpi(40) }, { label: '#8-36', pitch: tpi(36) },
+  { label: '#10-32', pitch: tpi(32) }, { label: '1/4-28', pitch: tpi(28) }, { label: '5/16-24', pitch: tpi(24) },
+  { label: '3/8-24', pitch: tpi(24) }, { label: '7/16-20', pitch: tpi(20) }, { label: '1/2-20', pitch: tpi(20) },
+  { label: '9/16-18', pitch: tpi(18) }, { label: '5/8-18', pitch: tpi(18) }, { label: '3/4-16', pitch: tpi(16) },
+  { label: '7/8-14', pitch: tpi(14) }, { label: '1-12', pitch: tpi(12) },
+]
+const BSW: ThreadEntry[] = [
+  { label: '1/8 BSW', pitch: tpi(40) }, { label: '3/16 BSW', pitch: tpi(24) }, { label: '1/4 BSW', pitch: tpi(20) },
+  { label: '5/16 BSW', pitch: tpi(18) }, { label: '3/8 BSW', pitch: tpi(16) }, { label: '7/16 BSW', pitch: tpi(14) },
+  { label: '1/2 BSW', pitch: tpi(12) }, { label: '5/8 BSW', pitch: tpi(11) }, { label: '3/4 BSW', pitch: tpi(10) },
+  { label: '7/8 BSW', pitch: tpi(9) }, { label: '1 BSW', pitch: tpi(8) },
+]
+const BSP: ThreadEntry[] = [
+  { label: '1/8 BSP', pitch: tpi(28) }, { label: '1/4 BSP', pitch: tpi(19) }, { label: '3/8 BSP', pitch: tpi(19) },
+  { label: '1/2 BSP', pitch: tpi(14) }, { label: '5/8 BSP', pitch: tpi(14) }, { label: '3/4 BSP', pitch: tpi(14) },
+  { label: '1 BSP', pitch: tpi(11) }, { label: '1-1/4 BSP', pitch: tpi(11) }, { label: '1-1/2 BSP', pitch: tpi(11) },
+  { label: '2 BSP', pitch: tpi(11) },
+]
+
+const THREAD_SYSTEMS: Record<string, ThreadEntry[]> = {
+  'Metric Coarse (ISO)': METRIC_COARSE,
+  'Metric Fine (ISO)': METRIC_FINE,
+  'UNC': UNC,
+  'UNF': UNF,
+  'BSW (Whitworth)': BSW,
+  'BSP (Pipe)': BSP,
+}
 
 export default function TappingTool({ onGenerate, busy, error }: {
   onGenerate: (values: Record<string, string>) => void
@@ -30,6 +74,8 @@ export default function TappingTool({ onGenerate, busy, error }: {
   const [workOffset, setWorkOffset] = useState('G54')
   const [retractMode, setRetractMode] = useState('G99')
   const [rpm, setRpm] = useState('')
+  const [calcMode, setCalcMode] = useState<'standard' | 'manual'>('standard')
+  const [threadSystem, setThreadSystem] = useState('Metric Coarse (ISO)')
 
   const feedPreview = rpm && pitch ? (Number(rpm) * Number(pitch)).toFixed(1) : null
 
@@ -52,20 +98,66 @@ export default function TappingTool({ onGenerate, busy, error }: {
       <p style={{ color: '#999', fontSize: 12, marginBottom: 18 }}>Feed is auto-calculated as RPM &times; Pitch to keep the tap synchronized.</p>
 
       <div style={{ background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 8, padding: 16, marginBottom: 20 }}>
-        <label style={label}>Pitch Calculator — pick a standard thread size</label>
-        <select
-          style={input}
-          defaultValue=""
-          onChange={e => {
-            const found = STANDARD_THREADS.find(t => t.label === e.target.value)
-            if (found) setPitch(String(found.pitch))
-          }}
-        >
-          <option value="" disabled>Select thread size...</option>
-          {STANDARD_THREADS.map(t => (
-            <option key={t.label} value={t.label}>{t.label} &mdash; pitch {t.pitch} mm</option>
+        <label style={label}>Pitch Calculator</label>
+
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+          {(['standard', 'manual'] as const).map(m => (
+            <button
+              key={m}
+              onClick={() => setCalcMode(m)}
+              style={{
+                flex: 1, padding: 8, borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700,
+                background: calcMode === m ? '#F0801E' : '#2b2a28', color: '#fff',
+              }}
+            >
+              {m === 'standard' ? 'By Standard' : 'Manual (TPI / Pitch)'}
+            </button>
           ))}
-        </select>
+        </div>
+
+        {calcMode === 'standard' ? (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <select
+              style={input}
+              value={threadSystem}
+              onChange={e => setThreadSystem(e.target.value)}
+            >
+              {Object.keys(THREAD_SYSTEMS).map(sys => <option key={sys} value={sys}>{sys}</option>)}
+            </select>
+            <select
+              style={input}
+              defaultValue=""
+              onChange={e => {
+                const found = THREAD_SYSTEMS[threadSystem].find(t => t.label === e.target.value)
+                if (found) setPitch(found.pitch.toFixed(4))
+              }}
+            >
+              <option value="" disabled>Select size...</option>
+              {THREAD_SYSTEMS[threadSystem].map(t => (
+                <option key={t.label} value={t.label}>{t.label} ({t.pitch.toFixed(3)} mm)</option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              <label style={{ ...label, fontSize: 11, marginBottom: 4 }}>Enter TPI (threads per inch)</label>
+              <input
+                style={input} type="number"
+                onChange={e => { const t = Number(e.target.value); if (t > 0) setPitch((25.4 / t).toFixed(4)) }}
+                placeholder="e.g. 20"
+              />
+            </div>
+            <div>
+              <label style={{ ...label, fontSize: 11, marginBottom: 4 }}>Or enter Pitch directly (mm)</label>
+              <input style={input} type="number" value={pitch} onChange={e => setPitch(e.target.value)} placeholder="e.g. 1.25" />
+            </div>
+          </div>
+        )}
+
+        <p style={{ color: '#888', fontSize: 11, marginTop: 10, marginBottom: 0 }}>
+          Not every size is listed — use Manual mode for anything not covered here. Verify against your print for critical threads.
+        </p>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
