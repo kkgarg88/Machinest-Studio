@@ -17,6 +17,18 @@ type Tool = {
   slug: string
 }
 
+const ICON_MAP: Record<string, string> = {
+  'FACE-MILL': '⬜',
+  'CIRC-INTERP': '⭕',
+  'TAP': '🔩',
+  'ENGRAVE': '✏️',
+  'ELLIPSE': '⬭',
+  'G81': '🕳️',
+  'G83/G73': '🕳️',
+  'CHAMFER': '⬡',
+  'RADIUS': '◠',
+}
+
 export default function StudioPage() {
   const [tool, setTool] = useState<Tool | null>(null)
   const [cycles, setCycles] = useState<Cycle[]>([])
@@ -36,15 +48,15 @@ export default function StudioPage() {
       const { data: toolData } = await supabase.from('tools').select('*').eq('slug', slug).single()
       if (!toolData) { router.push('/dashboard'); return }
 
-     const nowIso = new Date().toISOString()
-const { data: sub } = await supabase
-  .from('subscriptions')
-  .select('id')
-  .eq('user_id', user.id)
-  .eq('tool_id', toolData.id)
-  .eq('status', 'active')
-  .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
-  .maybeSingle()
+      const nowIso = new Date().toISOString()
+      const { data: sub } = await supabase
+        .from('subscriptions')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('tool_id', toolData.id)
+        .eq('status', 'active')
+        .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
+        .maybeSingle()
 
       if (!sub) {
         setNotAllowed(true)
@@ -87,43 +99,52 @@ const { data: sub } = await supabase
         </button>
       </header>
 
-      <div style={{ padding: '48px 40px', maxWidth: 800, margin: '0 auto' }}>
+      <div style={{ padding: '48px 40px', maxWidth: 1100, margin: '0 auto' }}>
         <h2 style={{ color: '#fff', fontSize: 26, margin: '0 0 6px', fontWeight: 800 }}>{tool?.name}</h2>
-        <p style={{ color: '#999', fontSize: 14, marginBottom: 28 }}>Select a cycle to generate your program</p>
+        <p style={{ color: '#999', fontSize: 14, marginBottom: 32 }}>Select a cycle to generate your program</p>
 
-        <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 12, padding: 20 }}>
-          {cycles.length === 0 ? (
-            <p style={{ color: '#777', fontSize: 14 }}>No cycles added yet.</p>
-          ) : (
-            cycles.map(cycle => (
+        {cycles.length === 0 ? (
+          <p style={{ color: '#777', fontSize: 14 }}>No cycles added yet.</p>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 20 }}>
+            {cycles.map(cycle => (
               <div
                 key={cycle.id}
-                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 18px', border: '1px solid #3a3733', borderRadius: 8, marginBottom: 10 }}
+                style={{
+                  background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 12,
+                  padding: 22, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
+                }}
               >
-                <div>
-                  <span style={{ color: '#F0801E', fontFamily: 'Consolas, monospace', fontWeight: 800, marginRight: 14 }}>{cycle.code}</span>
-                  <span style={{ color: '#fff', fontSize: 14 }}>{cycle.name}</span>
+                <div style={{
+                  width: 56, height: 56, borderRadius: 12, background: 'rgba(240,128,30,0.12)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, marginBottom: 14,
+                }}>
+                  {ICON_MAP[cycle.code] || '⚙️'}
                 </div>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  {cycle.tutorial_video_url && (
-                    <button
-                      onClick={() => setTutorialFor(cycle)}
-                      style={{ padding: '8px 14px', fontSize: 12, borderRadius: 6, cursor: 'pointer', background: 'transparent', border: '1px solid #3a3733', color: '#ddd' }}
-                    >
-                      ▶ Tutorial
-                    </button>
-                  )}
-                  <button
-                    onClick={() => router.push(`/cycle/${cycle.id}`)}
-                    style={{ padding: '8px 14px', fontSize: 12, borderRadius: 6, cursor: 'pointer', background: '#F0801E', border: 'none', color: '#fff', fontWeight: 700 }}
-                  >
-                    Use Cycle
-                  </button>
-                </div>
+
+                <span style={{ color: '#F0801E', fontFamily: 'Consolas, monospace', fontWeight: 800, fontSize: 13, marginBottom: 4 }}>
+                  {cycle.code}
+                </span>
+                <span style={{ color: '#fff', fontSize: 14, fontWeight: 600, marginBottom: 18 }}>
+                  {cycle.name}
+                </span>
+
+                <button
+                  onClick={() => router.push(`/cycle/${cycle.id}`)}
+                  style={{ width: '100%', padding: '10px 14px', fontSize: 13, borderRadius: 6, cursor: 'pointer', background: '#F0801E', border: 'none', color: '#fff', fontWeight: 700, marginBottom: 8 }}
+                >
+                  Use Cycle
+                </button>
+                <button
+                  onClick={() => setTutorialFor(cycle)}
+                  style={{ width: '100%', padding: '9px 14px', fontSize: 12, borderRadius: 6, cursor: 'pointer', background: 'transparent', border: '1px solid #3a3733', color: '#ddd' }}
+                >
+                  ▶ Tutorial
+                </button>
               </div>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {tutorialFor && (
