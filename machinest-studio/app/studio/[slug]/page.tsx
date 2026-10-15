@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
 import TutorialModal from '@/components/TutorialModal'
+import CycleIcon from '@/components/CycleIcon'
 
 type Cycle = {
   id: string
@@ -15,18 +16,6 @@ type Tool = {
   id: string
   name: string
   slug: string
-}
-
-const ICON_MAP: Record<string, string> = {
-  'FACE-MILL': '⬜',
-  'CIRC-INTERP': '⭕',
-  'TAP': '🔩',
-  'ENGRAVE': '✏️',
-  'ELLIPSE': '⬭',
-  'G81': '🕳️',
-  'G83/G73': '🕳️',
-  'CHAMFER': '⬡',
-  'RADIUS': '◠',
 }
 
 export default function StudioPage() {
@@ -107,7 +96,7 @@ export default function StudioPage() {
           <p style={{ color: '#777', fontSize: 14 }}>No cycles added yet.</p>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 20 }}>
-            {cycles.map(cycle => (
+                {cycles.map(cycle => (
               <div
                 key={cycle.id}
                 style={{
@@ -117,17 +106,19 @@ export default function StudioPage() {
               >
                 <div style={{
                   width: 56, height: 56, borderRadius: 12, background: 'rgba(240,128,30,0.12)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, marginBottom: 14,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14, flexShrink: 0,
                 }}>
-                  {ICON_MAP[cycle.code] || '⚙️'}
+                  <CycleIcon code={cycle.code} />
                 </div>
 
-                <span style={{ color: '#F0801E', fontFamily: 'Consolas, monospace', fontWeight: 800, fontSize: 13, marginBottom: 4 }}>
-                  {cycle.code}
-                </span>
-                <span style={{ color: '#fff', fontSize: 14, fontWeight: 600, marginBottom: 18 }}>
-                  {cycle.name}
-                </span>
+                <div style={{ minHeight: 58, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', marginBottom: 18 }}>
+                  <span style={{ color: '#F0801E', fontFamily: 'Consolas, monospace', fontWeight: 800, fontSize: 13, marginBottom: 4 }}>
+                    {cycle.code}
+                  </span>
+                  <span style={{ color: '#fff', fontSize: 14, fontWeight: 600, lineHeight: 1.3 }}>
+                    {cycle.name}
+                  </span>
+                </div>
 
                 <button
                   onClick={() => router.push(`/cycle/${cycle.id}`)}
