@@ -2,7 +2,9 @@
 
 const ORANGE = '#F0801E'
 
-function Svg({ children }: { children: React.ReactNode }) {
+import type { ReactNode } from 'react'
+// ...
+function Svg({ children }: { children: ReactNode }) {
   return (
     <svg viewBox="0 0 40 40" width="34" height="34">
       {children}
@@ -10,7 +12,9 @@ function Svg({ children }: { children: React.ReactNode }) {
   )
 }
 
-const icons: Record<string, () => JSX.Element> = {
+import type { ReactElement } from 'react'
+
+const icons: Record<string, () => ReactElement> = {
   // ---------- Drilling-family (plunge) ----------
   'G81': () => (
     <Svg>
