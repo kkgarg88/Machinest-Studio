@@ -6,7 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 const VALID_TYPES = ['video', 'pdf', 'excel', 'calculator', 'link']
 
 async function requireAdmin() {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false as const, status: 401, error: 'Not signed in' }
 
@@ -16,9 +16,11 @@ async function requireAdmin() {
   return { ok: true as const, user }
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin()
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status })
+
+  const { id } = await params
 
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
@@ -47,7 +49,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const { data, error } = await admin
     .from('resources')
     .update(updates)
-    .eq('id', params.id)
+    .eq('id', id)
     .select()
     .single()
 
@@ -55,12 +57,14 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   return NextResponse.json({ resource: data })
 }
 
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin()
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status })
 
+  const { id } = await params
+
   const admin = createAdminClient()
-  const { error } = await admin.from('resources').delete().eq('id', params.id)
+  const { error } = await admin.from('resources').delete().eq('id', id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ success: true })

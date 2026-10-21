@@ -6,7 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 const VALID_TYPES = ['video', 'pdf', 'excel', 'calculator', 'link']
 
 async function requireAdmin() {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { ok: false as const, status: 401, error: 'Not signed in' }
 
