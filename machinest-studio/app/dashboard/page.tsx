@@ -105,6 +105,7 @@ export default function Dashboard() {
                 {[
                   { label: 'My Profile', action: () => router.push('/profile') },
                   { label: 'My Membership', action: () => router.push('/membership') },
+                  { label: 'Free Resources', action: () => router.push('/resources') },
                   { label: 'Logout', action: handleLogout },
                 ].map(item => (
                   <div
@@ -124,6 +125,31 @@ export default function Dashboard() {
       <div style={{ padding: '48px 40px', maxWidth: 1100, margin: '0 auto' }}>
         <h2 style={{ color: '#fff', fontSize: 28, margin: '0 0 6px', fontWeight: 800 }}>Your Dashboard</h2>
         <p style={{ color: '#999', fontSize: 14, marginBottom: 36 }}>Manage your active tools or explore what's available</p>
+
+        {/* FREE RESOURCES BANNER */}
+        <div
+          onClick={() => router.push('/resources')}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            background: 'linear-gradient(135deg, #2f2d2a 0%, #262421 100%)',
+            border: '1px solid rgba(240,128,30,0.4)', borderRadius: 12,
+            padding: '18px 24px', marginBottom: 36, cursor: 'pointer',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 19, background: 'rgba(240,128,30,0.15)'
+            }}>
+              🎁
+            </div>
+            <div>
+              <div style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>Free Resources</div>
+              <div style={{ color: '#999', fontSize: 12.5 }}>Videos, Excel sheets, PDFs &amp; calculators — free for every member</div>
+            </div>
+          </div>
+          <span style={{ color: '#F0801E', fontSize: 13, fontWeight: 700 }}>Open →</span>
+        </div>
 
         {/* ACTIVE TOOLS */}
         <h3 style={{ color: '#fff', fontSize: 17, fontWeight: 700, marginBottom: 16 }}>Your Active Tools</h3>

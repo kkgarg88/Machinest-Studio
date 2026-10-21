@@ -157,11 +157,14 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
+        <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
           <button onClick={() => setTab('users')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: tab === 'users' ? '#F0801E' : '#2b2a28', color: '#fff' }}>Users</button>
           <button onClick={() => setTab('tools')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: tab === 'tools' ? '#F0801E' : '#2b2a28', color: '#fff' }}>Tools</button>
           <button onClick={() => setTab('payments')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: tab === 'payments' ? '#F0801E' : '#2b2a28', color: '#fff' }}>Payments</button>
           <button onClick={() => setTab('coupons')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: tab === 'coupons' ? '#F0801E' : '#2b2a28', color: '#fff' }}>Coupons</button>
+          <button onClick={() => router.push('/admin/resources')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: '#2b2a28', color: '#fff' }}>
+            Resources →
+          </button>
         </div>
 
         {tab === 'users' && (
