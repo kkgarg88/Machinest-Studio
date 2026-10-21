@@ -38,7 +38,7 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
 
-  const { title, description, resource_type, url, category, display_order, active } = body
+  const { title, description, resource_type, url, category, thumbnail_url, display_order, active } = body
 
   if (!title || !String(title).trim()) {
     return NextResponse.json({ error: 'Title is required' }, { status: 400 })
@@ -59,6 +59,7 @@ export async function POST(req: Request) {
       resource_type,
       url: String(url).trim(),
       category: category ? String(category).trim() : null,
+      thumbnail_url: thumbnail_url ? String(thumbnail_url).trim() : null,
       display_order: Number.isFinite(Number(display_order)) ? Number(display_order) : 0,
       active: active !== false,
     })

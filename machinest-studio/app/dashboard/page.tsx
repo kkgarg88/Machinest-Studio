@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import ResourceSlider, { ResourceItem } from '@/components/ResourceSlider'
 
 type Tool = {
   id: string
@@ -22,6 +23,7 @@ export default function Dashboard() {
   const [expiryMap, setExpiryMap] = useState<Record<string, string | null>>({})
   const [loading, setLoading] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [resources, setResources] = useState<ResourceItem[]>([])
   const supabase = createClient()
   const router = useRouter()
 
@@ -41,6 +43,13 @@ export default function Dashboard() {
         .eq('user_id', user.id)
         .eq('status', 'active')
         .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
+
+      const { data: resData } = await supabase
+        .from('resources')
+        .select('id, title, description, resource_type, url, thumbnail_url')
+        .eq('active', true)
+        .order('display_order', { ascending: true })
+      setResources((resData || []) as ResourceItem[])
 
       setTools(toolsData || [])
       setActiveIds((subsData || []).map(s => s.tool_id))
@@ -63,6 +72,9 @@ export default function Dashboard() {
 
   const activeTools = tools.filter(t => activeIds.includes(t.id))
   const availableTools = tools.filter(t => !activeIds.includes(t.id))
+  const docResources = resources.filter(r => r.resource_type === 'pdf' || r.resource_type === 'excel')
+  const videoResources = resources.filter(r => r.resource_type === 'video')
+  const webResources = resources.filter(r => r.resource_type === 'calculator' || r.resource_type === 'link')
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(180deg, #262421 0%, #302d29 100%)', fontFamily: 'Segoe UI, sans-serif' }}>
@@ -126,30 +138,16 @@ export default function Dashboard() {
         <h2 style={{ color: '#fff', fontSize: 28, margin: '0 0 6px', fontWeight: 800 }}>Your Dashboard</h2>
         <p style={{ color: '#999', fontSize: 14, marginBottom: 36 }}>Manage your active tools or explore what's available</p>
 
-        {/* FREE RESOURCES BANNER */}
-        <div
-          onClick={() => router.push('/resources')}
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            background: 'linear-gradient(135deg, #2f2d2a 0%, #262421 100%)',
-            border: '1px solid rgba(240,128,30,0.4)', borderRadius: 12,
-            padding: '18px 24px', marginBottom: 36, cursor: 'pointer',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{
-              width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 19, background: 'rgba(240,128,30,0.15)'
-            }}>
-              🎁
-            </div>
-            <div>
-              <div style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>Free Resources</div>
-              <div style={{ color: '#999', fontSize: 12.5 }}>Videos, Excel sheets, PDFs &amp; calculators — free for every member</div>
-            </div>
+        {/* FREE RESOURCES */}
+        {resources.length > 0 && (
+          <div style={{ marginBottom: 44 }}>
+            <h3 style={{ color: '#fff', fontSize: 20, fontWeight: 800, margin: '0 0 4px' }}>Free Resources</h3>
+            <p style={{ color: '#999', fontSize: 13, margin: '0 0 22px' }}>Free for every member</p>
+            <ResourceSlider title="PDF / Excel Tools" items={docResources} />
+            <ResourceSlider title="Videos" items={videoResources} />
+            <ResourceSlider title="Web Tools" items={webResources} />
           </div>
-          <span style={{ color: '#F0801E', fontSize: 13, fontWeight: 700 }}>Open →</span>
-        </div>
+        )}
 
         {/* ACTIVE TOOLS */}
         <h3 style={{ color: '#fff', fontSize: 17, fontWeight: 700, marginBottom: 16 }}>Your Active Tools</h3>

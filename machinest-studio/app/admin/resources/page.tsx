@@ -18,6 +18,7 @@ type Resource = {
   resource_type: ResourceType
   url: string
   category: string | null
+  thumbnail_url: string | null
   display_order: number
   active: boolean
   created_at: string
@@ -30,11 +31,11 @@ const TYPE_LABEL: Record<ResourceType, string> = {
   video: 'Video',
   pdf: 'PDF',
   excel: 'Excel Sheet',
-  calculator: 'Calculator',
+  calculator: 'Web Tool',
   link: 'Link',
 }
 
-const EMPTY_FORM = { title: '', description: '', resource_type: 'video' as ResourceType, url: '', category: '', display_order: '0' }
+const EMPTY_FORM = { title: '', description: '', resource_type: 'video' as ResourceType, url: '', category: '', thumbnail_url: '', display_order: '0' }
 
 export default function AdminResourcesPage() {
   const router = useRouter()
@@ -86,6 +87,7 @@ export default function AdminResourcesPage() {
       resource_type: form.resource_type,
       url: form.url.trim(),
       category: form.category.trim() || null,
+      thumbnail_url: form.thumbnail_url.trim() || null,
       display_order: Number(form.display_order) || 0,
     }
 
@@ -111,6 +113,7 @@ export default function AdminResourcesPage() {
       resource_type: r.resource_type,
       url: r.url,
       category: r.category || '',
+      thumbnail_url: r.thumbnail_url || '',
       display_order: String(r.display_order),
     })
   }
@@ -230,7 +233,7 @@ export default function AdminResourcesPage() {
                 <option value="video">Video</option>
                 <option value="pdf">PDF</option>
                 <option value="excel">Excel Sheet</option>
-                <option value="calculator">Calculator</option>
+                <option value="calculator">Web Tool / Calculator</option>
                 <option value="link">Link</option>
               </select>
             </div>
@@ -238,6 +241,10 @@ export default function AdminResourcesPage() {
           <div style={{ marginBottom: 14 }}>
             <label style={labelStyle}>URL</label>
             <input style={inputStyle} value={form.url} onChange={e => setForm({ ...form, url: e.target.value })} placeholder="https://... (YouTube link, Supabase Storage file link, Drive link, etc.)" />
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={labelStyle}>Thumbnail image URL (optional)</label>
+            <input style={inputStyle} value={form.thumbnail_url} onChange={e => setForm({ ...form, thumbnail_url: e.target.value })} placeholder="https://... image link. YouTube videos: leave blank, thumbnail is automatic" />
           </div>
           <div style={{ marginBottom: 14 }}>
             <label style={labelStyle}>Description (optional)</label>

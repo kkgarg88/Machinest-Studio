@@ -27,7 +27,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const updates: Record<string, unknown> = {}
   if (typeof body.title === 'string') updates.title = body.title.trim()
-  if (typeof body.description === 'string') updates.description = body.description.trim()
+  if (body.description !== undefined) {
+    updates.description = typeof body.description === 'string' && body.description.trim() ? body.description.trim() : null
+  }
   if (typeof body.resource_type === 'string') {
     if (!VALID_TYPES.includes(body.resource_type)) {
       return NextResponse.json({ error: 'Invalid resource_type' }, { status: 400 })
@@ -35,7 +37,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     updates.resource_type = body.resource_type
   }
   if (typeof body.url === 'string') updates.url = body.url.trim()
-  if (typeof body.category === 'string') updates.category = body.category.trim()
+  if (body.category !== undefined) {
+    updates.category = typeof body.category === 'string' && body.category.trim() ? body.category.trim() : null
+  }
+  if (body.thumbnail_url !== undefined) {
+    updates.thumbnail_url = typeof body.thumbnail_url === 'string' && body.thumbnail_url.trim() ? body.thumbnail_url.trim() : null
+  }
   if (body.display_order !== undefined && Number.isFinite(Number(body.display_order))) {
     updates.display_order = Number(body.display_order)
   }
