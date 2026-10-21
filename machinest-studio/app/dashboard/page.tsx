@@ -175,10 +175,10 @@ export default function Dashboard() {
             <h3 style={{ color: '#fff', fontSize: 17, fontWeight: 700, marginBottom: 16 }}>All Available Tools</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
               {availableTools.map(tool => (
-                <div
-                  key={tool.id}
-                  onClick={() => router.push('/membership')}
-                  style={{
+               <div
+  key={tool.id}
+  onClick={() => router.push(`/studio/${tool.slug}`)}
+  style={{
                     background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 12, padding: 24, cursor: 'pointer',
                   }}
                 >
