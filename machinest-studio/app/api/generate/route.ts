@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getCycleLogic, getCycleIntro } from '@/lib/cycles/logic'
 import { generateLimiter } from '@/lib/rate-limit'
+import { hasCycleAccess } from '@/lib/access'
 
 export async function POST(req: Request) {
   const supabase = await createClient()
@@ -33,19 +34,8 @@ export async function POST(req: Request) {
   const rel: any = cycle.tools
   const toolSlug: string | undefined = Array.isArray(rel) ? rel[0]?.slug : rel?.slug
 
-  const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).maybeSingle()
-  if (!profile?.is_admin) {
-    const nowIso = new Date().toISOString()
-    const { data: sub } = await supabase
-      .from('subscriptions')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('tool_id', cycle.tool_id)
-      .eq('status', 'active')
-      .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
-      .maybeSingle()
-    if (!sub) return NextResponse.json({ error: 'You do not have access to this tool' }, { status: 403 })
-  }
+  const allowed = await hasCycleAccess(supabase, user.id, cycle.id, cycle.tool_id)
+  if (!allowed) return NextResponse.json({ error: 'You do not have access to this tool' }, { status: 403 })
 
   const key = `${toolSlug}:${cycle.code}`
 
