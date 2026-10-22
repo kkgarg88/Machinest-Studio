@@ -9,6 +9,8 @@ type Sub = { user_id: string; tool_id: string; status: string; expires_at: strin
 type Order = { id: string; user_id: string; tool_ids: string[]; billing_cycle: string; amount: number; status: string; created_at: string }
 type Coupon = { id: string; code: string; discount_type: string; discount_value: number; max_uses: number | null; used_count: number; expires_at: string | null; active: boolean }
 
+type PlanLite = { id: string; name: string; tool_ids: string[] }
+
 const emptyForm = { id: '', name: '', slug: '', description: '', monthly_price: '', annual_price: '', features: '' }
 
 export default function AdminPage() {
@@ -19,6 +21,7 @@ export default function AdminPage() {
   const [tools, setTools] = useState<Tool[]>([])
   const [subs, setSubs] = useState<Sub[]>([])
   const [orders, setOrders] = useState<Order[]>([])
+  const [plans, setPlans] = useState<PlanLite[]>([])
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState(emptyForm)
   const [search, setSearch] = useState('')
@@ -35,6 +38,8 @@ export default function AdminPage() {
     setTools(t || [])
     setSubs(s || [])
     setOrders(o || [])
+    const { data: pl } = await supabase.from('plans').select('id, name, tool_ids').order('display_order', { ascending: true })
+    setPlans((pl || []) as PlanLite[])
     const { data: c } = await supabase.from('coupons').select('*').order('created_at', { ascending: false })
     setCoupons(c || [])
   }
@@ -74,20 +79,19 @@ export default function AdminPage() {
   }
 
   async function saveTool() {
-    if (!form.name || !form.slug || !form.monthly_price) return
+    if (!form.name || !form.slug) return
     const payload = {
       id: form.id || undefined,
       name: form.name,
       slug: form.slug,
       description: form.description,
-      monthly_price: Number(form.monthly_price),
-      annual_price: form.annual_price ? Number(form.annual_price) : null,
       features: form.features.split('\n').map(f => f.trim()).filter(Boolean),
     }
     if (form.id) {
       await supabase.from('tools').update(payload).eq('id', form.id)
     } else {
-      await supabase.from('tools').insert(payload)
+      // Prices now live on Plans; keep the old columns filled so the database stays valid
+      await supabase.from('tools').insert({ ...payload, monthly_price: 0, annual_price: null })
     }
     setForm(emptyForm)
     await loadAll()
@@ -226,11 +230,12 @@ export default function AdminPage() {
           <div>
             <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 20, marginBottom: 20 }}>
               <h4 style={{ color: '#fff', marginTop: 0 }}>{form.id ? 'Edit Tool' : 'Add New Tool'}</h4>
+              <p style={{ color: '#999', fontSize: 12.5, margin: '-6px 0 14px' }}>
+                Prices are set per plan. After adding a tool, include it in a plan under <a onClick={() => router.push('/admin/plans')} style={{ color: '#F0801E', cursor: 'pointer', fontWeight: 700 }}>Plans →</a>
+              </p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
                 <input placeholder="Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} style={inputStyle} />
                 <input placeholder="Slug (e.g. calibration-tracker)" value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} style={inputStyle} disabled={!!form.id} />
-                <input placeholder="Monthly Price" type="number" value={form.monthly_price} onChange={e => setForm({ ...form, monthly_price: e.target.value })} style={inputStyle} />
-                <input placeholder="Annual Price" type="number" value={form.annual_price} onChange={e => setForm({ ...form, annual_price: e.target.value })} style={inputStyle} />
               </div>
               <input placeholder="Short description (shown on dashboard tile)" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} style={{ ...inputStyle, width: '100%', marginBottom: 10 }} />
               <textarea
@@ -256,7 +261,13 @@ export default function AdminPage() {
               {tools.map(t => (
                 <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #3a3733' }}>
                   <div style={{ color: '#ddd', fontSize: 13 }}>
-                    <b style={{ color: '#fff' }}>{t.name}</b> — ₹{t.monthly_price}/mo, ₹{t.annual_price}/yr
+                    <b style={{ color: '#fff' }}>{t.name}</b>
+                    {(() => {
+                      const inPlans = plans.filter(pl => (pl.tool_ids || []).includes(t.id))
+                      return inPlans.length > 0
+                        ? <span style={{ color: '#999' }}> — in plans: {inPlans.map(pl => pl.name).join(', ')}</span>
+                        : <span style={{ color: '#ff6b6b' }}> — not in any plan yet</span>
+                    })()}
                   </div>
                   <button onClick={() => startEdit(t)} style={{ background: 'transparent', border: '1px solid #3a3733', color: '#F0801E', borderRadius: 6, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                     Edit
