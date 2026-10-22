@@ -46,6 +46,7 @@ export default function PublicShopBoard() {
   const [pinError, setPinError] = useState('')
   const [busy, setBusy] = useState(false)
   const [tv, setTv] = useState(false)
+  const [filter, setFilter] = useState<string | null>(null)
   const boardRef = useRef<HTMLDivElement>(null)
 
   const load = useCallback(async () => {
@@ -149,6 +150,7 @@ export default function PublicShopBoard() {
   }
 
   const machines = view.machines
+  const shown = filter ? machines.filter(m => m.status === filter) : machines
   const counts = STATUSES.map(s => ({ ...s, n: machines.filter(m => m.status === s.key).length })).filter(s => s.n > 0)
 
   return (
@@ -178,20 +180,41 @@ export default function PublicShopBoard() {
         </div>
 
         {counts.length > 0 && (
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 18 }}>
-            {counts.map(c => (
-              <span key={c.key} style={{ background: '#2b2a28', border: `1px solid ${c.color}`, color: '#fff', borderRadius: 999, padding: '5px 13px', fontSize: 12.5, fontWeight: 600 }}>
-                <span style={{ color: c.color }}>●</span> {c.label}: {c.n}
-              </span>
-            ))}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
+            <button
+              onClick={() => setFilter(null)}
+              style={{ background: filter === null ? '#F0801E' : '#2b2a28', border: '1px solid #F0801E', color: '#fff', borderRadius: 999, padding: '5px 13px', fontSize: tv ? 15 : 12.5, fontWeight: 700, cursor: 'pointer' }}
+            >
+              All: {machines.length}
+            </button>
+            {counts.map(c => {
+              const on = filter === c.key
+              return (
+                <button
+                  key={c.key}
+                  onClick={() => setFilter(on ? null : c.key)}
+                  style={{ background: on ? c.color : '#2b2a28', border: `1px solid ${c.color}`, color: on ? '#111' : '#fff', borderRadius: 999, padding: '5px 13px', fontSize: tv ? 15 : 12.5, fontWeight: 700, cursor: 'pointer' }}
+                >
+                  <span style={{ color: on ? '#111' : c.color }}>●</span> {c.label}: {c.n}
+                </button>
+              )
+            })}
           </div>
         )}
+        <div style={{ color: '#777', fontSize: 11.5, marginBottom: 14 }}>
+          {filter ? `Showing only ${STATUSES.find(s => s.key === filter)?.label || ''}. Tap it again or "All" to see every machine.` : 'Tap a status to show only those machines.'}
+        </div>
 
         {machines.length === 0 ? (
           <p style={{ color: '#999' }}>No machines have been added yet.</p>
+        ) : shown.length === 0 ? (
+          <p style={{ color: '#999' }}>
+            No machines are in this status right now.{' '}
+            <button onClick={() => setFilter(null)} style={{ background: 'transparent', border: 'none', color: '#F0801E', fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>Show all</button>
+          </p>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${tv ? 260 : 136}px, 1fr))`, gap: 12 }}>
-            {machines.map(m => <MachineCard key={m.id} machine={m} tv={tv} />)}
+            {shown.map(m => <MachineCard key={m.id} machine={m} tv={tv} />)}
           </div>
         )}
       </div>
