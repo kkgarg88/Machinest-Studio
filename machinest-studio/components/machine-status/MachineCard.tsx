@@ -22,24 +22,28 @@ export default function MachineCard({ machine: m, onClick, tv }: { machine: Card
     <div
       onClick={onClick}
       style={{
-        background: '#2b2a28', border: `2px solid ${st.color}`, borderRadius: 12, padding: 12,
-        cursor: onClick ? 'pointer' : 'default', boxShadow: `0 4px 16px ${st.color}22`,
+        background: '#2b2a28', border: `2px solid ${st.color}`, borderRadius: 12, padding: 10,
+        cursor: onClick ? 'pointer' : 'default', boxShadow: `0 4px 16px ${st.color}22`, minWidth: 0,
       }}
     >
-      <div style={{ position: 'relative', background: '#fff', borderRadius: 8, height: tv ? 150 : 110, marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={ty.image} alt={ty.label} style={{ height: '100%', width: '100%', objectFit: 'contain' }} />
-        <span style={{ position: 'absolute', left: 8, top: 8, background: ty.color, color: '#fff', fontWeight: 800, fontSize: 11.5, letterSpacing: 0.5, padding: '4px 9px', borderRadius: 6 }}>
+      {/* Type badge and machine number sit above the picture so they never cover it */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+        <span style={{ background: ty.color, color: '#fff', fontWeight: 800, fontSize: 11, letterSpacing: 0.4, padding: '4px 8px', borderRadius: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>
           {typeBadge(m.machine_type, m.type_remark)}
         </span>
         {m.machine_no && (
-          <span style={{ position: 'absolute', right: 8, top: 8, background: '#262421', color: '#fff', fontSize: 12, fontWeight: 700, padding: '3px 8px', borderRadius: 6 }}>
+          <span style={{ background: '#1f1e1c', color: '#fff', fontSize: 12, fontWeight: 700, padding: '3px 8px', borderRadius: 6, whiteSpace: 'nowrap' }}>
             #{m.machine_no}
           </span>
         )}
       </div>
 
-      <div style={{ color: '#fff', fontWeight: 700, fontSize: tv ? 18 : 16, wordBreak: 'break-word' }}>{m.name}</div>
+      <div style={{ background: '#fff', borderRadius: 8, height: tv ? 150 : 100, marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={ty.image} alt={ty.label} style={{ height: '100%', width: '100%', objectFit: 'contain' }} />
+      </div>
+
+      <div style={{ color: '#fff', fontWeight: 700, fontSize: tv ? 18 : 15, wordBreak: 'break-word' }}>{m.name}</div>
       <div style={{ color: '#bbb', fontSize: 12.5, margin: '2px 0 8px', wordBreak: 'break-word' }}>
         Part: <b style={{ color: '#fff' }}>{m.part_name || '—'}</b>
       </div>

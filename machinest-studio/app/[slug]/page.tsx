@@ -19,6 +19,24 @@ function Logo({ url, size }: { url: string | null; size: number }) {
   return <img src={url} alt="" style={{ width: size, height: size, objectFit: 'contain', background: '#fff', borderRadius: 10, padding: 3, boxSizing: 'border-box' }} />
 }
 
+// Live date and time (Indian time), ticking every second
+function Clock({ big }: { big: boolean }) {
+  const [now, setNow] = useState<Date | null>(null)
+  useEffect(() => {
+    setNow(new Date())
+    const t = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(t)
+  }, [])
+  if (!now) return <div style={{ height: big ? 30 : 22 }} />
+  const date = new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(now)
+  const time = new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true }).format(now).toUpperCase()
+  return (
+    <div style={{ color: '#ddd', fontSize: big ? 22 : 15, fontWeight: 600, marginTop: 6 }}>
+      {date} <span style={{ color: '#666', margin: '0 6px' }}>|</span> <span style={{ fontVariantNumeric: 'tabular-nums' }}>{time}</span>
+    </div>
+  )
+}
+
 export default function PublicShopBoard() {
   const params = useParams<{ slug: string }>()
   const slug = String(params?.slug || '').toLowerCase()
@@ -136,6 +154,13 @@ export default function PublicShopBoard() {
   return (
     <div ref={boardRef} style={{ ...page, padding: tv ? '20px 24px' : '24px 16px', overflowY: 'auto' }}>
       <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: 18 }}>
+          <h2 style={{ fontSize: tv ? 36 : 24, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', margin: 0, color: '#F0801E' }}>
+            Machine Status Board
+          </h2>
+          <Clock big={tv} />
+        </div>
+
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <Logo url={view.logoUrl} size={tv ? 60 : 48} />
@@ -165,7 +190,7 @@ export default function PublicShopBoard() {
         {machines.length === 0 ? (
           <p style={{ color: '#999' }}>No machines have been added yet.</p>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${tv ? 260 : 220}px, 1fr))`, gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${tv ? 260 : 136}px, 1fr))`, gap: 12 }}>
             {machines.map(m => <MachineCard key={m.id} machine={m} tv={tv} />)}
           </div>
         )}

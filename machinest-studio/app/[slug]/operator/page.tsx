@@ -152,7 +152,7 @@ export default function OperatorPage() {
         {view.machines.length === 0 ? (
           <p style={{ color: '#999' }}>The owner has not added any machines yet.</p>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(136px, 1fr))', gap: 12 }}>
             {view.machines.map(m => <MachineCard key={m.id} machine={m} onClick={() => setSelected(m)} />)}
           </div>
         )}

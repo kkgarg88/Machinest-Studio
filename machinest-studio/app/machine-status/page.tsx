@@ -219,6 +219,22 @@ export default function MachineStatusPage() {
     return true
   }
 
+  async function deleteShop() {
+    if (!me || me.role !== 'owner') return
+    const typed = prompt(
+      `This permanently deletes "${me.shop.name}": all machines, history, operators and the logo. The public and operator links stop working.\n\nType the shop name to confirm:`
+    )
+    if (typed === null) return
+    setBusy(true)
+    const r = await api('/api/machine-status/shop', 'DELETE', { confirm: typed })
+    setBusy(false)
+    if (!r.ok) { flash(r.data.error || 'Could not delete the shop', false); return }
+    setShowSettings(false)
+    setSelected(null)
+    flash('Shop deleted')
+    load()
+  }
+
   async function addOperator(e: React.FormEvent) {
     e.preventDefault()
     setBusy(true)
@@ -478,6 +494,20 @@ export default function MachineStatusPage() {
               <p style={{ color: '#777', fontSize: 12.5, margin: 0 }}>You have added the maximum of {limits.operators} operators.</p>
             )}
           </div>
+
+          <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #3a3733', paddingTop: 18 }}>
+            <h3 style={{ fontSize: 15, margin: '0 0 6px', color: '#ff6b6b' }}>Danger zone</h3>
+            <p style={{ color: '#999', fontSize: 12.5, margin: '0 0 12px', lineHeight: 1.5 }}>
+              Deleting the shop removes all machines, status history, operators and the logo, and frees the link name. Your subscription stays active, so you can set up a new shop afterwards.
+            </p>
+            <button
+              style={{ background: '#ff4d4f', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: busy ? 0.6 : 1 }}
+              disabled={busy}
+              onClick={deleteShop}
+            >
+              Delete shop
+            </button>
+          </div>
         </div>
       )}
 
@@ -496,7 +526,7 @@ export default function MachineStatusPage() {
       {machines.length === 0 ? (
         <div style={{ ...card, textAlign: 'center', color: '#999', fontSize: 14 }}>No machines yet. Use &quot;+ Add machine&quot; to build your grid.</div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(136px, 1fr))', gap: 12 }}>
           {machines.map(m => <MachineCard key={m.id} machine={m} onClick={() => { setSelected(m); setEditing(false) }} />)}
         </div>
       )}

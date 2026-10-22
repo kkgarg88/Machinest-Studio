@@ -34,6 +34,36 @@ export async function POST(req: Request) {
   return NextResponse.json({ success: true })
 }
 
+// Owner deletes the whole shop: machines, history, operators and logo go with it.
+// The subscription is untouched, so a fresh shop can be set up afterwards.
+export async function DELETE(req: Request) {
+  const user = await getAuthedUser()
+  if (!user) return NextResponse.json({ error: 'Not signed in' }, { status: 401 })
+
+  const ctx = await getOwnerContext(user.id)
+  if (!ctx) return NextResponse.json({ error: 'Only the shop owner can do this' }, { status: 403 })
+
+  const body = await req.json().catch(() => null)
+  const confirmName = typeof body?.confirm === 'string' ? body.confirm.trim() : ''
+  if (confirmName !== ctx.shop.name) {
+    return NextResponse.json({ error: 'The shop name you typed does not match' }, { status: 400 })
+  }
+
+  const admin = createAdminClient()
+
+  // remove every logo file stored for this shop
+  const { data: files } = await admin.storage.from('shop-logos').list(ctx.shop.id)
+  if (files && files.length > 0) {
+    await admin.storage.from('shop-logos').remove(files.map(f => `${ctx.shop.id}/${f.name}`))
+  }
+
+  // machines, status history, operators and PIN attempts are removed by cascade
+  const { error } = await admin.from('shops').delete().eq('id', ctx.shop.id)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  return NextResponse.json({ success: true })
+}
+
 // Owner settings: name, link name, public link on/off, PIN
 export async function PATCH(req: Request) {
   const user = await getAuthedUser()
