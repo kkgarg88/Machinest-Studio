@@ -165,6 +165,9 @@ export default function AdminPage() {
           <button onClick={() => router.push('/admin/resources')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: '#2b2a28', color: '#fff' }}>
             Resources →
           </button>
+          <button onClick={() => router.push('/admin/resumes')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: '#2b2a28', color: '#fff' }}>
+            Resumes →
+          </button>
         </div>
 
         {tab === 'users' && (

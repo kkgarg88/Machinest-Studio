@@ -24,6 +24,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
   const [resources, setResources] = useState<ResourceItem[]>([])
+  const [hasResume, setHasResume] = useState(false)
   const supabase = createClient()
   const router = useRouter()
 
@@ -50,6 +51,9 @@ export default function Dashboard() {
         .eq('active', true)
         .order('display_order', { ascending: true })
       setResources((resData || []) as ResourceItem[])
+
+      const { data: resumeRow } = await supabase.from('resumes').select('id').eq('user_id', user.id).maybeSingle()
+      setHasResume(!!resumeRow)
 
       setTools(toolsData || [])
       setActiveIds((subsData || []).map(s => s.tool_id))
@@ -118,6 +122,7 @@ export default function Dashboard() {
                   { label: 'My Profile', action: () => router.push('/profile') },
                   { label: 'My Membership', action: () => router.push('/membership') },
                   { label: 'Free Resources', action: () => router.push('/resources') },
+                  { label: 'My Resume', action: () => router.push('/resume') },
                   { label: 'Logout', action: handleLogout },
                 ].map(item => (
                   <div
@@ -148,6 +153,35 @@ export default function Dashboard() {
             <ResourceSlider title="Web Tools" items={webResources} />
           </div>
         )}
+
+        {/* RESUME BANNER */}
+        <div
+          onClick={() => router.push('/resume')}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap',
+            background: 'linear-gradient(135deg, #2f2d2a 0%, #262421 100%)',
+            border: '1px solid rgba(240,128,30,0.4)', borderRadius: 12,
+            padding: '16px 22px', marginBottom: 40, cursor: 'pointer',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 19, background: 'rgba(240,128,30,0.15)'
+            }}>
+              📄
+            </div>
+            <div>
+              <div style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>
+                {hasResume ? 'Your resume is uploaded' : 'Looking for a CNC job?'}
+              </div>
+              <div style={{ color: '#999', fontSize: 12.5 }}>
+                {hasResume ? 'Update it or change your job preferences anytime' : 'Upload your resume and let Machinest connect you with hiring companies'}
+              </div>
+            </div>
+          </div>
+          <span style={{ color: '#F0801E', fontSize: 13, fontWeight: 700 }}>{hasResume ? 'Manage →' : 'Upload →'}</span>
+        </div>
 
         {/* ACTIVE TOOLS */}
         <h3 style={{ color: '#fff', fontSize: 17, fontWeight: 700, marginBottom: 16 }}>Your Active Tools</h3>
