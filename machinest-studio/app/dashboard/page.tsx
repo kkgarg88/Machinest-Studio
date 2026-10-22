@@ -296,6 +296,66 @@ export default function Dashboard() {
             </div>
           </>
         )}
+
+        {/* CUSTOM SERVICES — highlighted block at the very bottom */}
+        <div
+          style={{
+            position: 'relative', overflow: 'hidden', marginTop: 56, borderRadius: 18, padding: '34px 34px',
+            background: 'radial-gradient(ellipse at 0% 0%, rgba(240,128,30,0.28) 0%, transparent 55%), linear-gradient(135deg, #2f2b26 0%, #1f1d1b 100%)',
+            border: '1.5px solid rgba(240,128,30,0.75)',
+            boxShadow: '0 0 0 4px rgba(240,128,30,0.08), 0 16px 48px rgba(240,128,30,0.18)',
+            display: 'flex', flexWrap: 'wrap', gap: 30, alignItems: 'center', justifyContent: 'space-between',
+          }}
+        >
+          <div style={{ flex: '1 1 380px', minWidth: 0 }}>
+            <span style={{
+              display: 'inline-block', background: '#F0801E', color: '#fff', fontSize: 10.5, fontWeight: 800,
+              letterSpacing: 1.2, padding: '5px 13px', borderRadius: 999, marginBottom: 14,
+            }}>
+              CUSTOM SERVICES
+            </span>
+            <h3 style={{ color: '#fff', fontSize: 26, fontWeight: 800, margin: '0 0 10px', lineHeight: 1.25 }}>
+              Need something built <span style={{ color: '#F0801E' }}>just for your shop?</span>
+            </h3>
+            <p style={{ color: '#bbb', fontSize: 14.5, lineHeight: 1.6, margin: '0 0 18px', maxWidth: 520 }}>
+              Custom CNC programs, process and cycle-time optimization, and tools made around your own machines and parts.
+              Tell us the requirement and we will get back to you with a quote.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
+              {['CNC Programming', 'Optimization', 'Custom Software', 'On-demand Manufacturing'].map(c => (
+                <span key={c} style={{ fontSize: 12, fontWeight: 600, color: '#F0801E', background: 'rgba(240,128,30,0.12)', border: '1px solid rgba(240,128,30,0.3)', padding: '5px 12px', borderRadius: 999 }}>
+                  {c}
+                </span>
+              ))}
+            </div>
+            <button
+              onClick={() => router.push('/services')}
+              style={{
+                background: '#F0801E', color: '#fff', border: 'none', borderRadius: 10, padding: '14px 28px',
+                fontSize: 15, fontWeight: 800, cursor: 'pointer', boxShadow: '0 8px 22px rgba(240,128,30,0.35)',
+              }}
+            >
+              Request a Custom Solution →
+            </button>
+          </div>
+
+          <div style={{ flex: '0 1 230px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            {[
+              { icon: '⚙️', label: 'Programs' },
+              { icon: '⏱️', label: 'Faster cycles' },
+              { icon: '💻', label: 'Custom tools' },
+              { icon: '🏭', label: 'Shop floor' },
+            ].map(t => (
+              <div key={t.label} style={{
+                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(240,128,30,0.25)', borderRadius: 12,
+                padding: '18px 10px', textAlign: 'center',
+              }}>
+                <div style={{ fontSize: 26, marginBottom: 6 }}>{t.icon}</div>
+                <div style={{ color: '#ddd', fontSize: 12, fontWeight: 600 }}>{t.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   )
