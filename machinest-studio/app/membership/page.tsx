@@ -6,11 +6,19 @@ import { useRouter } from 'next/navigation'
 type Tool = {
   id: string
   name: string
-  slug: string
-  description: string
-  monthly_price: number
-  annual_price: number
   features: string[] | null
+}
+
+type Plan = {
+  id: string
+  name: string
+  description: string | null
+  tool_ids: string[]
+  monthly_price: number
+  annual_price: number | null
+  features: string[] | null
+  badge: string | null
+  display_order: number
 }
 
 declare global {
@@ -20,23 +28,29 @@ declare global {
 }
 
 export default function MembershipPage() {
+  const [plans, setPlans] = useState<Plan[]>([])
   const [tools, setTools] = useState<Tool[]>([])
-  const [selected, setSelected] = useState<string[]>([])
+  const [selected, setSelected] = useState<string | null>(null)
   const [cycle, setCycle] = useState<'monthly' | 'annual'>('monthly')
   const [activeIds, setActiveIds] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [paying, setPaying] = useState(false)
   const [error, setError] = useState('')
   const [couponCode, setCouponCode] = useState('')
-const [couponApplied, setCouponApplied] = useState<{ discount: number; subtotal: number } | null>(null)
-const [couponMsg, setCouponMsg] = useState('')
   const supabase = createClient()
   const router = useRouter()
 
   useEffect(() => {
-    async function loadTools() {
-      const { data } = await supabase.from('tools').select('*')
-      setTools(data || [])
+    async function loadData() {
+      const { data: planData } = await supabase
+        .from('plans')
+        .select('*')
+        .eq('active', true)
+        .order('display_order', { ascending: true })
+      setPlans((planData || []) as Plan[])
+
+      const { data: toolData } = await supabase.from('tools').select('id, name, features')
+      setTools((toolData || []) as Tool[])
 
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
@@ -52,7 +66,7 @@ const [couponMsg, setCouponMsg] = useState('')
 
       setLoading(false)
     }
-    loadTools()
+    loadData()
 
     const script = document.createElement('script')
     script.src = 'https://checkout.razorpay.com/v1/checkout.js'
@@ -60,9 +74,18 @@ const [couponMsg, setCouponMsg] = useState('')
     document.body.appendChild(script)
   }, [])
 
-  function toggleTool(id: string) {
-    if (activeIds.includes(id)) return
-    setSelected(prev => (prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]))
+  function priceOf(plan: Plan): number | null {
+    const p = cycle === 'monthly' ? plan.monthly_price : plan.annual_price
+    return p === null || p === undefined ? null : Number(p)
+  }
+
+  function isBlocked(plan: Plan): boolean {
+    return plan.tool_ids.some(id => activeIds.includes(id)) || priceOf(plan) === null
+  }
+
+  function selectPlan(plan: Plan) {
+    if (isBlocked(plan)) return
+    setSelected(prev => (prev === plan.id ? null : plan.id))
   }
 
   function handleSkip() {
@@ -71,26 +94,24 @@ const [couponMsg, setCouponMsg] = useState('')
 
   async function handlePay() {
     setError('')
-    if (selected.length === 0) {
+    if (!selected) {
       handleSkip()
       return
     }
+    const plan = plans.find(p => p.id === selected)
     setPaying(true)
 
-  const res = await fetch('/api/payment/create-order', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ toolIds: selected, cycle, couponCode }),
-})
+    const res = await fetch('/api/payment/create-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ planId: selected, cycle, couponCode }),
+    })
     const data = await res.json().catch(() => ({}))
     if (!res.ok) {
       setPaying(false)
       setError(data.error || 'Could not start payment')
       return
     }
-    if (data.discount > 0) {
-  setCouponApplied({ discount: data.discount, subtotal: data.subtotal })
-}
 
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -99,7 +120,7 @@ const [couponMsg, setCouponMsg] = useState('')
       amount: data.amount,
       currency: 'INR',
       name: 'Machinest Studio',
-      description: `${cycle === 'monthly' ? 'Monthly' : 'Annual'} membership`,
+      description: `${plan?.name || 'Membership'} (${cycle === 'monthly' ? 'Monthly' : 'Annual'})`,
       order_id: data.orderId,
       prefill: { email: user?.email || '' },
       theme: { color: '#F0801E' },
@@ -130,9 +151,8 @@ const [couponMsg, setCouponMsg] = useState('')
     rzp.open()
   }
 
-  const total = tools
-    .filter(t => selected.includes(t.id))
-    .reduce((sum, t) => sum + Number(cycle === 'monthly' ? t.monthly_price : t.annual_price), 0)
+  const selectedPlan = plans.find(p => p.id === selected) || null
+  const total = selectedPlan ? priceOf(selectedPlan) : null
 
   if (loading) return <p style={{ padding: 40, color: '#fff', background: '#211f1d', minHeight: '100vh' }}>Loading...</p>
 
@@ -140,8 +160,8 @@ const [couponMsg, setCouponMsg] = useState('')
     <div style={{ minHeight: '100vh', background: 'linear-gradient(180deg, #211f1d 0%, #2a2724 100%)', padding: '48px 24px', fontFamily: 'Segoe UI, sans-serif' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 30 }}>
-          <h2 style={{ color: '#fff', fontSize: 30, margin: '0 0 8px', fontWeight: 800 }}>Choose your tools</h2>
-          <p style={{ color: '#999', fontSize: 15 }}>Pay only for what you use — pick any tools, or skip for now and add later</p>
+          <h2 style={{ color: '#fff', fontSize: 30, margin: '0 0 8px', fontWeight: 800 }}>Choose your plan</h2>
+          <p style={{ color: '#999', fontSize: 15 }}>Pick the plan that fits your shop, or skip for now and upgrade later</p>
 
           <div style={{ display: 'inline-flex', background: '#2b2a28', borderRadius: 8, padding: 4, marginTop: 20 }}>
             <button
@@ -159,79 +179,119 @@ const [couponMsg, setCouponMsg] = useState('')
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))', gap: 22, marginBottom: 28 }}>
-          {tools.map(tool => {
-            const isActive = activeIds.includes(tool.id)
-            const isSelected = selected.includes(tool.id)
-            const price = cycle === 'monthly' ? tool.monthly_price : tool.annual_price
+        {plans.length === 0 ? (
+          <p style={{ color: '#999', textAlign: 'center', marginBottom: 28 }}>No plans are available right now. Please check back soon.</p>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(270px, 1fr))', gap: 22, marginBottom: 28 }}>
+            {plans.map(plan => {
+              const price = priceOf(plan)
+              const planTools = plan.tool_ids.map(id => tools.find(t => t.id === id)).filter(Boolean) as Tool[]
+              const allActive = plan.tool_ids.length > 0 && plan.tool_ids.every(id => activeIds.includes(id))
+              const overlap = plan.tool_ids.some(id => activeIds.includes(id))
+              const unavailable = price === null
+              const blocked = overlap || unavailable
+              const isSelected = selected === plan.id
 
-            return (
-              <div
-                key={tool.id}
-                onClick={() => toggleTool(tool.id)}
-                style={{
-                  background: isSelected ? 'linear-gradient(160deg, #2e2920 0%, #262320 100%)' : '#2b2a28',
-                  border: `2px solid ${isSelected ? '#F0801E' : '#3a3733'}`,
-                  borderRadius: 14, padding: 26, cursor: isActive ? 'default' : 'pointer',
-                  opacity: isActive ? 0.6 : 1, position: 'relative', display: 'flex', flexDirection: 'column',
-                  boxShadow: isSelected ? '0 8px 24px rgba(240,128,30,0.15)' : 'none',
-                }}
-              >
-                {isActive && (
-                  <span style={{ position: 'absolute', top: 16, right: 16, background: '#F0801E', color: '#fff', fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 10 }}>
-                    ACTIVE
-                  </span>
-                )}
+              const featureList = plan.features && plan.features.length > 0
+                ? plan.features
+                : Array.from(new Set(planTools.flatMap(t => t.features || [])))
 
-                <h3 style={{ color: '#fff', fontSize: 19, fontWeight: 800, margin: '0 0 6px' }}>{tool.name}</h3>
-                <p style={{ color: '#999', fontSize: 13, marginBottom: 18, minHeight: 36 }}>{tool.description}</p>
+              let label = 'Select this plan'
+              if (allActive) label = 'Already Active'
+              else if (overlap) label = 'Includes a tool you already have'
+              else if (unavailable) label = 'Not available yearly'
+              else if (isSelected) label = 'Selected ✓'
 
-                <div style={{ marginBottom: 20 }}>
-                  <span style={{ color: '#F0801E', fontSize: 32, fontWeight: 800 }}>₹{price}</span>
-                  <span style={{ color: '#999', fontSize: 13 }}>/{cycle === 'monthly' ? 'month' : 'year'}</span>
+              return (
+                <div
+                  key={plan.id}
+                  onClick={() => selectPlan(plan)}
+                  style={{
+                    background: isSelected ? 'linear-gradient(160deg, #2e2920 0%, #262320 100%)' : '#2b2a28',
+                    border: `2px solid ${isSelected ? '#F0801E' : '#3a3733'}`,
+                    borderRadius: 14, padding: 26, cursor: blocked ? 'default' : 'pointer',
+                    opacity: blocked ? 0.6 : 1, position: 'relative', display: 'flex', flexDirection: 'column',
+                    boxShadow: isSelected ? '0 8px 24px rgba(240,128,30,0.15)' : 'none',
+                  }}
+                >
+                  {allActive ? (
+                    <span style={{ position: 'absolute', top: 16, right: 16, background: '#F0801E', color: '#fff', fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 10 }}>
+                      ACTIVE
+                    </span>
+                  ) : plan.badge ? (
+                    <span style={{ position: 'absolute', top: 16, right: 16, background: '#2fbf71', color: '#fff', fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 10 }}>
+                      {plan.badge.toUpperCase()}
+                    </span>
+                  ) : null}
+
+                  <h3 style={{ color: '#fff', fontSize: 19, fontWeight: 800, margin: '0 0 6px', paddingRight: 70 }}>{plan.name}</h3>
+                  <p style={{ color: '#999', fontSize: 13, marginBottom: 12, minHeight: 36 }}>{plan.description}</p>
+
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+                    {planTools.map(t => (
+                      <span key={t.id} style={{ fontSize: 11, fontWeight: 700, color: '#F0801E', background: 'rgba(240,128,30,0.12)', padding: '3px 10px', borderRadius: 10 }}>
+                        {t.name}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div style={{ marginBottom: 20 }}>
+                    {price === null ? (
+                      <span style={{ color: '#777', fontSize: 16, fontWeight: 700 }}>Not offered yearly</span>
+                    ) : (
+                      <>
+                        <span style={{ color: '#F0801E', fontSize: 32, fontWeight: 800 }}>₹{price}</span>
+                        <span style={{ color: '#999', fontSize: 13 }}>/{cycle === 'monthly' ? 'month' : 'year'}</span>
+                      </>
+                    )}
+                  </div>
+
+                  <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 22px', flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {featureList.map((f, i) => (
+                      <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#ddd' }}>
+                        <span style={{ color: '#2fbf71', fontWeight: 700, flexShrink: 0 }}>✓</span>
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div style={{
+                    textAlign: 'center', padding: '10px', borderRadius: 8, fontSize: 13, fontWeight: 700,
+                    background: blocked ? '#3a3733' : isSelected ? '#F0801E' : 'transparent',
+                    border: blocked || isSelected ? 'none' : '1px solid #3a3733',
+                    color: blocked ? '#aaa' : isSelected ? '#fff' : '#ddd',
+                  }}>
+                    {label}
+                  </div>
                 </div>
+              )
+            })}
+          </div>
+        )}
 
-                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 22px', flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {(tool.features || []).map((f, i) => (
-                    <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#ddd' }}>
-                      <span style={{ color: '#2fbf71', fontWeight: 700, flexShrink: 0 }}>✓</span>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-
-                <div style={{
-                  textAlign: 'center', padding: '10px', borderRadius: 8, fontSize: 13, fontWeight: 700,
-                  background: isActive ? '#3a3733' : isSelected ? '#F0801E' : 'transparent',
-                  border: isActive || isSelected ? 'none' : '1px solid #3a3733',
-                  color: isActive ? '#aaa' : isSelected ? '#fff' : '#ddd',
-                }}>
-                  {isActive ? 'Already Active' : isSelected ? 'Selected ✓' : 'Select this tool'}
-                </div>
-              </div>
-            )
-          })}
+        <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+          <input
+            type="text"
+            placeholder="Have a coupon code?"
+            value={couponCode}
+            onChange={e => setCouponCode(e.target.value.toUpperCase())}
+            style={{ background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 6, color: '#fff', padding: '10px 14px', fontSize: 13, flex: '1 1 200px' }}
+          />
+          <span style={{ color: '#888', fontSize: 12 }}>Coupon applies automatically at checkout</span>
         </div>
-<div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
-  <input
-    type="text"
-    placeholder="Have a coupon code?"
-    value={couponCode}
-    onChange={e => { setCouponCode(e.target.value.toUpperCase()); setCouponMsg('') }}
-    style={{ background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 6, color: '#fff', padding: '10px 14px', fontSize: 13, flex: '1 1 200px' }}
-  />
-  <span style={{ color: '#888', fontSize: 12 }}>Coupon applies automatically at checkout</span>
-</div>
+
         <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 12, padding: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
           <span style={{ color: '#999', fontSize: 14 }}>
-            {selected.length > 0 ? `Total: ₹${total}/${cycle === 'monthly' ? 'mo' : 'yr'} for ${selected.length} tool${selected.length > 1 ? 's' : ''}` : 'No tools selected'}
+            {selectedPlan && total !== null
+              ? `Total: ₹${total}/${cycle === 'monthly' ? 'mo' : 'yr'} for ${selectedPlan.name}`
+              : 'No plan selected'}
           </span>
           <div style={{ display: 'flex', gap: 10 }}>
             <button onClick={handleSkip} style={{ background: 'transparent', border: '1px solid #3a3733', color: '#ddd', borderRadius: 6, padding: '11px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
               Skip for now
             </button>
             <button onClick={handlePay} disabled={paying} style={{ background: '#F0801E', border: 'none', color: '#fff', borderRadius: 6, padding: '11px 24px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-              {paying ? 'Processing...' : selected.length === 0 ? 'Continue' : 'Pay & Continue'}
+              {paying ? 'Processing...' : !selected ? 'Continue' : 'Pay & Continue'}
             </button>
           </div>
         </div>
