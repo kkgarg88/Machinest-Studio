@@ -55,7 +55,7 @@ export const RESERVED_SLUGS = [
   'machine-status', 'machine-icons', 'machinest', 'privacy', 'privacy-policy', 'terms', 'terms-and-conditions', 'about',
   'contact', 'pricing', 'refund', 'refund-policy', 'shipping', 'cancellation', 'support', 'help',
   'callback', 'static', 'public', 'favicon', 'robots', 'sitemap', 'app', 'www', 'status', 'tutorial',
-  'generate', 'payment', 'webhook', 'test', 'demo', 'shop', 'shops', 'home', 'index', 'new', 'operator',
+  'generate', 'payment', 'webhook', 'test', 'demo', 'shop', 'shops', 'home', 'index', 'new', 'operator', 'tools',
 ]
 
 // 3 to 30 characters: lowercase letters, digits and hyphens; no hyphen at the ends
