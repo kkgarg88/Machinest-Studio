@@ -123,6 +123,7 @@ export default function Dashboard() {
                   { label: 'My Membership', action: () => router.push('/membership') },
                   { label: 'Free Resources', action: () => router.push('/resources') },
                   { label: 'My Resume', action: () => router.push('/resume') },
+                  { label: 'Ask a Question', action: () => router.push('/ask') },
                   { label: 'Logout', action: handleLogout },
                 ].map(item => (
                   <div
@@ -161,7 +162,7 @@ export default function Dashboard() {
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap',
             background: 'linear-gradient(135deg, #2f2d2a 0%, #262421 100%)',
             border: '1px solid rgba(240,128,30,0.4)', borderRadius: 12,
-            padding: '16px 22px', marginBottom: 40, cursor: 'pointer',
+            padding: '16px 22px', marginBottom: 16, cursor: 'pointer',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -181,6 +182,31 @@ export default function Dashboard() {
             </div>
           </div>
           <span style={{ color: '#F0801E', fontSize: 13, fontWeight: 700 }}>{hasResume ? 'Manage →' : 'Upload →'}</span>
+        </div>
+
+        {/* ASK A QUESTION BANNER */}
+        <div
+          onClick={() => router.push('/ask')}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap',
+            background: 'linear-gradient(135deg, #2f2d2a 0%, #262421 100%)',
+            border: '1px solid rgba(240,128,30,0.4)', borderRadius: 12,
+            padding: '16px 22px', marginBottom: 40, cursor: 'pointer',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 19, background: 'rgba(240,128,30,0.15)'
+            }}>
+              💬
+            </div>
+            <div>
+              <div style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>Have a question?</div>
+              <div style={{ color: '#999', fontSize: 12.5 }}>Ask about a cycle, request a new one, or get help with membership</div>
+            </div>
+          </div>
+          <span style={{ color: '#F0801E', fontSize: 13, fontWeight: 700 }}>Ask →</span>
         </div>
 
         {/* ACTIVE TOOLS */}
