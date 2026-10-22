@@ -9,13 +9,13 @@ async function findShop(slug: string) {
   const admin = createAdminClient()
   const { data } = await admin
     .from('shops')
-    .select('id, owner_id, name, slug, public_enabled, public_pin')
+    .select('id, owner_id, name, slug, logo_url, public_enabled, public_pin')
     .eq('slug', slug.toLowerCase())
     .maybeSingle()
   return data
 }
 
-// Public board data. Visitors never see operator names or phone numbers.
+// Public board data. Visitors never see phone numbers.
 export async function GET(_req: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const shop = await findShop(slug)
@@ -24,21 +24,21 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
   }
 
   const active = await hasMachineStatusAccess(shop.owner_id)
-  if (!active) return NextResponse.json({ state: 'expired', shopName: shop.name })
+  if (!active) return NextResponse.json({ state: 'expired', shopName: shop.name, logoUrl: shop.logo_url })
 
   if (!(await hasValidPinCookie(shop))) {
-    return NextResponse.json({ state: 'locked', shopName: shop.name })
+    return NextResponse.json({ state: 'locked', shopName: shop.name, logoUrl: shop.logo_url })
   }
 
   const admin = createAdminClient()
   const { data: machines } = await admin
     .from('machines')
-    .select('id, name, machine_no, icon, status, remark, status_since, updated_at')
+    .select('id, name, machine_no, machine_type, type_remark, part_name, status, remark, status_since, updated_by_name')
     .eq('shop_id', shop.id)
     .order('position', { ascending: true })
     .order('created_at', { ascending: true })
 
-  return NextResponse.json({ state: 'ok', shopName: shop.name, machines: machines || [] })
+  return NextResponse.json({ state: 'ok', shopName: shop.name, logoUrl: shop.logo_url, machines: machines || [] })
 }
 
 // Visitor enters the PIN
@@ -61,7 +61,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     .eq('shop_id', shop.id).eq('ip_hash', ipHash).gte('created_at', since15)
   const { count: overall } = await admin
     .from('shop_pin_attempts').select('id', { count: 'exact', head: true })
-    .eq('shop_id', shop.id).gte('created_at', since60)
+    .eq('shop_id', shop.id).not('ip_hash', 'like', 'op:%').gte('created_at', since60)
 
   if ((fromThisIp ?? 0) >= 8 || (overall ?? 0) >= 80) {
     return NextResponse.json({ error: 'Too many wrong attempts. Please try again later' }, { status: 429 })

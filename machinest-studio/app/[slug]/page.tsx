@@ -1,26 +1,23 @@
 'use client'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { STATUSES, statusInfo, iconEmoji, formatSince } from '@/lib/machineStatus'
-
-type PublicMachine = {
-  id: string
-  name: string
-  machine_no: string | null
-  icon: string
-  status: string
-  remark: string | null
-  status_since: string
-}
+import { STATUSES } from '@/lib/machineStatus'
+import MachineCard, { type CardMachine } from '@/components/machine-status/MachineCard'
 
 type View =
   | { state: 'loading' }
   | { state: 'not_found' }
-  | { state: 'expired'; shopName: string }
-  | { state: 'locked'; shopName: string }
-  | { state: 'ok'; shopName: string; machines: PublicMachine[] }
+  | { state: 'expired'; shopName: string; logoUrl: string | null }
+  | { state: 'locked'; shopName: string; logoUrl: string | null }
+  | { state: 'ok'; shopName: string; logoUrl: string | null; machines: CardMachine[] }
 
 const page = { minHeight: '100vh', background: 'linear-gradient(180deg, #262421 0%, #302d29 100%)', fontFamily: 'Segoe UI, sans-serif', color: '#fff' } as const
+
+function Logo({ url, size }: { url: string | null; size: number }) {
+  if (!url) return null
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={url} alt="" style={{ width: size, height: size, objectFit: 'contain', background: '#fff', borderRadius: 10, padding: 3, boxSizing: 'border-box' }} />
+}
 
 export default function PublicShopBoard() {
   const params = useParams<{ slug: string }>()
@@ -30,7 +27,6 @@ export default function PublicShopBoard() {
   const [pin, setPin] = useState('')
   const [pinError, setPinError] = useState('')
   const [busy, setBusy] = useState(false)
-  const [, setTick] = useState(0)
   const [tv, setTv] = useState(false)
   const boardRef = useRef<HTMLDivElement>(null)
 
@@ -46,8 +42,7 @@ export default function PublicShopBoard() {
   useEffect(() => {
     load()
     const poll = setInterval(load, 5000)
-    const clock = setInterval(() => setTick(t => t + 1), 30000)
-    return () => { clearInterval(poll); clearInterval(clock) }
+    return () => clearInterval(poll)
   }, [load])
 
   useEffect(() => {
@@ -96,7 +91,7 @@ export default function PublicShopBoard() {
     return (
       <div style={{ ...page, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center' }}>
         <div>
-          <div style={{ fontSize: 44, marginBottom: 12 }}>⏸️</div>
+          {view.logoUrl ? <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><Logo url={view.logoUrl} size={72} /></div> : <div style={{ fontSize: 44, marginBottom: 12 }}>⏸️</div>}
           <h1 style={{ fontSize: 22, margin: '0 0 8px' }}>{view.shopName}</h1>
           <p style={{ color: '#999', fontSize: 14, margin: 0 }}>Subscription expired. This status board is paused until the owner renews.</p>
         </div>
@@ -108,7 +103,7 @@ export default function PublicShopBoard() {
     return (
       <div style={{ ...page, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <form onSubmit={submitPin} style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 14, padding: 28, width: '100%', maxWidth: 340, textAlign: 'center' }}>
-          <div style={{ fontSize: 38, marginBottom: 10 }}>🔒</div>
+          {view.logoUrl ? <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><Logo url={view.logoUrl} size={72} /></div> : <div style={{ fontSize: 38, marginBottom: 10 }}>🔒</div>}
           <h1 style={{ fontSize: 20, margin: '0 0 6px' }}>{view.shopName}</h1>
           <p style={{ color: '#999', fontSize: 13, margin: '0 0 18px' }}>Enter the PIN to view live machine status</p>
           <input
@@ -142,11 +137,14 @@ export default function PublicShopBoard() {
     <div ref={boardRef} style={{ ...page, padding: tv ? '20px 24px' : '24px 16px', overflowY: 'auto' }}>
       <div style={{ maxWidth: 1400, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
-          <div>
-            <h1 style={{ fontSize: tv ? 30 : 22, fontWeight: 800, margin: 0 }}>{view.shopName}</h1>
-            <div style={{ color: '#999', fontSize: 12.5, marginTop: 3 }}>
-              <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 4, background: '#2fbf71', marginRight: 6 }} />
-              Live · {machines.length} machine{machines.length === 1 ? '' : 's'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <Logo url={view.logoUrl} size={tv ? 60 : 48} />
+            <div>
+              <h1 style={{ fontSize: tv ? 30 : 22, fontWeight: 800, margin: 0 }}>{view.shopName}</h1>
+              <div style={{ color: '#999', fontSize: 12.5, marginTop: 3 }}>
+                <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 4, background: '#2fbf71', marginRight: 6 }} />
+                Live · {machines.length} machine{machines.length === 1 ? '' : 's'}
+              </div>
             </div>
           </div>
           <button onClick={toggleTv} style={{ background: 'transparent', border: '1px solid #3a3733', color: '#ddd', borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
@@ -167,24 +165,8 @@ export default function PublicShopBoard() {
         {machines.length === 0 ? (
           <p style={{ color: '#999' }}>No machines have been added yet.</p>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${tv ? 230 : 170}px, 1fr))`, gap: 12 }}>
-            {machines.map(m => {
-              const st = statusInfo(m.status)
-              return (
-                <div key={m.id} style={{ background: '#2b2a28', border: `2px solid ${st.color}`, borderRadius: 12, padding: 14, boxShadow: `0 4px 16px ${st.color}22` }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                    <span style={{ fontSize: 22 }}>{iconEmoji(m.icon)}</span>
-                    {m.machine_no && <span style={{ color: '#999', fontSize: 11.5, fontWeight: 600 }}>#{m.machine_no}</span>}
-                  </div>
-                  <div style={{ fontWeight: 700, fontSize: tv ? 18 : 15, margin: '8px 0 8px', wordBreak: 'break-word' }}>{m.name}</div>
-                  <span style={{ display: 'inline-block', background: st.color, color: '#111', fontWeight: 800, fontSize: 11.5, padding: '3px 10px', borderRadius: 10 }}>
-                    {st.label}
-                  </span>
-                  {m.remark && <div style={{ color: '#ccc', fontSize: 12.5, marginTop: 8, lineHeight: 1.4, wordBreak: 'break-word' }}>{m.remark}</div>}
-                  <div style={{ color: '#888', fontSize: 11.5, marginTop: 8 }}>for {formatSince(m.status_since)}</div>
-                </div>
-              )
-            })}
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(${tv ? 260 : 220}px, 1fr))`, gap: 14 }}>
+            {machines.map(m => <MachineCard key={m.id} machine={m} tv={tv} />)}
           </div>
         )}
       </div>

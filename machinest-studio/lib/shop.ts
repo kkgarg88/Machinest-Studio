@@ -9,15 +9,28 @@ export type ShopRow = {
   owner_id: string
   name: string
   slug: string
+  logo_url: string | null
   public_enabled: boolean
   public_pin: string
-  join_code: string
   created_at: string
 }
 
-export type ShopContext =
-  | { role: 'owner' | 'operator'; shop: ShopRow; active: boolean }
-  | { role: null; shop: null; active: false }
+export type OperatorRow = {
+  id: string
+  shop_id: string
+  name: string
+  phone: string | null
+  pin_hash: string
+  created_at: string
+}
+
+export type Actor =
+  | { kind: 'owner'; shop: ShopRow; active: boolean; userId: string; name: string }
+  | { kind: 'operator'; shop: ShopRow; active: boolean; operatorId: string; name: string }
+
+function secret(): string {
+  return process.env.LEAD_SALT || process.env.SUPABASE_SERVICE_ROLE_KEY || 'machinest'
+}
 
 export async function getAuthedUser() {
   const supabase = await createClient()
@@ -49,42 +62,73 @@ export async function hasMachineStatusAccess(userId: string): Promise<boolean> {
   return !!subs && subs.length > 0
 }
 
-// Works out whether the user owns a shop, works as an operator in one, or neither.
-// "active" is the OWNER's subscription state, which governs the whole shop.
-export async function getContext(userId: string): Promise<ShopContext> {
+// The shop owned by this user (if any), with the owner's subscription state
+export async function getOwnerContext(userId: string): Promise<{ shop: ShopRow; active: boolean } | null> {
   const admin = createAdminClient()
-
-  const { data: owned } = await admin.from('shops').select('*').eq('owner_id', userId).maybeSingle()
-  if (owned) {
-    const active = await hasMachineStatusAccess(userId)
-    return { role: 'owner', shop: owned as ShopRow, active }
-  }
-
-  const { data: member } = await admin.from('shop_members').select('shop_id').eq('user_id', userId).maybeSingle()
-  if (member) {
-    const { data: shop } = await admin.from('shops').select('*').eq('id', member.shop_id).maybeSingle()
-    if (shop) {
-      const active = await hasMachineStatusAccess(shop.owner_id)
-      return { role: 'operator', shop: shop as ShopRow, active }
-    }
-  }
-
-  return { role: null, shop: null, active: false }
+  const { data: shop } = await admin.from('shops').select('*').eq('owner_id', userId).maybeSingle()
+  if (!shop) return null
+  const active = await hasMachineStatusAccess(userId)
+  return { shop: shop as ShopRow, active }
 }
 
-// 8 characters, no look-alike letters (no 0/O, 1/I)
-export function makeJoinCode(): string {
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  let code = ''
-  for (let i = 0; i < 8; i++) code += alphabet[crypto.randomInt(alphabet.length)]
-  return code
+export async function displayNameOf(userId: string): Promise<string> {
+  const admin = createAdminClient()
+  const { data } = await admin.from('profiles').select('full_name, email').eq('id', userId).maybeSingle()
+  return data?.full_name || (data?.email ? String(data.email).split('@')[0] : 'Owner')
+}
+
+// ---- Operators (link + personal PIN, no account) ----
+export const OPERATOR_COOKIE = 'ms_op'
+
+export function hashOperatorPin(operatorId: string, pin: string): string {
+  return crypto.createHmac('sha256', secret()).update(`op:${operatorId}:${pin}`).digest('hex')
+}
+
+// Cookie value is tied to the operator's PIN hash, so resetting the PIN
+// or removing the operator logs that phone out straight away.
+export function operatorToken(op: Pick<OperatorRow, 'id' | 'pin_hash'>): string {
+  const sig = crypto.createHmac('sha256', secret()).update(`session:${op.id}:${op.pin_hash}`).digest('hex')
+  return `${op.id}.${sig}`
+}
+
+export async function getOperatorSession(): Promise<{ operator: OperatorRow; shop: ShopRow; active: boolean } | null> {
+  const jar = await cookies()
+  const value = jar.get(OPERATOR_COOKIE)?.value
+  if (!value) return null
+  const dot = value.indexOf('.')
+  if (dot < 1) return null
+  const id = value.slice(0, dot)
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return null
+
+  const admin = createAdminClient()
+  const { data: op } = await admin.from('shop_operators').select('*').eq('id', id).maybeSingle()
+  if (!op) return null
+
+  const a = Buffer.from(value)
+  const b = Buffer.from(operatorToken(op as OperatorRow))
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null
+
+  const { data: shop } = await admin.from('shops').select('*').eq('id', op.shop_id).maybeSingle()
+  if (!shop) return null
+  const active = await hasMachineStatusAccess(shop.owner_id)
+  return { operator: op as OperatorRow, shop: shop as ShopRow, active }
+}
+
+// Whoever is making this request: the signed-in owner, or an operator on their phone
+export async function getActor(): Promise<Actor | null> {
+  const user = await getAuthedUser()
+  if (user) {
+    const ctx = await getOwnerContext(user.id)
+    if (ctx) return { kind: 'owner', shop: ctx.shop, active: ctx.active, userId: user.id, name: await displayNameOf(user.id) }
+  }
+  const session = await getOperatorSession()
+  if (session) {
+    return { kind: 'operator', shop: session.shop, active: session.active, operatorId: session.operator.id, name: session.operator.name }
+  }
+  return null
 }
 
 // ---- Public link PIN ----
-function secret(): string {
-  return process.env.LEAD_SALT || process.env.SUPABASE_SERVICE_ROLE_KEY || 'machinest'
-}
-
 // Token stored in the visitor's cookie after the right PIN. It is tied to the PIN,
 // so changing the PIN instantly locks out everyone who had the old one.
 export function pinToken(shop: Pick<ShopRow, 'id' | 'public_pin'>): string {
@@ -108,10 +152,4 @@ export async function clientIpHash(): Promise<string> {
   const h = await headers()
   const ip = (h.get('x-forwarded-for') || '').split(',')[0].trim() || 'unknown'
   return crypto.createHash('sha256').update(`${secret()}:${ip}`).digest('hex').slice(0, 32)
-}
-
-export async function displayNameOf(userId: string): Promise<string> {
-  const admin = createAdminClient()
-  const { data } = await admin.from('profiles').select('full_name, email').eq('id', userId).maybeSingle()
-  return data?.full_name || (data?.email ? String(data.email).split('@')[0] : 'Operator')
 }
