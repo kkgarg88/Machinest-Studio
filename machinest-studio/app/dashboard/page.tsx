@@ -15,6 +15,7 @@ type Tool = {
 const iconMap: Record<string, string> = {
   'turning-studio': '🔩',
   'milling-studio': '⚙️',
+  'machine-status': '📟',
 }
 
 export default function Dashboard() {
@@ -123,6 +124,7 @@ export default function Dashboard() {
                   { label: 'My Membership', action: () => router.push('/membership') },
                   { label: 'Free Resources', action: () => router.push('/resources') },
                   { label: 'My Resume', action: () => router.push('/resume') },
+                  { label: 'Machine Status', action: () => router.push('/machine-status') },
                   { label: 'Ask a Question', action: () => router.push('/ask') },
                   { label: 'Logout', action: handleLogout },
                 ].map(item => (
@@ -226,7 +228,7 @@ export default function Dashboard() {
               return (
                 <div
                   key={tool.id}
-                  onClick={() => router.push(`/studio/${tool.slug}`)}
+                  onClick={() => router.push(tool.slug === 'machine-status' ? '/machine-status' : `/studio/${tool.slug}`)}
                   style={{
                     background: 'linear-gradient(150deg, #2f2d2a 0%, #262421 100%)',
                     border: '1px solid rgba(240,128,30,0.5)', borderRadius: 12, padding: 24, cursor: 'pointer',
@@ -261,7 +263,7 @@ export default function Dashboard() {
               {availableTools.map(tool => (
                <div
   key={tool.id}
-  onClick={() => router.push(`/studio/${tool.slug}`)}
+  onClick={() => router.push(tool.slug === 'machine-status' ? '/machine-status' : `/studio/${tool.slug}`)}
   style={{
                     background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 12, padding: 24, cursor: 'pointer',
                   }}
