@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MachiNest | Free GD&amp;T Symbol Guide</title>
+<style>
+:root{color-scheme:light;--orange:#ff8500;--ink:#17191c;--muted:#667085;--line:#e5e7eb;--bg:#f5f6f8;--card:#fff;--green:#137547}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:Inter,Segoe UI,"Noto Sans Devanagari","Nirmala UI",Arial,sans-serif;color:var(--ink)}
+.wrap{max-width:1180px;margin:auto;padding:24px 16px 40px}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.logo{width:42px;height:42px;border-radius:12px;background:var(--orange);display:grid;place-items:center;color:#111;font-weight:900;font-size:22px}
+.brand small{display:block;color:var(--muted);margin-top:3px}
+.hero{background:#17191c;color:#fff;border-radius:18px;padding:26px;margin-bottom:18px;position:relative;overflow:hidden}
+.hero:after{content:'M';position:absolute;right:22px;top:-42px;font-weight:900;font-size:190px;color:#ffffff0a}
+.eyebrow{color:#ffb65b;font-weight:700;font-size:12px;letter-spacing:.13em;text-transform:uppercase}
+.hero h1{margin:8px 0;font-size:clamp(26px,4vw,38px)}
+.hero p{margin:0;color:#d2d5da;max-width:720px;line-height:1.6}
+.pill{display:inline-block;border:1px solid #ffffff30;border-radius:999px;padding:6px 10px;font-size:12px;margin:16px 6px 0 0}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:18px 0}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:#fff;color:var(--ink);font:inherit;border-radius:10px;padding:11px 16px;font-weight:700;cursor:pointer}
+.tab:hover{border-color:var(--orange)}
+.tab.active{background:var(--orange);border-color:var(--orange);color:#111}
+.lang{display:flex;border:1px solid #d4d8de;border-radius:10px;overflow:hidden;background:#fff}
+.lang button{border:0;background:#fff;font:inherit;font-weight:700;color:#424852;cursor:pointer;padding:10px 14px}
+.lang button+button{border-left:1px solid #d4d8de}
+.lang button.on{background:var(--ink);color:#fff}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;min-width:0}
+.card h2{font-size:18px;margin:0 0 6px}
+.lead{font-size:13px;color:var(--muted);margin:0 0 14px;line-height:1.5}
+.group{margin-top:16px}
+.group:first-child{margin-top:0}
+.ghead{display:flex;align-items:baseline;gap:8px;margin:0 0 8px;flex-wrap:wrap}
+.ghead b{font-size:14px}
+.ghead span{font-size:12px;color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.tile{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px;cursor:pointer;font:inherit;color:inherit;text-align:left;min-height:56px}
+.tile:hover{border-color:var(--orange)}
+.tile.on{border-color:var(--orange);background:#fff7ed;box-shadow:inset 0 0 0 1px var(--orange)}
+.tile .ic{flex:0 0 36px;height:36px;border-radius:9px;background:#f0f1f3;display:grid;place-items:center}
+.tile.on .ic{background:var(--orange)}
+.tile .ic svg{width:24px;height:24px}
+.tile .nm{font-size:13px;font-weight:750;line-height:1.25}
+.tile .nm small{display:block;font-weight:500;color:var(--muted);font-size:12px}
+.detail{margin-top:16px;scroll-margin-top:12px}
+.dhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.dtitle{display:flex;gap:14px;align-items:center}
+.bigic{width:58px;height:58px;border-radius:14px;background:var(--orange);display:grid;place-items:center;flex:0 0 58px}
+.bigic svg{width:36px;height:36px}
+.dtitle h2{margin:0;font-size:22px}
+.dtitle .hiname{font-size:15px;color:var(--muted);font-weight:600}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.tag{font-size:11.5px;font-weight:800;border-radius:6px;padding:3px 8px;background:#f0f1f3;color:#424852}
+.tag.warn{background:#fef3c7;color:#78350f}
+.tag.dat{background:#e0ecff;color:#1e3a8a}
+.nav{display:flex;gap:6px}
+.btn{border:1px solid #d4d8de;background:#fff;color:var(--ink);border-radius:9px;padding:9px 12px;font:inherit;font-weight:750;font-size:13px;cursor:pointer}
+.btn:hover{border-color:var(--orange)}
+.dgrid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px;align-items:start}
+.anim{background:#f8f9fb;border:1px solid var(--line);border-radius:14px;padding:8px}
+.anim svg{display:block;width:100%;height:auto}
+.status{margin-top:8px;border-radius:9px;padding:8px 12px;font-size:13px;font-weight:800;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.status.ok{background:#dcfce7;color:#14532d}
+.status.bad{background:#fee2e2;color:#7f1d1d}
+.status .r{font-variant-numeric:tabular-nums;font-weight:700}
+body.lang-both span.hi::before{content:" · ";color:inherit}
+body.lang-both .mn span.hi::before{content:""}
+body.lang-both #astatR span.hi{display:none}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:14px;height:8px;border-radius:2px;margin-right:5px;vertical-align:0}
+.fcf{display:inline-flex;border:2px solid var(--ink);border-radius:3px;background:#fff;font-family:Consolas,Menlo,monospace;font-size:17px;font-weight:700;margin-bottom:14px;max-width:100%}
+.fcf>span{padding:6px 11px;display:flex;align-items:center}
+.fcf>span+span{border-left:2px solid var(--ink)}
+.fcf svg{width:22px;height:22px}
+.sec{margin:0 0 14px}
+.sec h3{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#8a4b08;margin:0 0 6px}
+.t{font-size:14.5px;line-height:1.7;margin:0 0 6px}
+.hi{display:none}
+body.lang-hi .hi,body.lang-both .hi{display:block}
+body.lang-hi .en{display:none}
+span.hi{display:none}
+body.lang-hi span.hi,body.lang-both span.hi{display:inline}
+body.lang-both .t.hi{color:#424852;border-left:3px solid #fed7aa;padding-left:10px}
+body.lang-both .tile .nm small.hi{display:block}
+body.lang-hi .tile .nm small.hi{display:block}
+.mist{background:#fff8e7;border:1px solid #f4d58a;border-radius:12px;padding:12px 14px}
+.mist h3{color:#674b0b}
+.lower{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:16px}
+/* frame tab */
+.bigframe{display:flex;justify-content:center;margin:10px 0 6px;overflow:auto}
+.bigframe .fcf{font-size:24px;margin:0}
+.bigframe .fcf>span{padding:10px 16px}
+.bigframe .fcf svg{width:30px;height:30px}
+.parts{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:14px}
+.part{border:1px solid var(--line);border-radius:12px;padding:12px}
+.part .no{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--orange);font-weight:800;font-size:12px;margin-right:6px}
+.part b{font-size:14px}
+.part .t{font-size:13.5px;margin-top:6px}
+.readout{margin-top:16px;background:#17191c;color:#fff;border-radius:12px;padding:14px 16px}
+.readout .t{color:#e5e7eb}
+body.lang-both .readout .t.hi{color:#d2d5da}
+.mods{width:100%;border-collapse:collapse;font-size:14px}
+.mods td{padding:12px 10px;border-bottom:1px solid #eceef1;vertical-align:top}
+.mods tr:last-child td{border-bottom:0}
+.mods td:first-child{width:64px;text-align:center;font-size:24px;font-weight:700;font-family:Consolas,Menlo,monospace}
+.mods .mn{font-weight:800;margin-bottom:2px}
+.mods .t{font-size:13.5px;margin:2px 0}
+.symb{display:inline-grid;place-items:center;min-width:40px;height:40px;border:2px solid var(--ink);border-radius:50%;font-size:18px;padding:0 4px}
+.symb.box{border-radius:3px;font-size:15px;padding:0 6px}
+.hidden{display:none!important}
+.footer{margin-top:20px;text-align:center;color:var(--muted);font-size:12px;line-height:1.7}
+@media(max-width:860px){.dgrid,.lower{grid-template-columns:1fr}.hero{padding:21px}.wrap{padding:16px 12px 28px}}
+@media(max-width:430px){.tiles{grid-template-columns:1fr 1fr}.tile{padding:8px;gap:8px}.tile .ic{flex-basis:30px;height:30px}.tile .nm{font-size:12px}.dtitle h2{font-size:19px}.fcf{font-size:15px}.fcf>span{padding:5px 8px}.bigframe .fcf{font-size:17px}.bigframe .fcf>span{padding:8px 10px}.bigframe .fcf svg{width:22px;height:22px}}
+</style></head>
+<body class="lang-both"><main class="wrap">
+<div class="brand"><div class="logo">M</div><div><strong>MachiNest</strong><small>Building a smarter CNC community.</small></div></div>
+
+<section class="hero"><div class="eyebrow">Free CNC Learning</div><h1>GD&amp;T Symbol Guide</h1><p>All 14 GD&amp;T symbols explained in simple English and Hindi, each with a live animation showing what the tolerance zone controls, how to check it on the shop floor, and the mistakes people commonly make.</p><span class="pill">14 SYMBOLS</span><span class="pill">ENGLISH + हिंदी</span><span class="pill">ANIMATED</span><span class="pill">NO LOGIN REQUIRED</span></section>
+
+<div class="bar">
+  <div class="tabs"><button class="tab active" data-tab="symbols">Symbols</button><button class="tab" data-tab="frame">Read a Frame</button><button class="tab" data-tab="mods">Modifiers</button></div>
+  <div class="lang" id="lang"><button data-l="en">English</button><button data-l="hi">हिंदी</button><button data-l="both" class="on">Both</button></div>
+</div>
+
+<!-- SYMBOLS -->
+<section id="symbols" class="panel">
+  <div class="card">
+    <h2><span class="en">Pick a symbol</span><span class="hi">Symbol चुनें</span></h2>
+    <div id="groups"></div>
+  </div>
+  <div class="card detail" id="detail"></div>
+</section>
+
+<!-- FRAME -->
+<section id="frame" class="panel hidden"><div class="card">
+  <h2><span class="en">How to read a feature control frame</span><span class="hi">Feature control frame कैसे पढ़ें</span></h2>
+  <p class="lead">The box on the drawing that holds a GD&amp;T symbol. Read it from left to right.</p>
+  <div class="bigframe"><div class="fcf" id="bigFcf"></div></div>
+  <div class="parts" id="parts"></div>
+  <div class="readout">
+    <p class="t en"><strong>Read it as:</strong> The axis of this hole must lie inside a Ø0.1 mm cylinder at its true position. Bonus tolerance is allowed as the hole grows bigger than its smallest size (MMC). Measure from datum A first, then B, then C.</p>
+    <p class="t hi"><strong>ऐसे पढ़ें:</strong> इस hole का axis, true position पर बने Ø0.1 mm cylinder के अंदर रहना चाहिए। Hole अपने सबसे छोटे size (MMC) से जितना बड़ा होगा, उतना bonus tolerance मिलेगा। पहले datum A, फिर B, फिर C से नापें।</p>
+  </div>
+  <div class="lower">
+    <div class="sec"><h3>Datum feature</h3>
+      <p class="t en">A letter in a box with a triangle on the drawing marks a datum surface, like <strong>A</strong>. It is the reference you hold or rest the part on while measuring.</p>
+      <p class="t hi">Drawing पर triangle के साथ box में letter, जैसे <strong>A</strong>, datum surface दिखाता है। नापते समय part को इसी reference पर रखते या पकड़ते हैं।</p></div>
+    <div class="sec"><h3>Basic dimension</h3>
+      <p class="t en">A dimension inside a box, like <span class="symb box">30</span>, is the exact theoretical value with no ± tolerance. The allowed error comes from the feature control frame.</p>
+      <p class="t hi">Box के अंदर dimension, जैसे <span class="symb box">30</span>, exact theoretical value है, इस पर ± tolerance नहीं होता। Error की limit feature control frame से आती है।</p></div>
+  </div>
+</div></section>
+
+<!-- MODIFIERS -->
+<section id="mods" class="panel hidden"><div class="card">
+  <h2><span class="en">Modifiers and extra symbols</span><span class="hi">Modifiers और extra symbols</span></h2>
+  <p class="lead">Small symbols written inside or next to the feature control frame that change its meaning.</p>
+  <table class="mods" id="modTable"></table>
+</div></section>
+
+<div class="footer">MachiNest GD&amp;T Symbol Guide · Free CNC learning<br>Simplified for learning, based on ASME Y14.5 and ISO GPS. Always follow your drawing and its standard.</div>
+</main>
+
+<script>
+/* ---------- symbol icons (24x24) ---------- */
+const AH=(x,y,a)=>{const r=a*Math.PI/180,l=6,w=3;const bx=x-l*Math.cos(r),by=y-l*Math.sin(r);return `<path d="M${x} ${y} L${bx+w*Math.sin(r)} ${by-w*Math.cos(r)} L${bx-w*Math.sin(r)} ${by+w*Math.cos(r)} Z" fill="currentColor" stroke="none"/>`};
+const ICON={
+ straightness:'<path d="M3 12H21"/>',
+ flatness:'<path d="M7 7H22L17 17H2Z"/>',
+ circularity:'<circle cx="12" cy="12" r="8"/>',
+ cylindricity:'<circle cx="12" cy="12" r="6"/><path d="M3 21L10 3M14 21L21 3"/>',
+ profileLine:'<path d="M3 17A9 9 0 0 1 21 17"/>',
+ profileSurface:'<path d="M3 17A9 9 0 0 1 21 17Z"/>',
+ parallelism:'<path d="M5 20L11 4M13 20L19 4"/>',
+ perpendicularity:'<path d="M3 20H21M12 20V4"/>',
+ angularity:'<path d="M3 20H21M3 20L18 6"/>',
+ position:'<circle cx="12" cy="12" r="6"/><path d="M12 2V22M2 12H22"/>',
+ concentricity:'<circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="9"/>',
+ symmetry:'<path d="M6 6H18M2 12H22M6 18H18"/>',
+ circularRunout:'<path d="M5 19L18 6"/>'+AH(19.5,4.5,-45),
+ totalRunout:'<path d="M3 20H13M3 20L10 7M9 20L16 7"/>'+AH(11,5,-61.5)+AH(17,5,-61.5)
+};
+function icon(id,color){return `<svg viewBox="0 0 24 24" fill="none" stroke="${color||'currentColor'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:${color||'currentColor'}">${ICON[id]}</svg>`}
+
+/* ---------- content ---------- */
+const GROUPS=[
+ {id:'form',en:'Form',hi:'आकार',note:'No datum needed',noteHi:'Datum नहीं चाहिए'},
+ {id:'profile',en:'Profile',hi:'प्रोफाइल',note:'Datum optional',noteHi:'Datum ज़रूरी नहीं'},
+ {id:'orientation',en:'Orientation',hi:'दिशा',note:'Datum needed',noteHi:'Datum ज़रूरी'},
+ {id:'location',en:'Location',hi:'स्थिति',note:'Datum needed',noteHi:'Datum ज़रूरी'},
+ {id:'runout',en:'Runout',hi:'रनआउट',note:'Datum axis needed',noteHi:'Datum axis ज़रूरी'}
+];
+const S=[
+{id:'straightness',g:'form',en:'Straightness',hi:'स्ट्रेटनेस (सीधापन)',fcf:['0.02'],
+ m:['A line on the surface must lie between two parallel lines 0.02 mm apart. It controls bend and waviness along that line. With Ø in front of the value, it controls the axis instead, inside a Ø0.02 cylinder.','Surface की एक line, 0.02 mm दूरी वाली दो parallel lines के बीच रहनी चाहिए। यह उस line में bend और waviness को control करता है। Value के आगे Ø हो तो यह axis को Ø0.02 cylinder के अंदर control करता है।'],
+ c:['Rest the part on a surface plate or between centres and run a dial along the line. The total dial movement must be within 0.02 mm. A straight edge and feeler gauge also works.','Part को surface plate पर या centres के बीच रखें और dial को line के साथ चलाएं। Dial का कुल movement 0.02 mm के अंदर होना चाहिए। Straight edge और feeler gauge से भी check कर सकते हैं।'],
+ x:['Straightness checks one line at a time, not the whole surface. For a whole flat surface use flatness.','Straightness एक समय में एक line check करता है, पूरी surface नहीं। पूरी flat surface के लिए flatness use करें।']},
+{id:'flatness',g:'form',en:'Flatness',hi:'फ्लैटनेस (समतलता)',fcf:['0.05'],
+ m:['The whole surface must lie between two parallel planes 0.05 mm apart. No datum is needed: the two planes can tilt to fit the surface.','पूरी surface, 0.05 mm दूरी वाले दो parallel planes के बीच रहनी चाहिए। Datum नहीं चाहिए: दोनों planes surface के हिसाब से tilt हो सकते हैं।'],
+ c:['Place the part on three adjustable jacks on a surface plate and level it. Then sweep the dial over the whole surface. Max − min is the flatness.','Part को surface plate पर 3 adjustable jack पर रखकर level करें। फिर dial को पूरी surface पर घुमाएं। Max − min ही flatness है।'],
+ x:['Resting the part flat on the plate and reading the top face gives parallelism, not flatness. It only works if the bottom face is already flat.','Part को सीधे plate पर रखकर ऊपर की face पढ़ने से parallelism मिलता है, flatness नहीं। यह तभी सही है जब नीचे की face पहले से flat हो।']},
+{id:'circularity',g:'form',en:'Circularity (Roundness)',hi:'सर्कुलैरिटी (गोलाई)',fcf:['0.01'],
+ m:['Every cross-section must lie between two concentric circles 0.01 mm apart (on radius). Each section is checked on its own and no datum is needed.','हर cross-section, 0.01 mm (radius पर) दूरी वाले दो concentric circles के बीच रहना चाहिए। हर section अलग check होता है, datum नहीं चाहिए।'],
+ c:['A roundness machine gives the true value. In the shop, a V-block and dial gives a rough idea, but odd lobes (3 or 5) can fool a V-block.','सही value roundness machine से मिलती है। Shop में V-block और dial से अंदाज़ा मिलता है, लेकिन odd lobes (3 या 5) में V-block गलत reading दे सकता है।'],
+ x:['A micrometer measures diameter, not roundness. A 3-lobe part can show the same diameter all around and still be out of round.','Micrometer diameter नापता है, गोलाई नहीं। 3-lobe वाला part हर तरफ same diameter दिखा सकता है फिर भी गोल नहीं होता।']},
+{id:'cylindricity',g:'form',en:'Cylindricity',hi:'सिलिंड्रिसिटी',fcf:['0.02'],
+ m:['The whole cylindrical surface must lie between two coaxial cylinders 0.02 mm apart (on radius). It controls roundness, straightness and taper together.','पूरी cylindrical surface, 0.02 mm (radius पर) दूरी वाले दो coaxial cylinders के बीच रहनी चाहिए। यह roundness, straightness और taper तीनों को एक साथ control करता है।'],
+ c:['Use a roundness machine or CMM with many sections. In the shop, check roundness at several sections and taper over the full length.','Roundness machine या CMM पर कई sections से check करें। Shop में कई जगह roundness और पूरी length पर taper check करें।'],
+ x:['Checking only two or three sections can miss a barrel or banana shape between them.','सिर्फ 2–3 sections check करने पर बीच का barrel या banana shape छूट सकता है।']},
+{id:'profileLine',g:'profile',en:'Profile of a line',hi:'प्रोफाइल ऑफ ए लाइन',fcf:['0.1','A'],
+ m:['Each cross-section of a curved surface must lie between two curves 0.1 mm apart, built equally on both sides of the true profile from the drawing.','Curved surface का हर section, drawing वाले true profile के दोनों तरफ बराबर बनी दो curves (0.1 mm दूरी) के बीच रहना चाहिए।'],
+ c:['Profile projector with an overlay, a template or radius gauge, or CMM scanning section by section.','Profile projector पर overlay से, template या radius gauge से, या CMM पर section-wise scanning से।'],
+ x:['0.1 is the full band width (±0.05 each side), not ±0.1, unless the drawing shows a Ⓤ unequal zone.','0.1 पूरी band की चौड़ाई है (हर तरफ ±0.05), ±0.1 नहीं, जब तक drawing पर Ⓤ unequal zone न हो।']},
+{id:'profileSurface',g:'profile',en:'Profile of a surface',hi:'प्रोफाइल ऑफ ए सरफेस',fcf:['0.2','A','B'],
+ m:['The whole surface must lie between two surfaces 0.2 mm apart around the true shape. With datums, it also controls size, location and angle in one go.','पूरी surface, true shape के आसपास 0.2 mm दूरी वाली दो surfaces के बीच रहनी चाहिए। Datum के साथ यह size, location और angle भी एक साथ control करता है।'],
+ c:['CMM scanning compared with the CAD model, or a checking fixture with a gap gauge or dial at fixed points.','CMM पर CAD model से compare करके scanning, या checking fixture में gap gauge या dial से fixed points पर।'],
+ x:['It is not only a shape check. With datums, a perfectly shaped surface that sits 0.15 mm out of place is a reject.','यह सिर्फ shape का check नहीं है। Datum के साथ, shape perfect हो फिर भी surface 0.15 mm खिसकी हो तो reject।']},
+{id:'parallelism',g:'orientation',en:'Parallelism',hi:'पैरेललिज़्म (समानांतरता)',fcf:['0.03','A'],
+ m:['The surface must lie between two planes 0.03 mm apart that are exactly parallel to datum A. The zone can move up or down, but it cannot tilt.','Surface, datum A के बिल्कुल parallel 0.03 mm दूरी वाले दो planes के बीच रहनी चाहिए। Zone ऊपर-नीचे हो सकता है, लेकिन tilt नहीं हो सकता।'],
+ c:['Rest datum A on the surface plate and sweep a dial over the top surface. Max − min must be within 0.03 mm.','Datum A को surface plate पर रखें और dial को ऊपर की surface पर घुमाएं। Max − min 0.03 mm के अंदर होना चाहिए।'],
+ x:['Parallelism does not control the height. A part can be perfectly parallel and still be oversize.','Parallelism height को control नहीं करता। Part पूरी तरह parallel होकर भी oversize हो सकता है।']},
+{id:'perpendicularity',g:'orientation',en:'Perpendicularity',hi:'पर्पेंडिकुलैरिटी (लंबवतता)',fcf:['0.02','A'],
+ m:['The face must lie between two planes 0.02 mm apart that are exactly 90° to datum A. With Ø, an axis such as a pin or hole must stay inside a Ø0.02 cylinder at 90°.','Face, datum A से बिल्कुल 90° पर बने 0.02 mm दूरी वाले दो planes के बीच रहनी चाहिए। Ø के साथ, pin या hole का axis 90° पर Ø0.02 cylinder के अंदर रहे।'],
+ c:['Rest datum A on a surface plate. Run a dial on a height stand up the face, or use a cylinder square with a dial.','Datum A को surface plate पर रखें। Height stand पर dial को face के साथ ऊपर-नीचे चलाएं, या cylinder square और dial use करें।'],
+ x:['A try square only shows a light gap, not a value. Use a dial when you need a number.','Try square सिर्फ light gap दिखाता है, value नहीं। Value चाहिए तो dial use करें।']},
+{id:'angularity',g:'orientation',en:'Angularity',hi:'एंगुलैरिटी (कोण)',fcf:['0.05','A'],
+ m:['The surface must lie between two parallel planes 0.05 mm apart, set at the exact basic angle (here 30°) to datum A. The zone is in mm, not in degrees.','Surface, datum A से exact basic angle (यहाँ 30°) पर बने 0.05 mm दूरी वाले दो parallel planes के बीच रहनी चाहिए। Zone mm में होता है, degree में नहीं।'],
+ c:['Set the part on a sine bar or angle plate at 30° so the face becomes level. Sweep a dial: max − min within 0.05 mm.','Part को sine bar या angle plate पर 30° पर सेट करें ताकि face level हो जाए। Dial घुमाएं: max − min 0.05 mm के अंदर।'],
+ x:['Checking the angle with a protractor to ±0.5° is not the same. On a long face, a tiny angle error can be more than 0.05 mm.','Protractor से ±0.5° तक angle check करना same नहीं है। लंबी face पर छोटा सा angle error भी 0.05 mm से ज़्यादा हो सकता है।']},
+{id:'position',g:'location',en:'Position (True position)',hi:'पोज़िशन (ट्रू पोज़िशन)',fcf:['Ø0.1 Ⓜ','A','B','C'],
+ m:['The hole axis must lie inside a Ø0.1 cylinder centred at the true position. The true position is set by boxed basic dimensions from datums A, B and C.','Hole का axis, true position पर बने Ø0.1 cylinder के अंदर रहना चाहिए। True position, datum A, B, C से box वाली basic dimensions से तय होती है।'],
+ c:['On a CMM, measure the hole centre from the datums. Position = 2 × √(ΔX² + ΔY²). With Ⓜ, add bonus tolerance equal to how much the hole is bigger than its smallest size.','CMM पर datum से hole centre नापें। Position = 2 × √(ΔX² + ΔY²)। Ⓜ होने पर, hole अपने सबसे छोटे size से जितना बड़ा है उतना bonus tolerance जोड़ें।'],
+ x:['Ø0.1 position is not ±0.05 in X and Y. A hole off by 0.05 in both X and Y is 0.071 from true position, which is Ø0.141, so it fails.','Ø0.1 position, X और Y में ±0.05 नहीं है। X और Y दोनों में 0.05 हटा hole true position से 0.071 दूर है, यानी Ø0.141, इसलिए reject।']},
+{id:'concentricity',g:'location',en:'Concentricity',hi:'कॉन्सेंट्रिसिटी',fcf:['Ø0.02','A'],old:true,
+ m:['The median points of the feature (the middle of every pair of opposite surface points) must lie inside a Ø0.02 cylinder around datum axis A.','Feature के median points (surface के हर आमने-सामने वाले points का बीच), datum axis A के चारों ओर Ø0.02 cylinder के अंदर रहने चाहिए।'],
+ c:['You need a CMM or roundness machine to find the median points. A dial check on a rotating part gives runout, not concentricity.','Median points निकालने के लिए CMM या roundness machine चाहिए। घूमते part पर dial से runout मिलता है, concentricity नहीं।'],
+ x:['Removed from ASME Y14.5 in 2018, but still in ISO. Runout or position usually does the same job and is much easier to check.','ASME Y14.5 (2018) से हटा दिया गया है, ISO में अभी भी है। आम तौर पर runout या position से यही काम होता है और check करना बहुत आसान है।']},
+{id:'symmetry',g:'location',en:'Symmetry',hi:'सिमेट्री',fcf:['0.1','A'],old:true,
+ m:['The median points of the slot (the middle between its two side walls) must lie between two planes 0.1 mm apart, centred on datum plane A.','Slot के median points (दोनों side walls का बीच), datum plane A पर centre वाले 0.1 mm दूरी के दो planes के बीच रहने चाहिए।'],
+ c:['Measure each wall from both outer faces at several depths. Half of the difference gives the offset. A CMM is best.','कई depth पर दोनों बाहरी faces से हर wall की दूरी नापें। फर्क का आधा offset बताता है। CMM सबसे अच्छा।'],
+ x:['Removed from ASME Y14.5 in 2018, but still in ISO. For keyways and slots, position with a datum is the modern way.','ASME Y14.5 (2018) से हटा दिया गया है, ISO में अभी भी है। Keyway और slot के लिए datum के साथ position आज का सही तरीका है।']},
+{id:'circularRunout',g:'runout',en:'Circular runout',hi:'सर्कुलर रनआउट',fcf:['0.05','A'],
+ m:['When the part turns one full round on datum axis A, a dial gauge touching the surface must not move more than 0.05 mm in total. Each cross-section is checked on its own.','जब part को datum axis A पर एक पूरा चक्कर घुमाते हैं, तो surface पर लगे dial gauge की सुई कुल 0.05 mm से ज़्यादा नहीं हिलनी चाहिए। हर section को अलग-अलग check करते हैं।'],
+ c:['Hold the part on the datum (between centres, V-block or collet). Touch the dial at one point, rotate once and note max − min. Repeat at a few points along the length.','Part को datum पर पकड़ें (centre, V-block या collet में)। Dial को एक जगह लगाएं, एक चक्कर घुमाएं और max − min नोट करें। लंबाई में 2–3 जगह दोहराएं।'],
+ x:['If the part is 0.015 mm off-centre, the dial shows 0.030 mm. Runout is the full needle movement, which is twice the off-centre amount.','Part 0.015 mm off-centre है तो dial 0.030 mm दिखाएगा। Runout सुई का पूरा movement है, जो off-centre का दोगुना होता है।']},
+{id:'totalRunout',g:'runout',en:'Total runout',hi:'टोटल रनआउट',fcf:['0.05','A'],
+ m:['While the part turns on datum axis A and the dial travels along the full length, the total needle movement over the whole surface must stay within 0.05 mm.','Part datum axis A पर घूमते हुए और dial पूरी length पर चलते हुए, पूरी surface पर सुई का कुल movement 0.05 mm के अंदर रहना चाहिए।'],
+ c:['Hold the part on the datum. Keep it rotating while you move the dial along a straight guide parallel to the axis. Take max − min of all readings.','Part को datum पर पकड़ें। Part को घुमाते रहें और dial को axis के parallel straight guide पर पूरी length चलाएं। सभी readings का max − min लें।'],
+ x:['Total runout also catches taper and bend. A part can pass circular runout at every section and still fail total runout.','Total runout taper और bend भी पकड़ता है। Part हर section पर circular runout pass करके भी total runout में fail हो सकता है।']}
+];
+const MODS=[
+ ['Ⓜ','Maximum material condition (MMC)','मैक्सिमम मटेरियल कंडीशन (MMC)','The part has the most material: the smallest hole or the biggest shaft. As the size moves away from MMC, you get extra (bonus) tolerance.','Part में सबसे ज़्यादा material: सबसे छोटा hole या सबसे बड़ा shaft। Size जितना MMC से दूर जाए, उतना extra (bonus) tolerance मिलता है।'],
+ ['Ⓛ','Least material condition (LMC)','लीस्ट मटेरियल कंडीशन (LMC)','The part has the least material: the biggest hole or the smallest shaft. Used to protect minimum wall thickness.','Part में सबसे कम material: सबसे बड़ा hole या सबसे छोटा shaft। Minimum wall thickness बचाने के लिए use होता है।'],
+ ['Ⓢ','Regardless of feature size (RFS)','रिगार्डलेस ऑफ फीचर साइज़ (RFS)','No bonus tolerance, whatever the size. This is the default today when no Ⓜ or Ⓛ is shown, so Ⓢ is rarely written now.','Size कुछ भी हो, bonus tolerance नहीं मिलता। आजकल Ⓜ या Ⓛ न हो तो यही default है, इसलिए Ⓢ अब कम लिखा जाता है।'],
+ ['Ø','Diameter zone','डायमीटर ज़ोन','The tolerance zone is a round cylinder instead of two parallel lines or planes. Common with position.','Tolerance zone दो parallel lines या planes की जगह गोल cylinder होता है। Position के साथ आम है।'],
+ ['Ⓟ','Projected tolerance zone','प्रोजेक्टेड टॉलरेंस ज़ोन','The zone extends above the part by the given height. Used for threaded holes so the bolt or stud lines up with the mating part.','Zone, part के ऊपर दी गई height तक बढ़ जाता है। Threaded holes के लिए use होता है, ताकि bolt या stud mating part से line up हो।'],
+ ['Ⓕ','Free state','फ्री स्टेट','Check the part without clamping or restraint. For flexible parts like rubber, plastic or thin sheet.','Part को बिना clamp या दबाव के check करें। Rubber, plastic या पतली sheet जैसे flexible parts के लिए।'],
+ ['Ⓣ','Tangent plane','टैन्जेंट प्लेन','Only the plane touching the high points is controlled, not every small low spot. Used for mating faces.','सिर्फ high points को छूने वाला plane control होता है, हर छोटा low spot नहीं। Mating faces के लिए use होता है।'],
+ ['Ⓤ','Unequal bilateral (profile)','अनइक्वल बाइलेटरल','Shifts the profile zone more to one side, for example to allow extra material for finishing.','Profile zone को एक तरफ ज़्यादा shift करता है, जैसे finishing के लिए extra material रखने के लिए।'],
+ ['<span class="symb box">30</span>','Basic dimension','बेसिक डायमेंशन','A boxed exact value with no ± tolerance. The allowed error comes from the feature control frame.','Box में exact value, इस पर ± tolerance नहीं होता। Error की limit feature control frame से आती है।'],
+ ['<span class="symb box">A</span>','Datum feature','डेटम फीचर','Marks a reference surface or axis, shown with a triangle on the drawing. Measurements are taken from it in the order given in the frame.','Reference surface या axis दिखाता है, drawing पर triangle के साथ। Frame में दिए क्रम में इसी से नापते हैं।']
+];
+
+/* ---------- language ---------- */
+function setLang(l){document.body.className='lang-'+l;document.querySelectorAll('#lang button').forEach(b=>b.classList.toggle('on',b.dataset.l===l));try{localStorage.setItem('gdtLang',l)}catch(e){}}
+document.querySelectorAll('#lang button').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.l)));
+try{const l=localStorage.getItem('gdtLang');if(l==='en'||l==='hi'||l==='both')setLang(l)}catch(e){}
+const bi=(en,hi,tag)=>`<${tag||'p'} class="t en">${en}</${tag||'p'}><${tag||'p'} class="t hi">${hi}</${tag||'p'}>`;
+
+/* ---------- feature control frame ---------- */
+function fcf(id,parts){return `<div class="fcf"><span>${icon(id)}</span>${parts.map(p=>`<span>${p}</span>`).join('')}</div>`}
+
+/* ---------- animations (viewBox 360x240) ---------- */
+const ZC='#1D9E75',ZF='rgba(29,158,117,.13)',PC='#ff8500',PF='rgba(255,133,0,.14)',BAD='#E24B4A',BADF='rgba(226,75,74,.14)',INK='#17191c',MU='#8a909a';
+const DEFS=`<defs><pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="#9aa1ab" stroke-width="2"/></pattern><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${INK}"/></marker></defs>`;
+const err=t=>0.55+0.62*Math.pow(Math.max(0,Math.sin(t*0.55)),6); // mostly inside, sometimes outside (>1)
+const txt=(x,y,s,o)=>`<text x="${x}" y="${y}" font-size="${(o&&o.size)||12}" font-weight="${(o&&o.w)||700}" fill="${(o&&o.c)||MU}" text-anchor="${(o&&o.a)||'start'}" font-family="Inter,Segoe UI,Arial,sans-serif">${s}</text>`;
+const pathOf=pts=>'M'+pts.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' L');
+const datum=(x,y,w,h,l)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#hatch)" stroke="#9aa1ab"/>`+(l?txt(x+w-4,y+h-4,l,{a:'end',c:INK,size:11}):'');
+const dimV=(x,y1,y2,l)=>`<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="${INK}" stroke-width="1.2" marker-start="url(#arr)" marker-end="url(#arr)"/>`+txt(x+6,(y1+y2)/2+4,l,{c:INK,size:11});
+const pc=ok=>ok?PC:BAD, pf=ok=>ok?PF:BADF;
+
+const ANIM={
+straightness(t){
+  const e=err(t),W=36,y0=110,A=e*W/2,pts=[];
+  for(let x=30;x<=330;x+=4){const u=(x-30)/300;pts.push([x,y0+A*(0.72*Math.sin(u*7+t*1.4)+0.28*Math.sin(u*17-t*0.9))])}
+  const dev=pts.map(p=>p[1]-y0),mx=Math.max(...dev),mn=Math.min(...dev),zc=y0+(mx+mn)/2,ok=(mx-mn)<=W;
+  let s=`<rect x="22" y="${zc-W/2}" width="316" height="${W}" fill="${ZF}"/><line x1="22" y1="${zc-W/2}" x2="338" y2="${zc-W/2}" stroke="${ZC}" stroke-width="1.6" stroke-dasharray="6 4"/><line x1="22" y1="${zc+W/2}" x2="338" y2="${zc+W/2}" stroke="${ZC}" stroke-width="1.6" stroke-dasharray="6 4"/>`;
+  s+=`<path d="${pathOf(pts)} L330 200 L30 200 Z" fill="${pf(ok)}"/><path d="${pathOf(pts)}" fill="none" stroke="${pc(ok)}" stroke-width="3"/>`;
+  s+=dimV(346,zc-W/2,zc+W/2,'')+txt(338,zc-W/2-8,'Zone 0.02',{a:'end',c:ZC})+txt(36,190,'Part (side view)',{c:MU})+txt(36,40,'Two parallel lines, 0.02 apart',{c:INK,size:12});
+  return{s,ok,r:((mx-mn)/W*0.02).toFixed(3)};
+},
+flatness(t){
+  const e=err(t),W=30,A=e*W/2;
+  const P=(x,z,y)=>[70+x+z*0.75,150-y-z*0.5];
+  const h=(x,z)=>A*(0.65*Math.sin(x*0.028+t*1.2)*Math.cos(z*0.035-t*0.8)+0.35*Math.sin((x+z)*0.05-t));
+  let hs=[];for(let x=0;x<=220;x+=20)for(let z=0;z<=120;z+=20)hs.push(h(x,z));
+  const mx=Math.max(...hs),mn=Math.min(...hs),ok=(mx-mn)<=W,zc=(mx+mn)/2;
+  const plane=y=>{const a=P(0,0,y),b=P(220,0,y),c=P(220,120,y),d=P(0,120,y);return pathOf([a,b,c,d])+' Z'};
+  let s=`<path d="${plane(zc-W/2)}" fill="${ZF}" stroke="${ZC}" stroke-width="1.5" stroke-dasharray="6 4"/>`;
+  for(let z=0;z<=120;z+=20){const pts=[];for(let x=0;x<=220;x+=10)pts.push(P(x,z,h(x,z)));s+=`<path d="${pathOf(pts)}" fill="none" stroke="${pc(ok)}" stroke-width="${z===0?2.6:1.4}" opacity="${z===0?1:.75}"/>`}
+  for(let x=0;x<=220;x+=44){const pts=[];for(let z=0;z<=120;z+=10)pts.push(P(x,z,h(x,z)));s+=`<path d="${pathOf(pts)}" fill="none" stroke="${pc(ok)}" stroke-width="1.2" opacity=".6"/>`}
+  s+=`<path d="${plane(zc+W/2)}" fill="${ZF}" stroke="${ZC}" stroke-width="1.5" stroke-dasharray="6 4"/>`;
+  const a=P(220,0,zc+W/2),b=P(220,0,zc-W/2);s+=dimV(a[0]+14,a[1],b[1],'0.05');
+  s+=txt(20,30,'Surface between two parallel planes',{c:INK})+txt(20,226,'Planes can tilt to fit; no datum',{c:MU});
+  return{s,ok,r:((mx-mn)/W*0.05).toFixed(3)};
+},
+circularity(t){
+  const e=err(t),cx=210,cy=130,R=74,W=22,A=e*W/2;
+  const r=th=>R+A*(0.75*Math.sin(3*th+t*1.1)+0.25*Math.sin(5*th-t*1.6));
+  const pts=[],rs=[];for(let i=0;i<=120;i++){const th=i/120*2*Math.PI,rr=r(th);rs.push(rr);pts.push([cx+rr*Math.cos(th),cy-rr*Math.sin(th)])}
+  const mx=Math.max(...rs),mn=Math.min(...rs),ok=(mx-mn)<=W,rc=(mx+mn)/2;
+  let s=`<circle cx="${cx}" cy="${cy}" r="${rc+W/2}" fill="${ZF}" stroke="${ZC}" stroke-width="1.6" stroke-dasharray="6 4"/><circle cx="${cx}" cy="${cy}" r="${rc-W/2}" fill="#f8f9fb" stroke="${ZC}" stroke-width="1.6" stroke-dasharray="6 4"/>`;
+  s+=`<path d="${pathOf(pts)} Z" fill="${pf(ok)}" stroke="${pc(ok)}" stroke-width="3"/><circle cx="${cx}" cy="${cy}" r="3" fill="${INK}"/>`;
+  s+=`<line x1="${cx+rc-W/2}" y1="${cy}" x2="${cx+rc+W/2}" y2="${cy}" stroke="${INK}" stroke-width="1.2" marker-start="url(#arr)" marker-end="url(#arr)"/>`+txt(cx+rc+W/2+6,cy+4,'0.01',{c:INK,size:11});
+  s+=txt(14,26,'One cross-section',{c:INK})+txt(14,42,'between 2 concentric circles',{c:MU,size:11});
+  return{s,ok,r:((mx-mn)/W*0.01).toFixed(4)};
+},
+cylindricity(t){
+  const e=err(t),y0=120,R=58,W=22,A=e*W/2,x1=50,x2=300;
+  const d=(x,s)=>{const u=(x-x1)/(x2-x1);return A*(0.45*(u*2-1)+0.55*Math.sin(u*6+t*1.3+s))};
+  const top=[],bot=[];const ds=[];
+  for(let x=x1;x<=x2;x+=5){const a=d(x,0),b=d(x,1.7);ds.push(a,b);top.push([x,y0-R-a]);bot.push([x,y0+R+b])}
+  const mx=Math.max(...ds),mn=Math.min(...ds),ok=(mx-mn)<=W,mid=(mx+mn)/2,ro=R+mid+W/2,ri=R+mid-W/2;
+  let s=`<rect x="${x1-10}" y="${y0-ro}" width="${x2-x1+20}" height="${ro-ri}" fill="${ZF}"/><rect x="${x1-10}" y="${y0+ri}" width="${x2-x1+20}" height="${ro-ri}" fill="${ZF}"/>`;
+  [ro,ri].forEach(rr=>{s+=`<line x1="${x1-10}" y1="${y0-rr}" x2="${x2+10}" y2="${y0-rr}" stroke="${ZC}" stroke-width="1.5" stroke-dasharray="6 4"/><line x1="${x1-10}" y1="${y0+rr}" x2="${x2+10}" y2="${y0+rr}" stroke="${ZC}" stroke-width="1.5" stroke-dasharray="6 4"/><ellipse cx="${x2+10}" cy="${y0}" rx="14" ry="${rr}" fill="none" stroke="${ZC}" stroke-width="1.3" stroke-dasharray="4 4"/>`});
+  s+=`<path d="${pathOf(top)} L${pathOf(bot.slice().reverse()).slice(1)} Z" fill="${pf(ok)}" stroke="${pc(ok)}" stroke-width="2.6"/>`;
+  s+=`<line x1="${x1-24}" y1="${y0}" x2="${x2+26}" y2="${y0}" stroke="${MU}" stroke-dasharray="10 4 2 4"/>`;
+  s+=dimV(x2+30,y0-ro,y0-ri,'0.02')+txt(14,22,'Whole surface between 2 coaxial cylinders',{c:INK});
+  return{s,ok,r:((mx-mn)/W*0.02).toFixed(3)};
+},
+profileLine(t){
+  const e=err(t),W=26,A=e*W/2;
+  const f=x=>160-95*Math.sin(Math.PI*(x-40)/280);
+  const nrm=x=>{const dy=(f(x+1)-f(x-1))/2,L=Math.hypot(1,dy);return[dy/L,-1/L]};
+  const tp=[],o1=[],o2=[],act=[],dv=[];
+  for(let x=40;x<=320;x+=5){const [nx,ny]=nrm(x),y=f(x),u=(x-40)/280;const dd=A*(0.7*Math.sin(u*9+t*1.3)+0.3*Math.sin(u*21-t));dv.push(dd);
+    tp.push([x,y]);o1.push([x+nx*W/2,y+ny*W/2]);o2.push([x-nx*W/2,y-ny*W/2]);act.push([x+nx*dd,y+ny*dd])}
+  const ok=Math.max(...dv.map(Math.abs))<=W/2;
+  let s=`<path d="${pathOf(o1)} L${pathOf(o2.slice().reverse()).slice(1)} Z" fill="${ZF}"/><path d="${pathOf(o1)}" fill="none" stroke="${ZC}" stroke-width="1.5" stroke-dasharray="6 4"/><path d="${pathOf(o2)}" fill="none" stroke="${ZC}" stroke-width="1.5" stroke-dasharray="6 4"/>`;
+  s+=`<path d="${pathOf(act)} L320 205 L40 205 Z" fill="${pf(ok)}"/><path d="${pathOf(tp)}" fill="none" stroke="${INK}" stroke-width="1.2" stroke-dasharray="3 3"/><path d="${pathOf(act)}" fill="none" stroke="${pc(ok)}" stroke-width="3"/>`;
+  s+=datum(30,205,300,14,'A')+txt(14,24,'Each section within a 0.1 band',{c:INK})+txt(14,40,'around the true profile (dashed)',{c:MU,size:11});
+  return{s,ok,r:(Math.max(...dv.map(Math.abs))/(W/2)*0.05*2).toFixed(3)};
+},
+profileSurface(t){
+  const e=err(t),W=24,A=e*W/2;
+  const f=x=>178-80*Math.sin(Math.PI*(x-50)/240);
+  let s='',ok=true,worst=0;const layers=[[48,-44,.45],[24,-22,.7],[0,0,1]];
+  layers.forEach(([dx,dy,op],li)=>{
+    const o1=[],o2=[],act=[];
+    for(let x=50;x<=290;x+=6){const y=f(x),dyy=(f(x+1)-f(x-1))/2,L=Math.hypot(1,dyy),nx=dyy/L,ny=-1/L,u=(x-50)/240;
+      const dd=A*(0.7*Math.sin(u*8+t*1.2+li*1.3)+0.3*Math.sin(u*19-t+li));worst=Math.max(worst,Math.abs(dd));
+      o1.push([x+dx+nx*W/2,y+dy+ny*W/2]);o2.push([x+dx-nx*W/2,y+dy-ny*W/2]);act.push([x+dx+nx*dd,y+dy+ny*dd])}
+    s+=`<path d="${pathOf(o1)} L${pathOf(o2.slice().reverse()).slice(1)} Z" fill="${ZF}" opacity="${op}"/>`;
+    s+=`<path d="${pathOf(act)}" fill="none" stroke="__C__" stroke-width="${li===2?3:1.6}" opacity="${op}"/>`;
+  });
+  ok=worst<=W/2;s=s.split('__C__').join(pc(ok));
+  [[50,f(50)],[290,f(290)]].forEach(([x,y])=>{s+=`<line x1="${x}" y1="${y}" x2="${x+48}" y2="${y-44}" stroke="${MU}" stroke-dasharray="4 3"/>`});
+  s+=datum(40,204,300,14,'A')+txt(14,22,'Whole surface within a 0.2 band',{c:INK});
+  return{s,ok,r:(worst/(W/2)*0.1*2).toFixed(3)};
+},
+parallelism(t){
+  const e=err(t),W=26,A=e*W/2,y0=88;
+  const pts=[],dv=[];for(let x=60;x<=300;x+=5){const u=(x-180)/120;const d=A*(0.8*u*Math.sin(t*0.7)+0.35*Math.sin(x*0.05+t*1.5));dv.push(d);pts.push([x,y0+d])}
+  const mx=Math.max(...dv),mn=Math.min(...dv),ok=(mx-mn)<=W,zc=y0+(mx+mn)/2;
+  let s=`<rect x="44" y="${zc-W/2}" width="272" height="${W}" fill="${ZF}"/><line x1="44" y1="${zc-W/2}" x2="316" y2="${zc-W/2}" stroke="${ZC}" stroke-width="1.6" stroke-dasharray="6 4"/><line x1="44" y1="${zc+W/2}" x2="316" y2="${zc+W/2}" stroke="${ZC}" stroke-width="1.6" stroke-dasharray="6 4"/>`;
+  s+=`<path d="${pathOf(pts)} L300 190 L60 190 Z" fill="${pf(ok)}" stroke="${pc(ok)}" stroke-width="2.6"/>`;
+  s+=datum(30,190,300,16,'Datum A')+dimV(328,zc-W/2,zc+W/2,'0.03');
+  s+=txt(14,26,'Zone stays parallel to datum A',{c:INK});
+  return{s,ok,r:((mx-mn)/W*0.03).toFixed(3)};
+},
+perpendicularity(t){
+  const e=err(t),W=24,A=e*W/2,x0=210;
+  const pts=[],dv=[];for(let y=190;y>=46;y-=5){const u=(190-y)/144;const d=A*(1.6*(u-0.5)*Math.sin(t*0.7)+0.3*Math.sin(y*0.06+t*1.4));dv.push(d);pts.push([x0+d,y])}
+  const mx=Math.max(...dv),mn=Math.min(...dv),ok=(mx-mn)<=W,zc=x0+(mx+mn)/2;
+  let s=`<rect x="${zc-W/2}" y="30" width="${W}" height="160" fill="${ZF}"/><line x1="${zc-W/2}" y1="30" x2="${zc-W/2}" y2="190" stroke="${ZC}" stroke-width="1.6" stroke-dasharray="6 4"/><line x1="${zc+W/2}" y1="30" x2="${zc+W/2}" y2="190" stroke="${ZC}" stroke-width="1.6" stroke-dasharray="6 4"/>`;
+  s+=`<path d="M90 190 L90 46 L${pts[pts.length-1][0].toFixed(1)} 46 L${pathOf(pts.slice().reverse()).slice(1)} Z" fill="${pf(ok)}" stroke="${pc(ok)}" stroke-width="2.6"/>`;
+  s+=`<path d="M${zc+W/2+4} 178 h12 v12" fill="none" stroke="${INK}" stroke-width="1.4"/>`+txt(zc+W/2+20,186,'90°',{c:INK,size:11});
+  s+=datum(30,190,300,16,'Datum A')+`<line x1="${zc-W/2}" y1="22" x2="${zc+W/2}" y2="22" stroke="${INK}" stroke-width="1.2" marker-start="url(#arr)" marker-end="url(#arr)"/>`+txt(zc+W/2+6,26,'0.02',{c:INK,size:11});
+  s+=txt(14,26,'Face',{c:INK})+txt(14,42,'at 90° to A',{c:MU,size:11});
+  return{s,ok,r:((mx-mn)/W*0.02).toFixed(3)};
+},
+angularity(t){
+  const e=err(t),W=24,A=e*W/2,ang=30*Math.PI/180,ux=Math.cos(ang),uy=-Math.sin(ang),nx=-uy,ny=ux; // n points up-left (outward)
+  const o=[60,190],L=250,pts=[],dv=[];
+  for(let s=0;s<=L;s+=5){const u=s/L;const d=A*(1.5*(u-0.5)*Math.sin(t*0.7)+0.35*Math.sin(s*0.05+t*1.5));dv.push(d);pts.push([o[0]+ux*s-nx*d,o[1]+uy*s-ny*d])}
+  const mx=Math.max(...dv),mn=Math.min(...dv),ok=(mx-mn)<=W,zc=(mx+mn)/2;
+  const line=off=>{const a=[o[0]-ux*10-nx*off,o[1]-uy*10-ny*off],b=[o[0]+ux*(L+14)-nx*off,o[1]+uy*(L+14)-ny*off];return[a,b]};
+  const [a1,b1]=line(zc-W/2),[a2,b2]=line(zc+W/2);
+  let s=`<path d="${pathOf([a1,b1,b2,a2])} Z" fill="${ZF}"/><line x1="${a1[0]}" y1="${a1[1]}" x2="${b1[0]}" y2="${b1[1]}" stroke="${ZC}" stroke-width="1.6" stroke-dasharray="6 4"/><line x1="${a2[0]}" y1="${a2[1]}" x2="${b2[0]}" y2="${b2[1]}" stroke="${ZC}" stroke-width="1.6" stroke-dasharray="6 4"/>`;
+  const end=pts[pts.length-1];
+  s+=`<path d="${pathOf(pts)} L${end[0].toFixed(1)} 190 Z" fill="${pf(ok)}" stroke="${pc(ok)}" stroke-width="2.6"/>`;
+  s+=`<path d="M120 190 A60 60 0 0 0 ${60+60*ux} ${190+60*uy}" fill="none" stroke="${INK}" stroke-width="1.3"/>`+txt(126,178,'30°',{c:INK,size:12});
+  s+=datum(30,190,300,16,'Datum A')+txt(14,26,'Zone tilted at exact 30° to A',{c:INK})+txt(14,42,'zone width 0.05 mm',{c:MU,size:11});
+  return{s,ok,r:((mx-mn)/W*0.05).toFixed(3)};
+},
+position(t){
+  if(!this._trail)this._trail=[];
+  const e=err(t),Rz=26,tx=200,ty=106;
+  const dx=e*Rz*Math.cos(t*0.9)*Math.cos(t*0.37),dy=e*Rz*Math.sin(t*1.3)*Math.cos(t*0.37+0.6);
+  const d=Math.hypot(dx,dy),ok=d<=Rz,hx=tx+dx,hy=ty-dy;
+  this._trail.push([hx,hy]);if(this._trail.length>70)this._trail.shift();
+  let s=`<rect x="70" y="30" width="250" height="168" fill="#fff" stroke="${INK}" stroke-width="1.5"/>`;
+  s+=datum(56,30,14,168,'')+txt(48,118,'B',{c:INK,a:'end'})+datum(70,198,250,14,'')+txt(194,232,'C',{c:INK,a:'middle'});
+  s+=`<line x1="70" y1="${ty}" x2="${tx}" y2="${ty}" stroke="${MU}" stroke-dasharray="4 3"/><line x1="${tx}" y1="${ty}" x2="${tx}" y2="198" stroke="${MU}" stroke-dasharray="4 3"/>`;
+  s+=`<rect x="114" y="${ty-22}" width="40" height="18" rx="2" fill="#fff" stroke="${INK}"/>`+txt(134,ty-9,'130',{c:INK,a:'middle',size:11});
+  s+=`<rect x="${tx+6}" y="140" width="34" height="18" rx="2" fill="#fff" stroke="${INK}"/>`+txt(tx+23,153,'90',{c:INK,a:'middle',size:11});
+  s+=`<circle cx="${hx}" cy="${hy}" r="38" fill="#eef0f3" stroke="${INK}" stroke-width="1.6"/>`;
+  s+=`<path d="${pathOf(this._trail)}" fill="none" stroke="${pc(ok)}" stroke-width="1.2" opacity=".45"/>`;
+  s+=`<circle cx="${tx}" cy="${ty}" r="${Rz}" fill="${ZF}" stroke="${ZC}" stroke-width="1.8" stroke-dasharray="5 3"/>`;
+  s+=`<line x1="${tx-8}" y1="${ty}" x2="${tx+8}" y2="${ty}" stroke="${ZC}" stroke-width="1.5"/><line x1="${tx}" y1="${ty-8}" x2="${tx}" y2="${ty+8}" stroke="${ZC}" stroke-width="1.5"/>`;
+  s+=`<circle cx="${hx}" cy="${hy}" r="4.5" fill="${pc(ok)}"/>`;
+  s+=txt(80,190,'Ø0.1 zone at true position',{c:ZC,size:11})+txt(80,46,'Face = datum A',{c:MU,size:11});
+  return{s,ok,r:'Ø'+(2*d/Rz*0.05).toFixed(3)};
+},
+concentricity(t){
+  const e=err(t),cx=215,cy=124,Rz=14,dx=e*Rz*Math.cos(t*1.1),dy=e*Rz*Math.sin(t*0.8)*0.9,d=Math.hypot(dx,dy),ok=d<=Rz;
+  const fx=cx+dx,fy=cy-dy;
+  let s=`<circle cx="${fx}" cy="${fy}" r="84" fill="${pf(ok)}" stroke="${pc(ok)}" stroke-width="3"/>`;
+  s+=`<circle cx="${cx}" cy="${cy}" r="42" fill="#fff" stroke="${INK}" stroke-width="2"/><circle cx="${cx}" cy="${cy}" r="42" fill="url(#hatch)" opacity=".5"/>`;
+  s+=`<line x1="${cx-104}" y1="${cy}" x2="${cx+104}" y2="${cy}" stroke="${MU}" stroke-dasharray="8 4 2 4"/><line x1="${cx}" y1="${cy-104}" x2="${cx}" y2="${cy+104}" stroke="${MU}" stroke-dasharray="8 4 2 4"/>`;
+  s+=`<circle cx="${cx}" cy="${cy}" r="${Rz}" fill="${ZF}" stroke="${ZC}" stroke-width="1.8"/><circle cx="${fx}" cy="${fy}" r="4.5" fill="${pc(ok)}"/>`;
+  s+=txt(10,24,'Outer feature',{c:INK})+txt(10,40,'(being checked)',{c:MU,size:11})+txt(10,196,'Datum A:',{c:INK,size:11})+txt(10,212,'inner diameter',{c:MU,size:11})+txt(10,232,'Dot = median point',{c:MU,size:11});
+  return{s,ok,r:'Ø'+(2*d/Rz*0.01).toFixed(3)};
+},
+symmetry(t){
+  const e=err(t),W=20,c=180,offT=e*W/2*Math.sin(t*0.9),offB=e*W/2*Math.sin(t*0.9+1.4);
+  const ok=Math.max(Math.abs(offT),Math.abs(offB))<=W/2;
+  const wT=40,top=46,bot=128;
+  let s=`<path d="M60 ${top} L${c-wT+offT} ${top} L${c-wT+offB} ${bot} L${c+wT+offB} ${bot} L${c+wT+offT} ${top} L300 ${top} L300 200 L60 200 Z" fill="${pf(ok)}" stroke="${pc(ok)}" stroke-width="2.6"/>`;
+  s+=`<rect x="${c-W/2}" y="30" width="${W}" height="180" fill="${ZF}"/><line x1="${c-W/2}" y1="30" x2="${c-W/2}" y2="210" stroke="${ZC}" stroke-width="1.6" stroke-dasharray="6 4"/><line x1="${c+W/2}" y1="30" x2="${c+W/2}" y2="210" stroke="${ZC}" stroke-width="1.6" stroke-dasharray="6 4"/>`;
+  s+=`<line x1="${c}" y1="24" x2="${c}" y2="218" stroke="${INK}" stroke-dasharray="10 4 2 4"/>`;
+  s+=`<line x1="${c+offT}" y1="${top}" x2="${c+offB}" y2="${bot}" stroke="${pc(ok)}" stroke-width="2" stroke-dasharray="4 3"/><circle cx="${c+offT}" cy="${top}" r="3.5" fill="${pc(ok)}"/><circle cx="${c+offB}" cy="${bot}" r="3.5" fill="${pc(ok)}"/>`;
+  s+=datum(46,46,14,154,'')+datum(300,46,14,154,'')+txt(14,226,'Datum A = centre of outer width',{c:MU,size:11})+txt(c+W/2+6,24,'0.1',{c:ZC,size:11});
+  return{s,ok,r:(2*Math.max(Math.abs(offT),Math.abs(offB))/W*0.1).toFixed(3)};
+},
+circularRunout(t){
+  const e=0.025*err(t),MAG=900,cx=110,cy=140,R=64,ang=t*2.2;
+  const ex=e*MAG*Math.cos(ang),ey=e*MAG*Math.sin(ang),tir=2*e,ok=tir<=0.05+1e-9,reading=e*Math.sin(ang);
+  let s=`<line x1="20" y1="${cy}" x2="200" y2="${cy}" stroke="${MU}" stroke-dasharray="8 4 2 4"/><line x1="${cx}" y1="60" x2="${cx}" y2="225" stroke="${MU}" stroke-dasharray="8 4 2 4"/>`;
+  s+=`<circle cx="${cx+ex}" cy="${cy-ey}" r="${R}" fill="${pf(ok)}" stroke="${pc(ok)}" stroke-width="2.6"/><line x1="${cx+ex}" y1="${cy-ey}" x2="${cx+ex+R*Math.cos(ang)}" y2="${cy-ey-R*Math.sin(ang)}" stroke="${pc(ok)}" stroke-width="2"/><circle cx="${cx+ex}" cy="${cy-ey}" r="3" fill="${pc(ok)}"/>`;
+  s+=`<circle cx="${cx}" cy="${cy}" r="3.5" fill="${INK}"/>`+txt(14,232,'Datum axis A',{c:MU,size:11});
+  const topY=cy-ey-R;s+=`<rect x="${cx-4}" y="${topY-46}" width="8" height="46" rx="2" fill="#5f6672"/><rect x="${cx-16}" y="${topY-58}" width="32" height="14" rx="3" fill="#5f6672"/>`;
+  const gx=272,gy=78;s+=`<line x1="${cx+16}" y1="${topY-51}" x2="${gx-52}" y2="${gy}" stroke="#5f6672" stroke-width="3"/><circle cx="${gx}" cy="${gy}" r="52" fill="#fff" stroke="${INK}" stroke-width="2"/>`;
+  for(let i=-5;i<=5;i++){const a=(i*14-90)*Math.PI/180,r1=i%5===0?38:42;s+=`<line x1="${gx+r1*Math.cos(a)}" y1="${gy+r1*Math.sin(a)}" x2="${gx+48*Math.cos(a)}" y2="${gy+48*Math.sin(a)}" stroke="${INK}" stroke-width="${i%5===0?2:1}"/>`}
+  const na=((reading/0.01)*14-90)*Math.PI/180;s+=`<line x1="${gx}" y1="${gy}" x2="${gx+44*Math.cos(na)}" y2="${gy+44*Math.sin(na)}" stroke="${BAD}" stroke-width="2.6" stroke-linecap="round"/><circle cx="${gx}" cy="${gy}" r="4" fill="${INK}"/>`;
+  s+=txt(gx,gy+70,'0.01 mm / div',{c:MU,size:11,a:'middle'})+txt(gx,gy+90,'Part rotates 360°',{c:INK,size:11,a:'middle'})+txt(gx,gy+106,'(movement magnified)',{c:MU,size:11,a:'middle'});
+  return{s,ok,r:tir.toFixed(3)};
+},
+totalRunout(t){
+  const k=err(t),e=0.012*k,ta=0.026*k,MAG=900,ang=t*2.6,x1=60,x2=300,y0=140,R=46;
+  const off=e*MAG*Math.cos(ang),rad=x=>R+ta*MAG*((x-x1)/(x2-x1));
+  const xd=x1+12+(x2-x1-24)*(0.5-0.5*Math.cos(t*0.45));
+  const tir=ta+2*e,ok=tir<=0.05+1e-9;
+  const top=[],bot=[];for(let x=x1;x<=x2;x+=6){top.push([x,y0-off-rad(x)]);bot.push([x,y0-off+rad(x)])}
+  let s=`<line x1="30" y1="${y0}" x2="330" y2="${y0}" stroke="${MU}" stroke-dasharray="10 4 2 4"/>`;
+  s+=`<path d="M${x1-26} ${y0-14} L${x1} ${y0} L${x1-26} ${y0+14} Z" fill="#5f6672"/><path d="M${x2+26} ${y0-14} L${x2} ${y0} L${x2+26} ${y0+14} Z" fill="#5f6672"/>`;
+  s+=`<path d="${pathOf(top)} L${pathOf(bot.slice().reverse()).slice(1)} Z" fill="${pf(ok)}" stroke="${pc(ok)}" stroke-width="2.6"/>`;
+  for(let i=0;i<3;i++){const a=ang+i*2.09,sy=Math.sin(a);if(Math.cos(a)>0){const y=y0-off-sy*R*0.92;s+=`<line x1="${x1+4}" y1="${y}" x2="${x2-4}" y2="${y}" stroke="${pc(ok)}" stroke-width="1" opacity=".45"/>`}}
+  const sy=y0-off-rad(xd);s+=`<line x1="40" y1="44" x2="320" y2="44" stroke="#9aa1ab" stroke-width="4"/>`+txt(320,36,'Guide parallel to axis',{c:MU,size:11,a:'end'});
+  s+=`<rect x="${xd-4}" y="${Math.min(sy-2,96)}" width="8" height="${Math.max(4,sy-96+2)}" rx="2" fill="#5f6672"/><rect x="${xd-20}" y="48" width="40" height="48" rx="6" fill="#fff" stroke="${INK}" stroke-width="1.6"/>`;
+  const reading=(rad(xd)-R)/MAG+e*Math.cos(ang),na=((reading/0.03)*120-150)*Math.PI/180;
+  s+=`<line x1="${xd}" y1="78" x2="${xd+14*Math.cos(na)}" y2="${78+14*Math.sin(na)}" stroke="${BAD}" stroke-width="2.2" stroke-linecap="round"/><circle cx="${xd}" cy="78" r="2.5" fill="${INK}"/>`;
+  s+=txt(14,226,'Rotate + move the dial over the full length',{c:INK,size:11})+txt(346,226,'Datum axis A',{c:MU,size:11,a:'end'});
+  return{s,ok,r:tir.toFixed(3)};
+}
+};
+
+/* ---------- render ---------- */
+const $=id=>document.getElementById(id);
+let cur=0,raf=0,t0=0,lastDraw=0;
+function renderGroups(){
+  $('groups').innerHTML=GROUPS.map(g=>`<div class="group"><div class="ghead"><b><span class="en">${g.en}</span><span class="hi">${g.hi}</span></b><span><span class="en">${g.note}</span><span class="hi">${g.noteHi}</span></span></div><div class="tiles">`+
+    S.map((s,i)=>s.g!==g.id?'':`<button class="tile" data-i="${i}"><span class="ic">${icon(s.id)}</span><span class="nm">${s.en}<small class="hi">${s.hi}</small></span></button>`).join('')+`</div></div>`).join('');
+  document.querySelectorAll('.tile').forEach(b=>b.addEventListener('click',()=>{select(+b.dataset.i);if(window.innerWidth<860)$('detail').scrollIntoView({behavior:'smooth'})}));
+}
+function select(i){
+  cur=(i+S.length)%S.length;const s=S[cur],g=GROUPS.find(x=>x.id===s.g);
+  document.querySelectorAll('.tile').forEach(b=>b.classList.toggle('on',+b.dataset.i===cur));
+  ANIM[s.id]._trail=null;
+  const needsDatum=s.fcf.length>1;
+  $('detail').innerHTML=`
+  <div class="dhead">
+    <div class="dtitle"><div class="bigic">${icon(s.id,'#111')}</div><div><h2>${s.en}</h2><div class="hiname">${s.hi}</div>
+      <div class="tags"><span class="tag">${g.en} · ${g.hi}</span><span class="tag dat">${needsDatum?'Datum: '+s.fcf.slice(1).join(', '):'No datum'}</span>${s.old?'<span class="tag warn">Removed in ASME 2018 · still in ISO</span>':''}</div></div></div>
+    <div class="nav"><button class="btn" id="prev">‹ Prev</button><button class="btn" id="next">Next ›</button></div>
+  </div>
+  <div class="dgrid">
+    <div><div class="anim"><svg id="asvg" viewBox="0 0 360 240" role="img" aria-label="${s.en} animation"></svg></div>
+      <div class="status ok" id="astat"><span id="astatT"></span><span class="r" id="astatR"></span></div>
+      <div class="legend"><span><i style="background:${ZF};border:1.5px dashed ${ZC}"></i>Tolerance zone</span><span><i style="background:${PF};border:1.5px solid ${PC}"></i>Part (OK)</span><span><i style="background:${BADF};border:1.5px solid ${BAD}"></i><span class="en">Outside zone</span><span class="hi">Zone से बाहर</span></span></div>
+      <p class="t en" style="font-size:12px;color:var(--muted);margin-top:6px">Errors are magnified so you can see them.</p><p class="t hi" style="font-size:12px;color:var(--muted);margin-top:6px">Error को बड़ा करके दिखाया गया है ताकि दिख सके।</p>
+    </div>
+    <div>
+      <div class="sec"><h3><span class="en">On the drawing</span><span class="hi">Drawing पर</span></h3>${fcf(s.id,s.fcf)}</div>
+      <div class="sec"><h3><span class="en">What it means</span><span class="hi">मतलब</span></h3>${bi(s.m[0],s.m[1])}</div>
+    </div>
+  </div>
+  <div class="lower">
+    <div class="sec"><h3><span class="en">How to check</span><span class="hi">कैसे check करें</span></h3>${bi(s.c[0],s.c[1])}</div>
+    <div class="sec mist"><h3><span class="en">Common mistake</span><span class="hi">आम गलती</span></h3>${bi(s.x[0],s.x[1])}</div>
+  </div>`;
+  $('prev').addEventListener('click',()=>select(cur-1));$('next').addEventListener('click',()=>select(cur+1));
+  try{history.replaceState(null,'','#'+s.id)}catch(e){}
+  drawNow(performance.now());
+}
+function drawNow(ts){
+  const s=S[cur],fn=ANIM[s.id],svg=$('asvg');if(!svg)return;
+  const t=(ts-t0)/1000,res=fn.call(fn,t);
+  svg.innerHTML=DEFS+res.s;
+  const st=$('astat');st.className='status '+(res.ok?'ok':'bad');
+  const body=document.body.className;
+  $('astatT').innerHTML=res.ok?'<span class="en">OK: inside the zone</span><span class="hi">OK: zone के अंदर</span>':'<span class="en">Reject: outside the zone</span><span class="hi">Reject: zone से बाहर</span>';
+  $('astatR').innerHTML=`<span class="en">Measured ${res.r} · Allowed ${s.fcf[0].replace(' Ⓜ','')}</span><span class="hi">नापा ${res.r} · Allowed ${s.fcf[0].replace(' Ⓜ','')}</span>`;
+}
+function loop(ts){if(ts-lastDraw>33){lastDraw=ts;drawNow(ts)}raf=requestAnimationFrame(loop)}
+
+/* ---------- frame tab ---------- */
+$('bigFcf').innerHTML=`<span>${icon('position')}</span><span>Ø0.1 Ⓜ</span><span>A</span><span>B</span><span>C</span>`;
+const PARTS=[
+ ['Symbol','Symbol','What is controlled. Here: position.','क्या control हो रहा है। यहाँ: position।'],
+ ['Ø0.1','Ø0.1','Zone shape and size. Ø means a round (cylinder) zone of 0.1 mm. No Ø means two parallel lines or planes.','Zone का shape और size। Ø मतलब 0.1 mm का गोल (cylinder) zone। Ø न हो तो दो parallel lines या planes।'],
+ ['Ⓜ','Ⓜ','Modifier. Ⓜ means extra bonus tolerance as the hole gets bigger than its smallest size.','Modifier। Ⓜ मतलब hole अपने सबसे छोटे size से जितना बड़ा, उतना extra bonus tolerance।'],
+ ['A','A','Primary datum. The part rests on this first (3 points of contact).','Primary datum। Part सबसे पहले इसी पर टिकता है (3 points पर contact)।'],
+ ['B','B','Secondary datum. Next, the part is pushed against this (2 points).','Secondary datum। फिर part को इससे लगाते हैं (2 points)।'],
+ ['C','C','Tertiary datum. Last, the part touches this (1 point). Now the part cannot move.','Tertiary datum। आखिर में part इसे छूता है (1 point)। अब part हिल नहीं सकता।']
+];
+$('parts').innerHTML=PARTS.map((p,i)=>`<div class="part"><span class="no">${i+1}</span><b>${i===0?icon('position'):''}${i===0?'':p[0]}</b>${bi(p[2],p[3])}</div>`).join('');
+document.querySelectorAll('#parts .part b svg').forEach(s=>{s.style.width='20px';s.style.height='20px';s.style.verticalAlign='-4px'});
+
+/* ---------- modifiers tab ---------- */
+$('modTable').innerHTML=MODS.map(m=>`<tr><td>${m[0].startsWith('<')?m[0]:`<span class="symb">${m[0]}</span>`}</td><td><div class="mn">${m[1]} <span class="hi" style="font-weight:600;color:var(--muted)">· ${m[2]}</span></div>${bi(m[3],m[4])}</td></tr>`).join('');
+
+/* ---------- tabs & init ---------- */
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('hidden',p.id!==b.dataset.tab));}));
+renderGroups();
+const start=S.findIndex(s=>'#'+s.id===location.hash);
+t0=performance.now();select(start>=0?start:0);
+raf=requestAnimationFrame(loop);
+</script></body></html>
