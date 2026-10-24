@@ -12,11 +12,14 @@ export type ResourceItem = {
   thumbnail_url: string | null
 }
 
-const ICON: Record<ResourceType, string> = {
-  video: '▶', pdf: '📄', excel: '📊', calculator: '🧮', link: '🌐',
-}
-const LABEL: Record<ResourceType, string> = {
-  video: 'Video', pdf: 'PDF', excel: 'Excel', calculator: 'Web Tool', link: 'Web Tool',
+const ICON: Record<ResourceType, string> = { video: '🎬', pdf: '📄', excel: '📊', calculator: '🧮', link: '🌐' }
+const LABEL: Record<ResourceType, string> = { video: 'Video', pdf: 'PDF', excel: 'Excel', calculator: 'Web Tool', link: 'Web Tool' }
+const BG: Record<ResourceType, string> = {
+  video: 'linear-gradient(135deg,#3a2a1c,#171513)',
+  pdf: 'linear-gradient(135deg,#3b2321,#171513)',
+  excel: 'linear-gradient(135deg,#1c3326,#171513)',
+  calculator: 'linear-gradient(135deg,#1f2c3d,#171513)',
+  link: 'linear-gradient(135deg,#1f2c3d,#171513)',
 }
 
 function youtubeId(url: string): string | null {
@@ -35,7 +38,6 @@ function youtubeId(url: string): string | null {
 }
 
 // Google Drive share links open a Drive page, not an image. Turn them into a direct image link.
-// Works for files shared as "Anyone with the link".
 function driveId(url: string): string | null {
   try {
     const u = new URL(url)
@@ -64,52 +66,20 @@ function getThumb(r: ResourceItem): string | null {
 function Card({ r }: { r: ResourceItem }) {
   const [failed, setFailed] = useState(false)
   const thumb = failed ? null : getThumb(r)
-
   return (
-    <a
-      href={r.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      style={{
-        flex: '0 0 230px', scrollSnapAlign: 'start', textDecoration: 'none',
-        background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 12, overflow: 'hidden', display: 'block',
-      }}
-    >
-      <div style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', background: 'linear-gradient(135deg, #3a3733 0%, #262421 100%)' }}>
+    <a className="dbx-rc" href={r.url} target="_blank" rel="noopener noreferrer">
+      <div className="dbx-th">
         {thumb ? (
-          <img
-            src={thumb}
-            alt={r.title}
-            referrerPolicy="no-referrer"
-            onError={() => setFailed(true)}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-          />
+          <img src={thumb} alt={r.title} referrerPolicy="no-referrer" onError={() => setFailed(true)} />
         ) : (
-          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38 }}>
-            {ICON[r.resource_type]}
-          </div>
+          <div className="dbx-fallback" style={{ background: BG[r.resource_type] }}>{ICON[r.resource_type]}</div>
         )}
-        {r.resource_type === 'video' && thumb && (
-          <div style={{
-            position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <span style={{
-              width: 44, height: 44, borderRadius: '50%', background: 'rgba(240,128,30,0.92)', color: '#fff',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, paddingLeft: 3,
-            }}>
-              {'▶'}
-            </span>
-          </div>
-        )}
+        <span className="dbx-kind">{LABEL[r.resource_type]}</span>
+        {r.resource_type === 'video' && <div className="dbx-play"><i /></div>}
       </div>
-      <div style={{ padding: '12px 14px 14px' }}>
-        <div style={{
-          color: '#fff', fontWeight: 700, fontSize: 14, lineHeight: 1.35, marginBottom: 6,
-          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', minHeight: 38,
-        }}>
-          {r.title}
-        </div>
-        <span style={{ color: '#F0801E', fontSize: 11, fontWeight: 700 }}>{LABEL[r.resource_type]} &rarr;</span>
+      <div className="dbx-rb">
+        <strong>{r.title}</strong>
+        <small>{r.resource_type === 'video' ? 'Watch' : 'Open'} &rarr;</small>
       </div>
     </a>
   )
@@ -118,34 +88,20 @@ function Card({ r }: { r: ResourceItem }) {
 export default function ResourceSlider({ title, items }: { title: string; items: ResourceItem[] }) {
   const ref = useRef<HTMLDivElement>(null)
   if (items.length === 0) return null
-
-  function scroll(dir: 1 | -1) {
-    ref.current?.scrollBy({ left: dir * 480, behavior: 'smooth' })
-  }
-
-  const arrow = {
-    width: 34, height: 34, borderRadius: '50%', border: '1px solid #3a3733', background: '#2b2a28',
-    color: '#fff', fontSize: 16, cursor: 'pointer',
-  } as const
+  const scroll = (dir: 1 | -1) => ref.current?.scrollBy({ left: dir * 520, behavior: 'smooth' })
 
   return (
-    <div style={{ marginBottom: 30 }}>
-      <style>{'.rs-track::-webkit-scrollbar{display:none}'}</style>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <h4 style={{ color: '#F0801E', fontSize: 14, fontWeight: 700, margin: 0, textTransform: 'uppercase', letterSpacing: 0.5 }}>{title}</h4>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button aria-label="Scroll left" onClick={() => scroll(-1)} style={arrow}>&#8249;</button>
-          <button aria-label="Scroll right" onClick={() => scroll(1)} style={arrow}>&#8250;</button>
+    <div className="dbx-rowblock">
+      <div className="dbx-rowhead">
+        <h3>{title}</h3>
+        <span className="dbx-n">{items.length}</span>
+        <i className="dbx-sp2" />
+        <div className="dbx-arrows">
+          <button aria-label="Scroll left" onClick={() => scroll(-1)}>&#8249;</button>
+          <button aria-label="Scroll right" onClick={() => scroll(1)}>&#8250;</button>
         </div>
       </div>
-      <div
-        ref={ref}
-        className="rs-track"
-        style={{
-          display: 'flex', gap: 16, overflowX: 'auto', scrollSnapType: 'x mandatory',
-          scrollbarWidth: 'none', paddingBottom: 4,
-        }}
-      >
+      <div className="dbx-track" ref={ref}>
         {items.map(r => <Card key={r.id} r={r} />)}
       </div>
     </div>
