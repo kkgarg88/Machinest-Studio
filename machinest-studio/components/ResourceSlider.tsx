@@ -34,8 +34,26 @@ function youtubeId(url: string): string | null {
   return null
 }
 
+// Google Drive share links open a Drive page, not an image. Turn them into a direct image link.
+// Works for files shared as "Anyone with the link".
+function driveId(url: string): string | null {
+  try {
+    const u = new URL(url)
+    if (u.hostname !== 'drive.google.com' && u.hostname !== 'docs.google.com') return null
+    const m = u.pathname.match(/\/d\/([^/?]+)/)
+    if (m) return m[1]
+    return u.searchParams.get('id')
+  } catch {}
+  return null
+}
+
+function cleanThumb(url: string): string {
+  const id = driveId(url.trim())
+  return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w800` : url.trim()
+}
+
 function getThumb(r: ResourceItem): string | null {
-  if (r.thumbnail_url) return r.thumbnail_url
+  if (r.thumbnail_url && r.thumbnail_url.trim()) return cleanThumb(r.thumbnail_url)
   if (r.resource_type === 'video') {
     const id = youtubeId(r.url)
     if (id) return `https://img.youtube.com/vi/${id}/hqdefault.jpg`
