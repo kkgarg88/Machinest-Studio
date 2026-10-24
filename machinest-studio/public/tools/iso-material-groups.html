@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MachiNest | Free ISO Material Groups Guide</title>
+<style>
+:root{color-scheme:light;--orange:#ff8500;--ink:#17191c;--muted:#667085;--line:#e5e7eb;--bg:#f5f6f8;--card:#fff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:Inter,Segoe UI,"Noto Sans Devanagari","Nirmala UI",Arial,sans-serif;color:var(--ink)}
+.wrap{max-width:1180px;margin:auto;padding:24px 16px 40px}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.logo{width:42px;height:42px;border-radius:12px;background:var(--orange);display:grid;place-items:center;color:#111;font-weight:900;font-size:22px}
+.brand small{display:block;color:var(--muted);margin-top:3px}
+.hero{background:#17191c;color:#fff;border-radius:18px;padding:26px;margin-bottom:18px;position:relative;overflow:hidden}
+.hero:after{content:'M';position:absolute;right:22px;top:-42px;font-weight:900;font-size:190px;color:#ffffff0a}
+.eyebrow{color:#ffb65b;font-weight:700;font-size:12px;letter-spacing:.13em;text-transform:uppercase}
+.hero h1{margin:8px 0;font-size:clamp(26px,4vw,38px)}
+.hero p{margin:0;color:#d2d5da;max-width:720px;line-height:1.6}
+.pill{display:inline-block;border:1px solid #ffffff30;border-radius:999px;padding:6px 10px;font-size:12px;margin:16px 6px 0 0}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:18px 0}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:#fff;color:var(--ink);font:inherit;border-radius:10px;padding:11px 16px;font-weight:700;cursor:pointer}
+.tab:hover{border-color:var(--orange)}
+.tab.active{background:var(--orange);border-color:var(--orange);color:#111}
+.lang{display:flex;border:1px solid #d4d8de;border-radius:10px;overflow:hidden;background:#fff}
+.lang button{border:0;background:#fff;font:inherit;font-weight:700;color:#424852;cursor:pointer;padding:10px 14px}
+.lang button+button{border-left:1px solid #d4d8de}
+.lang button.on{background:var(--ink);color:#fff}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;min-width:0}
+.card h2{font-size:18px;margin:0 0 6px}
+.lead{font-size:13px;color:var(--muted);margin:0 0 14px;line-height:1.5}
+.gtiles{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.gt{border:2px solid transparent;border-radius:14px;padding:12px 10px;cursor:pointer;font:inherit;text-align:left;color:#fff;min-height:104px;display:flex;flex-direction:column;justify-content:space-between}
+.gt .L{font-size:38px;font-weight:900;line-height:1}
+.gt .nm{font-size:13px;font-weight:800;line-height:1.25}
+.gt .nm small{display:block;font-weight:600;opacity:.9;font-size:12px}
+.gt.on{outline:3px solid var(--ink);outline-offset:2px}
+.gt.dark{color:#111}
+.detail{margin-top:16px}
+.dhead{display:flex;gap:14px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.dhead .big{width:64px;height:64px;border-radius:14px;display:grid;place-items:center;font-size:40px;font-weight:900;color:#fff;flex:0 0 64px}
+.dhead h2{margin:0;font-size:22px}
+.dhead .sub{font-size:14px;color:var(--muted);font-weight:600}
+.dgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
+.sec{margin:0 0 14px}
+.sec h3{font-size:12px;text-transform:uppercase;letter-spacing:.06em;margin:0 0 6px}
+.t{font-size:14.5px;line-height:1.7;margin:0 0 6px}
+.hi{display:none}
+body.lang-hi .hi,body.lang-both .hi{display:block}
+body.lang-hi .en{display:none}
+span.hi{display:none}
+body.lang-hi span.hi,body.lang-both span.hi{display:inline}
+body.lang-both span.hi::before{content:" · "}
+body.lang-both .t.hi{color:#424852;border-left:3px solid #d4d8de;padding-left:10px}
+.chipbox{background:#f8f9fb;border:1px solid var(--line);border-radius:14px;padding:8px;margin-bottom:14px}
+.chipbox svg{display:block;width:100%;height:auto}
+.mats{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.mat{font-size:12.5px;font-weight:700;border-radius:7px;padding:4px 9px;background:#f0f1f3;color:#424852}
+.tips{margin:0;padding-left:0;list-style:none}
+.tips li{margin:0 0 10px;padding-left:14px;border-left:3px solid var(--line)}
+.vc{border-radius:12px;padding:14px;border:1px solid var(--line);background:#fafbfc}
+.vc .big{font-size:26px;font-weight:850;letter-spacing:-.02em}
+.vc .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;font-size:13px}
+.vc input{width:96px;padding:9px 10px;border:1px solid #d4d8de;border-radius:8px;font:inherit}
+.vc .out{font-weight:800;background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-variant-numeric:tabular-nums}
+.search input{width:100%;font:inherit;font-size:18px;font-weight:700;padding:14px 16px;border:2px solid #d4d8de;border-radius:12px}
+.search input:focus{outline:3px solid #ff850040;border-color:var(--orange)}
+.res{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;margin-top:14px}
+.ri{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px;cursor:pointer;background:#fff;font:inherit;text-align:left;color:inherit}
+.ri:hover{border-color:var(--orange)}
+.ri .b{width:38px;height:38px;border-radius:9px;display:grid;place-items:center;color:#fff;font-weight:900;font-size:20px;flex:0 0 38px}
+.ri .b.dark{color:#111}
+.ri .nm{font-size:14px;font-weight:800}
+.ri .nm small{display:block;font-weight:500;color:var(--muted);font-size:12px}
+.empty{color:var(--muted);font-size:14px;padding:16px 4px}
+.chart svg{display:block;width:100%;height:auto}
+.notice{padding:12px 14px;background:#fff8e7;border:1px solid #f4d58a;border-radius:10px;color:#674b0b;font-size:13px;line-height:1.55;margin-top:14px}
+.hidden{display:none!important}
+.footer{margin-top:20px;text-align:center;color:var(--muted);font-size:12px;line-height:1.7}
+@media(max-width:860px){.dgrid{grid-template-columns:1fr}.gtiles{grid-template-columns:repeat(3,minmax(0,1fr))}.hero{padding:21px}.wrap{padding:16px 12px 28px}}
+@media(max-width:430px){.gt{min-height:88px;padding:10px 8px}.gt .L{font-size:30px}.gt .nm{font-size:12px}}
+</style></head>
+<body class="lang-both"><main class="wrap">
+<div class="brand"><div class="logo">M</div><div><strong>MachiNest</strong><small>Building a smarter CNC community.</small></div></div>
+
+<section class="hero"><div class="eyebrow">Free CNC Learning</div><h1>ISO Material Groups</h1><p>The six colour codes on every insert box: <strong>P</strong> steel, <strong>M</strong> stainless, <strong>K</strong> cast iron, <strong>N</strong> non-ferrous, <strong>S</strong> super alloys and titanium, <strong>H</strong> hardened steel. See how each one cuts, which insert to pick, starting cutting speeds, and find the group for your material.</p><span class="pill">ISO 513</span><span class="pill">ENGLISH + हिंदी</span><span class="pill">RPM CALCULATOR</span><span class="pill">NO LOGIN REQUIRED</span></section>
+
+<div class="bar">
+  <div class="tabs"><button class="tab active" data-tab="groups">Material Groups</button><button class="tab" data-tab="find">Find My Material</button><button class="tab" data-tab="speed">Speed Chart</button></div>
+  <div class="lang" id="lang"><button data-l="en">English</button><button data-l="hi">हिंदी</button><button data-l="both" class="on">Both</button></div>
+</div>
+
+<section id="groups" class="panel">
+  <div class="card">
+    <h2><span class="en">Pick a group</span><span class="hi">Group चुनें</span></h2>
+    <p class="lead">The letter and colour are printed on insert boxes and catalogues to show which material the grade is made for.</p>
+    <div class="gtiles" id="gtiles"></div>
+  </div>
+  <div class="card detail" id="detail"></div>
+</section>
+
+<section id="find" class="panel hidden"><div class="card">
+  <h2><span class="en">Which group is my material?</span><span class="hi">मेरा material किस group में है?</span></h2>
+  <p class="lead">Type a material name or grade, like EN8, SS304, 6061, SG iron, Inconel or D2.</p>
+  <div class="search"><input id="q" type="search" placeholder="EN24, SS316, brass, FG260…" autocomplete="off"></div>
+  <div class="res" id="res"></div>
+  <div class="notice"><strong>Heat treatment matters:</strong> the same steel moves group when hardened. Soft EN31 is P; EN31 hardened to 60 HRC is H.</div>
+</div></section>
+
+<section id="speed" class="panel hidden"><div class="card">
+  <h2><span class="en">Starting cutting speed by group</span><span class="hi">हर group की starting cutting speed</span></h2>
+  <p class="lead">Typical Vc range for turning with a suitable coated carbide grade (CBN for H). Use the middle of the range to start, then adjust.</p>
+  <div class="chart"><svg id="chart" viewBox="0 0 660 330" role="img" aria-label="Cutting speed ranges by group"></svg></div>
+  <div class="notice"><strong>Starting values only.</strong> Real speed depends on hardness, insert grade, depth of cut, coolant and machine rigidity. Always check the insert maker's catalogue for your grade.</div>
+</div></section>
+
+<div class="footer">MachiNest ISO Material Groups · Free CNC learning · Based on ISO 513 groups<br>Cutting speeds are general starting points, not guaranteed values.</div>
+</main>
+
+<script>
+const G=[
+{L:'P',c:'#2563EB',dark:false,en:'Steel',hi:'स्टील',vc:[150,350],
+ what:['All steels except austenitic stainless: mild steel, carbon steel, alloy steel, cast steel, and ferritic or martensitic stainless.','Austenitic stainless छोड़कर सभी steel: mild steel, carbon steel, alloy steel, cast steel, और ferritic या martensitic stainless।'],
+ mats:['Mild steel','EN1A','EN8 / C45','EN9','EN19 / 4140','EN24 / 4340','20MnCr5 (soft)','EN31 (soft)','SS410 / SS420','Cast steel'],
+ chip:['Long, continuous chips. A chipbreaker is needed to break them into short curls.','लंबी, लगातार chips बनती हैं। इन्हें छोटे टुकड़ों में तोड़ने के लिए chipbreaker ज़रूरी है।'],
+ wear:['Crater wear on the top of the insert and steady flank wear.','Insert के top पर crater wear और धीरे-धीरे बढ़ता flank wear।'],
+ grade:['CVD-coated carbide with a thick coating. Cermet for fine finishing.','मोटी coating वाला CVD coated carbide। Fine finishing के लिए cermet।'],
+ cool:['Flood coolant is normal. CVD grades can also run dry at high speed.','Normal coolant चलाएं। CVD grade high speed पर dry भी चल सकता है।'],
+ tips:[['Harder alloy steel (EN24, EN19) needs a lower speed than mild steel.','सख्त alloy steel (EN24, EN19) में mild steel से कम speed रखें।'],['Soft, low-carbon steel forms built-up edge at low speed. Increase the speed.','Soft low-carbon steel में कम speed पर built-up edge बनता है। Speed बढ़ाएं।'],['If chips wrap around the part, increase feed or use a stronger chipbreaker.','अगर chips part पर लिपटें तो feed बढ़ाएं या मज़बूत chipbreaker लें।']]},
+{L:'M',c:'#EAB308',dark:true,en:'Stainless steel',hi:'स्टेनलेस स्टील',vc:[100,220],
+ what:['Austenitic and duplex stainless steels such as SS304, SS316, SS321 and duplex 2205.','SS304, SS316, SS321 और duplex 2205 जैसे austenitic और duplex stainless steel।'],
+ mats:['SS304 / 304L','SS316 / 316L','SS321','SS310','Duplex 2205','17-4 PH'],
+ chip:['Tough, stringy chips that stick and are hard to break.','मज़बूत, धागे जैसी chips जो चिपकती हैं और आसानी से नहीं टूटतीं।'],
+ wear:['Notch wear at the depth-of-cut line and built-up edge. The surface hardens while cutting (work hardening).','Depth of cut वाली line पर notch wear और built-up edge। काटते समय surface सख्त हो जाती है (work hardening)।'],
+ grade:['Tough grade with PVD or CVD coating and a sharp, positive chipbreaker.','PVD या CVD coating वाला tough grade, sharp और positive chipbreaker के साथ।'],
+ cool:['Plenty of coolant, high pressure if available.','भरपूर coolant, हो सके तो high pressure।'],
+ tips:[['Never let the tool rub. Very light cuts or dwelling harden the surface and spoil the next pass.','Tool को कभी रगड़ने न दें। बहुत हल्की cut या रुकने से surface सख्त होकर अगली pass खराब करती है।'],['Change the depth of cut a little between passes so the notch does not form at one spot.','हर pass में depth of cut थोड़ा बदलें ताकि notch एक ही जगह न बने।'],['Start about 20–30% slower than for normal steel.','Normal steel से लगभग 20–30% कम speed से शुरू करें।']]},
+{L:'K',c:'#DC2626',dark:false,en:'Cast iron',hi:'कास्ट आयरन',vc:[150,400],
+ what:['Grey cast iron, ductile (SG) iron, malleable iron and compacted graphite iron.','Grey cast iron, ductile (SG) iron, malleable iron और compacted graphite iron।'],
+ mats:['Grey CI (FG 200 / FG 260)','SG iron (SG 400 / SG 500)','Malleable iron','CGI'],
+ chip:['Short, broken chips or powder. Easy to control, but very abrasive.','छोटी टूटी chips या पाउडर। Control करना आसान, लेकिन बहुत घिसने वाला (abrasive)।'],
+ wear:['Abrasive flank wear. The edge can chip at the hard casting skin.','घिसाई वाला flank wear। Casting की सख्त ऊपरी परत पर edge chip हो सकता है।'],
+ grade:['Hard, wear-resistant CVD-coated carbide. Ceramic or CBN for high-speed grey iron.','सख्त, wear-resistant CVD coated carbide। High speed grey iron के लिए ceramic या CBN।'],
+ cool:['Often machined dry. Coolant mainly helps control dust.','अक्सर dry काटते हैं। Coolant मुख्य रूप से dust रोकने के लिए।'],
+ tips:[['SG iron cuts more like steel than grey iron, so use a lower speed.','SG iron, grey iron से ज़्यादा steel जैसा कटता है, इसलिए speed कम रखें।'],['On the first cut, go below the hard casting skin with a strong edge and lower speed.','पहली cut में strong edge और कम speed के साथ casting की सख्त परत के नीचे तक काटें।'],['Use dust extraction or a mask: cast iron dust is fine and abrasive.','Dust extraction या mask use करें: cast iron का dust बारीक और घिसने वाला होता है।']]},
+{L:'N',c:'#16A34A',dark:false,en:'Non-ferrous',hi:'नॉन-फेरस',vc:[300,1500],
+ what:['Aluminium (wrought and cast), brass, copper, bronze, plastics and composites.','Aluminium (wrought और cast), brass, copper, bronze, plastic और composites।'],
+ mats:['Al 6061 / 6082 (HE30)','Al 7075','Cast Al LM6 / LM25','ADC12','Brass','Copper','Phosphor bronze','Nylon / Delrin'],
+ chip:['Long chips in aluminium, short chips in brass. Material tends to stick to the edge.','Aluminium में लंबी chips, brass में छोटी। Material edge पर चिपकता है।'],
+ wear:['Built-up edge (material welds to the edge), which spoils the finish.','Built-up edge (material edge पर चिपक जाता है), जिससे finish खराब होती है।'],
+ grade:['Uncoated, polished, sharp positive carbide, or PCD for high volume and high-silicon aluminium.','Uncoated, polished, sharp positive carbide, या high volume और high-silicon aluminium के लिए PCD।'],
+ cool:['Coolant or mist to stop sticking.','चिपकने से रोकने के लिए coolant या mist।'],
+ tips:[['Use a sharp, polished, positive insert. A coated steel grade will smear aluminium.','Sharp, polished, positive insert लें। Steel वाला coated grade aluminium को चिपका देगा।'],['Aluminium likes high speed; often the spindle RPM is the only limit.','Aluminium को high speed पसंद है; अक्सर spindle RPM ही limit होती है।'],['High-silicon cast aluminium (LM25, ADC12) is abrasive; PCD lasts much longer there.','High-silicon cast aluminium (LM25, ADC12) घिसने वाला है; वहाँ PCD बहुत ज़्यादा चलता है।']]},
+{L:'S',c:'#C2410C',dark:false,en:'Super alloys & titanium',hi:'सुपर अलॉय और टाइटेनियम',vc:[25,90],
+ what:['Heat-resistant nickel and cobalt alloys (Inconel, Hastelloy, Nimonic) and titanium alloys.','Heat-resistant nickel और cobalt alloys (Inconel, Hastelloy, Nimonic) और titanium alloys।'],
+ mats:['Inconel 718','Inconel 625','Hastelloy','Nimonic','Monel','Ti-6Al-4V (Gr 5)','Titanium Gr 2','Stellite'],
+ chip:['Tough, segmented chips. Very high heat stays at the cutting edge.','मज़बूत, टुकड़ों वाली chips। बहुत ज़्यादा गर्मी cutting edge पर ही रहती है।'],
+ wear:['Notch wear, edge deformation from heat, and fast wear. These alloys also work-harden.','Notch wear, गर्मी से edge का दबना, और जल्दी wear। ये alloys भी work-harden होते हैं।'],
+ grade:['Fine-grain PVD-coated carbide with a sharp edge. Ceramic for nickel alloys (not for titanium).','Sharp edge वाला fine-grain PVD coated carbide। Nickel alloys के लिए ceramic (titanium के लिए नहीं)।'],
+ cool:['High-pressure coolant aimed at the edge with carbide. Most ceramic grades run dry.','Carbide के साथ edge पर high-pressure coolant। ज़्यादातर ceramic grade dry चलते हैं।'],
+ tips:[['Low speed, but keep the feed steady: never let the tool rub.','Speed कम रखें, लेकिन feed लगातार रखें: tool को रगड़ने न दें।'],['A round or large-radius insert spreads the heat and reduces notching.','Round या बड़े radius वाला insert गर्मी फैलाता है और notch कम करता है।'],['Change the insert early. A worn edge in these alloys fails suddenly.','Insert जल्दी बदलें। इन alloys में घिसा edge अचानक टूटता है।']]},
+{L:'H',c:'#6B7280',dark:false,en:'Hardened materials',hi:'हार्डन मटेरियल',vc:[80,220],
+ what:['Hardened steel from about 45 to 65 HRC, and chilled cast iron. Hard turning often replaces grinding.','लगभग 45 से 65 HRC तक hardened steel, और chilled cast iron। Hard turning से अक्सर grinding की ज़रूरत नहीं रहती।'],
+ mats:['EN31 hardened','EN24 hardened','D2 / D3 hardened','H13 hardened','Case-hardened gears','Chilled cast iron'],
+ chip:['Small, hot, saw-tooth chips that can glow red.','छोटी, गर्म, आरी के दाँत जैसी chips जो लाल भी हो सकती हैं।'],
+ wear:['Crater wear and edge chipping. Needs a very rigid setup.','Crater wear और edge chipping। Setup बहुत rigid होना चाहिए।'],
+ grade:['CBN (most common) or mixed ceramic, with a chamfered (T-land) edge.','CBN (सबसे आम) या mixed ceramic, chamfered (T-land) edge के साथ।'],
+ cool:['Usually dry with CBN. If coolant is used, it must be continuous.','CBN के साथ आम तौर पर dry। Coolant लगाएं तो लगातार होना चाहिए।'],
+ tips:[['Small depth of cut (about 0.1–0.3 mm) and a short, rigid tool overhang.','कम depth of cut (लगभग 0.1–0.3 mm) और छोटा, rigid tool overhang।'],['Interrupted cuts on hardened parts need a tougher CBN grade.','Hardened parts पर interrupted cut के लिए tough CBN grade चाहिए।'],['Check hardness first. Below about 45 HRC, carbide usually works better than CBN.','पहले hardness check करें। लगभग 45 HRC से कम पर carbide अक्सर CBN से बेहतर चलता है।']]}
+];
+const MATS=[
+ ['Mild steel','MS, EN3, EN3B, 1018, C15','P'],['Free-cutting steel','EN1A, 11SMn30, 1215','P'],['Medium carbon steel','EN8, C45, 45C8, 1045, EN9, C55','P'],
+ ['Alloy steel (soft)','EN19, 42CrMo4, 4140, EN24, 4340, EN36, EN353','P'],['Case-hardening steel (soft)','20MnCr5, 16MnCr5, 8620','P'],
+ ['Bearing steel (soft / annealed)','EN31, 52100, 100Cr6','P'],['Tool steel (annealed)','D2, D3, H13, OHNS','P'],['Cast steel','WCB, GS-C25','P'],
+ ['Martensitic / ferritic stainless','SS410, SS416, SS420, SS430, SS431','P'],
+ ['Austenitic stainless','SS304, 304L, SS316, 316L, SS321, SS310, SS303','M'],['Duplex stainless','2205, 2507, duplex','M'],['Precipitation-hardening stainless','17-4 PH, 15-5 PH','M'],
+ ['Grey cast iron','FG150, FG200, FG260, GG25, CI, grey iron','K'],['Ductile / SG iron','SG400, SG500, SG600, GGG40, GGG50, ductile','K'],['Malleable iron','malleable','K'],['Compacted graphite iron','CGI','K'],
+ ['Aluminium (wrought)','6061, 6063, 6082, HE30, HE9, 7075, 2024, 5083, aluminium, aluminum','N'],['Aluminium (cast)','LM6, LM25, LM4, ADC12, A356, cast aluminium','N'],
+ ['Brass','CW614N, CZ121, free-cutting brass, brass','N'],['Copper','copper, ETP, OFHC','N'],['Bronze','phosphor bronze, aluminium bronze, gunmetal, bronze','N'],
+ ['Plastics','nylon, delrin, POM, acetal, PTFE, teflon, UHMW, PEEK, plastic','N'],
+ ['Nickel alloys','Inconel 718, Inconel 625, Hastelloy, Nimonic, Monel, Waspaloy, nickel','S'],['Titanium','Ti-6Al-4V, grade 5, grade 2, titanium','S'],['Cobalt alloys','Stellite, cobalt','S'],
+ ['Hardened steel (45–65 HRC)','EN31 hardened, EN24 hardened, D2 hardened, H13 hardened, HRC, hardened, through-hardened','H'],['Case-hardened parts (after HT)','carburised, case hardened gear, 20MnCr5 hardened','H'],['Chilled cast iron','chilled iron, white iron, Ni-hard','H']
+];
+
+/* ---------- language ---------- */
+function setLang(l){document.body.className='lang-'+l;document.querySelectorAll('#lang button').forEach(b=>b.classList.toggle('on',b.dataset.l===l));try{localStorage.setItem('isoLang',l)}catch(e){}}
+document.querySelectorAll('#lang button').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.l)));
+try{const l=localStorage.getItem('isoLang');if(l==='en'||l==='hi'||l==='both')setLang(l)}catch(e){}
+const bi=(a)=>`<p class="t en">${a[0]}</p><p class="t hi">${a[1]}</p>`;
+const $=id=>document.getElementById(id);
+
+/* ---------- chip drawings ---------- */
+function chipSvg(L,c){
+  let h='';const st=`stroke="${c}" fill="none" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"`;
+  if(L==='P'){for(let i=0;i<4;i++){const x=40+i*75;h+=`<path d="M${x} 70 c 0 -30 50 -30 50 0 c 0 24 -38 24 -38 2 c 0 -16 26 -16 26 0" ${st}/>`}h+=`<text x="20" y="128" font-size="12" font-weight="700" fill="#667085">Short curled chips (with chipbreaker)</text>`}
+  else if(L==='M'){h+=`<path d="M20 90 C 60 20, 90 130, 130 60 S 190 10, 220 80 S 280 130, 300 50 S 330 40, 340 70" ${st}/><path d="M30 60 C 80 120, 120 10, 170 90 S 260 20, 330 100" ${st} opacity=".55"/>`+`<text x="20" y="128" font-size="12" font-weight="700" fill="#667085">Long, tough, sticky chips</text>`}
+  else if(L==='K'){for(let i=0;i<34;i++){const x=24+((i*53)%310),y=36+((i*37)%62),r=2+(i%3);h+=`<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`}h+=`<text x="20" y="128" font-size="12" font-weight="700" fill="#667085">Short broken chips and dust</text>`}
+  else if(L==='N'){h+=`<path d="M20 80 C 70 30, 110 30, 150 70 S 230 110, 270 60 S 320 40, 340 60" stroke="${c}" fill="none" stroke-width="14" stroke-linecap="round" opacity=".35"/><path d="M20 80 C 70 30, 110 30, 150 70 S 230 110, 270 60 S 320 40, 340 60" stroke="${c}" fill="none" stroke-width="3" stroke-linecap="round"/>`+`<text x="20" y="128" font-size="12" font-weight="700" fill="#667085">Long ribbon chips, sticks to the edge</text>`}
+  else if(L==='S'){let d='M20 60';for(let x=20;x<340;x+=16)d+=` L${x+8} 44 L${x+16} 60`;h+=`<path d="${d} L340 76 L20 76 Z" fill="${c}" opacity=".25"/><path d="${d}" ${st}/><line x1="20" y1="76" x2="340" y2="76" stroke="${c}" stroke-width="5" stroke-linecap="round"/>`+`<text x="20" y="128" font-size="12" font-weight="700" fill="#667085">Segmented chips, heat stays at the edge</text>`}
+  else{for(let k=0;k<5;k++){let d=`M${30+k*64} 70`;for(let j=0;j<4;j++)d+=` l6 -10 l6 10`;h+=`<path d="${d}" stroke="#F97316" fill="none" stroke-width="4" stroke-linecap="round"/><path d="${d}" stroke="${c}" fill="none" stroke-width="1.5" transform="translate(0 6)"/>`}h+=`<text x="20" y="128" font-size="12" font-weight="700" fill="#667085">Small hot saw-tooth chips</text>`}
+  return `<svg viewBox="0 0 360 140" role="img" aria-label="Typical chip">${h}</svg>`;
+}
+
+/* ---------- group view ---------- */
+let curG=0;
+$('gtiles').innerHTML=G.map((g,i)=>`<button class="gt ${g.dark?'dark':''}" data-i="${i}" style="background:${g.c}"><span class="L">${g.L}</span><span class="nm">${g.en}<small class="hi">${g.hi}</small></span></button>`).join('');
+document.querySelectorAll('.gt').forEach(b=>b.addEventListener('click',()=>{showGroup(+b.dataset.i);if(window.innerWidth<860)$('detail').scrollIntoView({behavior:'smooth'})}));
+function showGroup(i){
+  curG=i;const g=G[i];document.querySelectorAll('.gt').forEach(b=>b.classList.toggle('on',+b.dataset.i===i));
+  const h3=(en,hi)=>`<h3 style="color:${g.dark?'#854d0e':g.c}">${en===hi?en:`<span class="en">${en}</span><span class="hi">${hi}</span>`}</h3>`;
+  $('detail').innerHTML=`
+  <div class="dhead"><div class="big" style="background:${g.c};color:${g.dark?'#111':'#fff'}">${g.L}</div><div><h2>${g.en}</h2><div class="sub">${g.hi} · ISO group ${g.L}</div></div></div>
+  <div class="dgrid">
+    <div>
+      <div class="sec">${h3('What is in this group','इस group में क्या आता है')}${bi(g.what)}<div class="mats">${g.mats.map(m=>`<span class="mat">${m}</span>`).join('')}</div></div>
+      <div class="sec">${h3('Chips','Chips')}<div class="chipbox">${chipSvg(g.L,g.c)}</div>${bi(g.chip)}</div>
+      <div class="sec">${h3('Main tool wear','मुख्य tool wear')}${bi(g.wear)}</div>
+    </div>
+    <div>
+      <div class="sec">${h3('Insert grade to use','कौन सा insert grade लें')}${bi(g.grade)}</div>
+      <div class="sec">${h3('Coolant','Coolant')}${bi(g.cool)}</div>
+      <div class="sec">${h3('Shop tips','Shop tips')}<ul class="tips">${g.tips.map(t=>`<li style="border-left-color:${g.c}">${bi(t)}</li>`).join('')}</ul></div>
+      <div class="vc"><div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Starting cutting speed (turning)</div>
+        <div class="big">${g.vc[0]}–${g.vc[1]}${g.L==='N'?'+':''} <span style="font-size:15px;color:var(--muted)">m/min</span></div>
+        <div class="row"><label for="dia"><span class="en">Work diameter (mm)</span><span class="hi">Job diameter (mm)</span></label><input id="dia" type="number" min="1" step="any" value="50"><span class="out" id="rpm"></span></div>
+      </div>
+    </div>
+  </div>`;
+  const d=$('dia'),calc=()=>{const D=parseFloat(d.value);$('rpm').textContent=D>0?`${Math.round(1000*g.vc[0]/(Math.PI*D)).toLocaleString('en-IN')} – ${Math.round(1000*g.vc[1]/(Math.PI*D)).toLocaleString('en-IN')} RPM`:'Enter a diameter';};
+  d.addEventListener('input',calc);calc();
+}
+
+/* ---------- search ---------- */
+function norm(s){return s.toLowerCase().replace(/[\s\-\/().]/g,'')}
+function search(){
+  const q=norm($('q').value);
+  const list=q?MATS.filter(m=>norm(m[0]).includes(q)||m[1].split(',').some(a=>norm(a).includes(q))):MATS;
+  $('res').innerHTML=list.length?list.map(m=>{const g=G.find(x=>x.L===m[2]);return `<button class="ri" data-g="${m[2]}"><span class="b ${g.dark?'dark':''}" style="background:${g.c}">${g.L}</span><span class="nm">${m[0]}<small>${m[1]}</small><small>${g.en} · ${g.hi}</small></span></button>`}).join(''):`<div class="empty">No match. Try a shorter name, like "EN", "SS", "Al" or "cast".</div>`;
+  document.querySelectorAll('.ri').forEach(b=>b.addEventListener('click',()=>{showTab('groups');showGroup(G.findIndex(g=>g.L===b.dataset.g));window.scrollTo({top:0,behavior:'smooth'})}));
+}
+$('q').addEventListener('input',search);
+
+/* ---------- speed chart ---------- */
+function chart(){
+  const W=660,top=20,rowH=46,left=220,right=40,max=500,x=v=>left+(Math.min(v,max)/max)*(W-left-right);
+  let h='';
+  for(let v=0;v<=max;v+=100){h+=`<line x1="${x(v)}" y1="${top-6}" x2="${x(v)}" y2="${top+rowH*6}" stroke="#eceef1"/><text x="${x(v)}" y="${top+rowH*6+18}" font-size="12" fill="#667085" text-anchor="middle">${v}</text>`}
+  h+=`<text x="${W-right}" y="${top+rowH*6+34}" font-size="12" fill="#667085" text-anchor="end" font-weight="700">Vc (m/min)</text>`;
+  G.forEach((g,i)=>{const y=top+i*rowH+8;
+    h+=`<rect x="10" y="${y}" width="30" height="30" rx="7" fill="${g.c}"/><text x="25" y="${y+21}" font-size="16" font-weight="900" fill="${g.dark?'#111':'#fff'}" text-anchor="middle">${g.L}</text><text x="48" y="${y+20}" font-size="13" font-weight="700" fill="#17191c">${g.en}</text>`;
+    const over=g.vc[1]>max;
+    h+=`<rect x="${x(g.vc[0])}" y="${y+4}" width="${x(g.vc[1])-x(g.vc[0])}" height="22" rx="6" fill="${g.c}" opacity=".85"/>`;
+    if(over)h+=`<path d="M${x(max)} ${y+4} l14 11 l-14 11 Z" fill="${g.c}"/>`;
+    const narrow=x(g.vc[1])-x(g.vc[0])<70;h+=`<text x="${narrow?x(g.vc[1])+6:(x(g.vc[0])+x(g.vc[1]))/2}" y="${y+19}" font-size="12" font-weight="800" fill="${narrow?'#17191c':(g.dark?'#111':'#fff')}" text-anchor="${narrow?'start':'middle'}">${g.vc[0]}–${g.vc[1]}${over?'+':''}</text>`;
+  });
+  $('chart').innerHTML=h;
+}
+
+/* ---------- tabs & init ---------- */
+function showTab(id){document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('hidden',p.id!==id))}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+const hashG=G.findIndex(g=>'#'+g.L.toLowerCase()===location.hash.toLowerCase());
+showGroup(hashG>=0?hashG:0);search();chart();
+</script></body></html>

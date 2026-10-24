@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MachiNest | Free Insert Code Decoder</title>
+<style>
+:root{color-scheme:light;--orange:#ff8500;--ink:#17191c;--muted:#667085;--line:#e5e7eb;--bg:#f5f6f8;--card:#fff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--ink)}
+.wrap{max-width:1180px;margin:auto;padding:24px 16px 40px}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.logo{width:42px;height:42px;border-radius:12px;background:var(--orange);display:grid;place-items:center;color:#111;font-weight:900;font-size:22px}
+.brand small{display:block;color:var(--muted);margin-top:3px}
+.hero{background:#17191c;color:#fff;border-radius:18px;padding:26px;margin-bottom:18px;position:relative;overflow:hidden}
+.hero:after{content:'M';position:absolute;right:22px;top:-42px;font-weight:900;font-size:190px;color:#ffffff0a}
+.eyebrow{color:#ffb65b;font-weight:700;font-size:12px;letter-spacing:.13em;text-transform:uppercase}
+.hero h1{margin:8px 0;font-size:clamp(26px,4vw,38px)}
+.hero p{margin:0;color:#d2d5da;max-width:700px;line-height:1.6}
+.pill{display:inline-block;border:1px solid #ffffff30;border-radius:999px;padding:6px 10px;font-size:12px;margin:16px 6px 0 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;min-width:0}
+.card h2{font-size:18px;margin:0 0 6px}
+.lead{font-size:13px;color:var(--muted);margin:0 0 14px;line-height:1.5}
+.entry input{width:100%;font:inherit;font-size:28px;font-weight:850;letter-spacing:.06em;padding:14px 16px;border:2px solid #d4d8de;border-radius:12px;text-transform:uppercase;color:var(--ink);font-family:Consolas,Menlo,monospace}
+.entry input:focus{outline:3px solid #ff850040;border-color:var(--orange)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{border:1px solid #d4d8de;background:#fff;border-radius:999px;padding:7px 11px;font:inherit;font-size:12.5px;font-weight:750;cursor:pointer;color:var(--ink);font-family:Consolas,Menlo,monospace}
+.chip:hover{border-color:var(--orange)}
+.code{display:flex;flex-wrap:wrap;gap:6px;margin:18px 0 4px}
+.cbox{border:2px solid var(--line);border-radius:10px;padding:8px 10px 6px;min-width:48px;text-align:center;cursor:pointer;background:#fff;font:inherit;color:inherit}
+.cbox b{display:block;font-family:Consolas,Menlo,monospace;font-size:24px;letter-spacing:.04em}
+.cbox small{display:block;font-size:10.5px;color:var(--muted);font-weight:700;margin-top:2px;text-transform:uppercase;letter-spacing:.04em}
+.cbox.bad{border-color:#fecaca;background:#fef2f2}
+.cbox.bad b{color:#b42318}
+.cbox.on{border-color:var(--orange);background:#fff7ed}
+.cbox.miss b{color:#c3c7ce}
+.summary{background:#17191c;color:#fff;border-radius:14px;padding:16px 18px;margin-top:14px;line-height:1.65;font-size:15px}
+.summary b{color:#ffb65b}
+.summary .facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.summary .fact{background:#ffffff14;border:1px solid #ffffff22;border-radius:8px;padding:6px 10px;font-size:12.5px}
+.summary .fact strong{display:block;font-size:16px;color:#fff}
+.err{display:none;margin-top:12px;padding:12px 14px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;color:#991b1b;font-size:13px;font-weight:600}
+.err.show{display:block}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:16px}
+.draw{background:#f8f9fb;border:1px solid var(--line);border-radius:14px;padding:8px}
+.draw svg{display:block;width:100%;height:auto}
+.pos{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px;scroll-margin-top:12px}
+.pos.on{border-color:var(--orange);box-shadow:inset 0 0 0 1px var(--orange)}
+.pos h3{margin:0 0 4px;font-size:14px;display:flex;align-items:center;gap:8px}
+.pos h3 .n{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--orange);font-size:11px;font-weight:800}
+.pos h3 .v{margin-left:auto;font-family:Consolas,Menlo,monospace;font-size:16px;background:#f0f1f3;border-radius:6px;padding:2px 8px}
+.pos p{margin:4px 0 0;font-size:13.5px;line-height:1.6;color:#424852}
+.pos p b{color:var(--ink)}
+.pos.bad h3 .v{background:#fee2e2;color:#991b1b}
+.pos.miss{opacity:.55}
+.calc{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;font-size:13px}
+.calc input{width:96px;padding:9px 10px;border:1px solid #d4d8de;border-radius:8px;font:inherit}
+.calc .out{font-weight:800;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px 10px}
+.tabs{display:flex;gap:8px;margin:18px 0;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:#fff;color:var(--ink);font:inherit;border-radius:10px;padding:11px 16px;font-weight:700;cursor:pointer}
+.tab:hover{border-color:var(--orange)}
+.tab.active{background:var(--orange);border-color:var(--orange);color:#111}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px}
+table.ref{width:100%;border-collapse:collapse;background:#fff;font-size:13px}
+table.ref th,table.ref td{padding:9px 11px;border-bottom:1px solid #eceef1;text-align:left;vertical-align:top}
+table.ref th{background:#f8f9fb;color:#4c5360;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+table.ref td:first-child{font-family:Consolas,Menlo,monospace;font-weight:800;font-size:15px;width:56px}
+table.ref tr:last-child td{border-bottom:0}
+.refgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.refgrid h3{font-size:14px;margin:0 0 8px}
+.notice{padding:12px 14px;background:#fff8e7;border:1px solid #f4d58a;border-radius:10px;color:#674b0b;font-size:13px;line-height:1.55;margin-top:14px}
+.hidden{display:none!important}
+.footer{margin-top:20px;text-align:center;color:var(--muted);font-size:12px;line-height:1.7}
+@media(max-width:860px){.grid{grid-template-columns:1fr}.hero{padding:21px}.wrap{padding:16px 12px 28px}.refgrid{grid-template-columns:1fr}}
+@media(max-width:430px){.entry input{font-size:22px}.cbox{min-width:40px;padding:6px 7px 5px}.cbox b{font-size:19px}}
+</style></head>
+<body><main class="wrap">
+<div class="brand"><div class="logo">M</div><div><strong>MachiNest</strong><small>Building a smarter CNC community.</small></div></div>
+
+<section class="hero"><div class="eyebrow">Free CNC Utility</div><h1>Insert Code Decoder</h1><p>Type any ISO turning insert code like <strong>CNMG 120408-PM</strong> and see what every letter and number means: shape, clearance, tolerance, hole and chipbreaker, size, thickness and nose radius, with a drawing of the insert.</p><span class="pill">ISO 1832</span><span class="pill">TURNING INSERTS</span><span class="pill">METRIC CODES</span><span class="pill">NO LOGIN REQUIRED</span></section>
+
+<div class="tabs"><button class="tab active" data-tab="dec">Decode an Insert</button><button class="tab" data-tab="ref">Code Charts</button></div>
+
+<section id="dec" class="panel">
+<div class="card">
+  <h2>Insert code</h2>
+  <p class="lead">Type it the way it is printed on the box. Spaces and the dash are optional.</p>
+  <div class="entry"><input id="code" type="text" value="CNMG 120408-PM" autocomplete="off" spellcheck="false" aria-label="Insert code"></div>
+  <div class="chips" id="examples"></div>
+  <div class="code" id="boxes"></div>
+  <div class="err" id="err"></div>
+  <div class="summary" id="summary"></div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>Insert drawing</h2>
+    <p class="lead">Top view with the cutting corner and IC circle, and side view showing clearance and thickness. Angles are drawn larger so you can see them.</p>
+    <div class="draw"><svg id="top" viewBox="0 0 360 300" role="img" aria-label="Insert top view"></svg></div>
+    <div class="draw" style="margin-top:10px"><svg id="side" viewBox="0 0 360 150" role="img" aria-label="Insert side view"></svg></div>
+  </div>
+  <div class="card">
+    <h2>Position by position</h2>
+    <p class="lead">Tap a box in the code above to jump to it.</p>
+    <div id="positions"></div>
+  </div>
+</div>
+</section>
+
+<section id="ref" class="panel hidden"><div class="card">
+  <h2>ISO 1832 code charts</h2>
+  <p class="lead">The full list of letters for each position of a turning insert code.</p>
+  <div class="refgrid" id="refgrid"></div>
+  <div class="notice"><strong>Brand codes:</strong> everything after the dash (like -PM, -MF, -GN) and the grade number (like 4325, IC907) are chosen by each insert maker. Check the maker's catalogue for those.</div>
+</div></section>
+
+<div class="footer">MachiNest Insert Code Decoder · Free CNC utility · Based on ISO 1832 metric insert codes<br>Always confirm cutting data and grade with your insert supplier's catalogue.</div>
+</main>
+
+<script>
+/* ---------- ISO 1832 data ---------- */
+const SHAPE={
+ C:{n:'Rhombic 80°',ang:80,kind:'rh',corners:2,use:'General turning and facing. Strong corner and the most popular shape.'},
+ D:{n:'Rhombic 55°',ang:55,kind:'rh',corners:2,use:'Profiling and copy turning. Reaches into more shapes than C, but weaker.'},
+ E:{n:'Rhombic 75°',ang:75,kind:'rh',corners:2,use:'Profiling and general turning.'},
+ M:{n:'Rhombic 86°',ang:86,kind:'rh',corners:2,use:'Turning and facing with a strong corner.'},
+ V:{n:'Rhombic 35°',ang:35,kind:'rh',corners:2,use:'Fine profiling and copying of complex shapes. Weakest corner, use light cuts.'},
+ S:{n:'Square 90°',ang:90,kind:'poly',sides:4,corners:4,use:'Roughing, chamfering and facing. Very strong, 4 corners per side.'},
+ T:{n:'Triangle 60°',ang:60,kind:'poly',sides:3,corners:3,use:'General turning and facing. 3 corners per side, weaker than C or W.'},
+ W:{n:'Trigon 80°',ang:80,kind:'trigon',corners:3,use:'General turning and facing. 3 strong 80° corners per side, good value.'},
+ R:{n:'Round',ang:360,kind:'round',corners:0,use:'Profiling, copy turning and heavy roughing. Strongest edge, can be turned to fresh edge many times.'},
+ H:{n:'Hexagon 120°',ang:120,kind:'poly',sides:6,corners:6,use:'Roughing with many edges.'},
+ O:{n:'Octagon 135°',ang:135,kind:'poly',sides:8,corners:8,use:'Milling and roughing with many edges.'},
+ P:{n:'Pentagon 108°',ang:108,kind:'poly',sides:5,corners:5,use:'Roughing with many edges.'},
+ K:{n:'Parallelogram 55°',ang:55,kind:'para',corners:2,use:'Special profiling and grooving tools.'},
+ A:{n:'Parallelogram 85°',ang:85,kind:'para',corners:2,use:'Special tools.'},
+ B:{n:'Parallelogram 82°',ang:82,kind:'para',corners:2,use:'Special tools.'},
+ L:{n:'Rectangle 90°',ang:90,kind:'rect',corners:4,use:'Special tools.'}
+};
+const CLEAR={A:3,B:5,C:7,D:15,E:20,F:25,G:30,N:0,P:11,O:null};
+const TOL={
+ A:['±0.005','±0.025','±0.025','Precision ground'],F:['±0.005','±0.025','±0.013','Precision ground'],
+ C:['±0.013','±0.025','±0.025','Precision ground'],H:['±0.013','±0.025','±0.013','Precision ground'],
+ E:['±0.025','±0.025','±0.025','Ground'],G:['±0.025','±0.13','±0.025','Ground (precision)'],
+ J:['±0.005','±0.025','±0.05 to ±0.15','Ground corners'],K:['±0.013','±0.025','±0.05 to ±0.15','Ground corners'],
+ L:['±0.025','±0.025','±0.05 to ±0.15','Ground corners'],M:['±0.08 to ±0.2','±0.13','±0.05 to ±0.15','Pressed (most common)'],
+ N:['±0.08 to ±0.2','±0.025','±0.05 to ±0.15','Pressed'],U:['±0.13 to ±0.38','±0.13','±0.08 to ±0.25','Pressed (rough)']
+};
+// type: hole (none|cyl|cs1|cs2), cs angle text, chipbreaker sides (0,1,2)
+const TYPE={
+ A:['cyl','',0],B:['cs1','70–90°',0],C:['cs2','70–90°',0],F:['none','',2],G:['cyl','',2],H:['cs1','70–90°',1],
+ J:['cs2','70–90°',2],M:['cyl','',1],N:['none','',0],Q:['cs2','40–60°',0],R:['none','',1],T:['cs1','40–60°',1],
+ U:['cs2','40–60°',2],W:['cs1','40–60°',0],X:['special','',0]
+};
+const HOLE_TXT={none:'No hole',cyl:'Cylindrical hole',cs1:'Hole with countersink on one side',cs2:'Hole with countersink on both sides',special:'Special design'};
+const THICK={'01':1.59,'T1':1.98,'02':2.38,'T2':2.78,'03':3.18,'T3':3.97,'04':4.76,'05':5.56,'06':6.35,'07':7.94,'09':9.52};
+const ICS=[3.97,4.76,5.56,6.35,7.94,9.525,12.7,15.875,19.05,25.4,31.75];
+const EDGE={F:'Sharp edge',E:'Rounded (honed) edge',T:'Chamfered edge (negative land)',S:'Chamfered and rounded edge'};
+const HAND={R:'Right hand',L:'Left hand',N:'Neutral (both directions)'};
+
+function sideFromIC(sh,ic){const s=SHAPE[sh];if(!s)return null;
+  switch(s.kind){case 'rh':return ic/Math.sin(s.ang*Math.PI/180);case 'poly':return ic*Math.tan(Math.PI/s.sides);case 'trigon':return ic*0.6849;case 'round':return ic;default:return null}}
+function icFromCode(sh,code){
+  const n=parseInt(code,10);if(!isFinite(n))return null;
+  if(sh==='R')return{ic:n,edge:null};
+  let best=null;
+  for(const ic of ICS){const l=sideFromIC(sh,ic);if(l===null)return null;if(Math.floor(l+1e-6)===n)return{ic,edge:l};const d=Math.abs(l-n);if(!best||d<best.d)best={ic,edge:l,d}}
+  return best&&best.d<1.2?{ic:best.ic,edge:best.edge,approx:true}:null;
+}
+
+/* ---------- parsing ---------- */
+const $=id=>document.getElementById(id);
+const POS=[['Shape',1],['Clearance',2],['Tolerance',3],['Type',4],['Size',5],['Thickness',6],['Corner',7],['Edge',8],['Hand',9],['Brand',10]];
+function parse(raw){
+  let s=raw.toUpperCase().replace(/[\s‐-―]/g,'');
+  const out={};let i=0;
+  for(const k of ['shape','clear','tol','type']){out[k]=s[i]||'';i++}
+  out.size=s.slice(i,i+2);i+=2;
+  out.thick=s.slice(i,i+2);i+=2;
+  out.rad=s.slice(i,i+2);i+=2;
+  let rest=s.slice(i);
+  if(/^[EFST]/.test(rest)&&!rest.startsWith('-')){out.edge=rest[0];rest=rest.slice(1)}
+  if(/^[RLN]/.test(rest)&&!rest.startsWith('-')){out.hand=rest[0];rest=rest.slice(1)}
+  out.brand=rest.replace(/^-/,'');
+  return out;
+}
+
+/* ---------- decode ---------- */
+function decode(p){
+  const items=[];let errs=[];
+  const sh=SHAPE[p.shape];
+  items.push({k:'shape',v:p.shape,label:'Shape',ok:!!sh,miss:!p.shape,h:sh?sh.n:'',t:sh?sh.use:'Unknown shape letter.'});
+  const cl=p.clear in CLEAR;
+  items.push({k:'clear',v:p.clear,label:'Clearance',ok:cl,miss:!p.clear,h:cl?(p.clear==='O'?'Special angle':CLEAR[p.clear]+'° clearance'):'',
+    t:cl?(p.clear==='N'?'<b>Negative insert.</b> Sides are straight, so it gets its clearance by being tilted in the holder. Strong, and usually both sides can be used.':p.clear==='O'?'Special clearance angle, see catalogue.':`<b>Positive insert.</b> Sides are angled ${CLEAR[p.clear]}°. Cuts lighter with less force, good for small parts, boring and finishing. Only one side is usable.`):'Unknown clearance letter.'});
+  const tl=TOL[p.tol];
+  items.push({k:'tol',v:p.tol,label:'Tolerance',ok:!!tl,miss:!p.tol,h:tl?tl[3]:'',t:tl?`Corner height (m) ${tl[0]} mm, thickness (s) ${tl[1]} mm, IC circle (d) ${tl[2]} mm. ${p.tol==='M'?'M is the standard pressed (sintered) insert used for most turning.':p.tol==='G'?'G inserts are ground all round for precise, repeatable size, often for finishing.':''}`:'Unknown tolerance letter.'});
+  const ty=TYPE[p.type];
+  items.push({k:'type',v:p.type,label:'Type',ok:!!ty,miss:!p.type,h:ty?`${HOLE_TXT[ty[0]]}${ty[1]?' ('+ty[1]+')':''}`:'',t:ty?`${ty[2]===0?'No chipbreaker (flat top).':ty[2]===1?'Chipbreaker on one side.':'Chipbreakers on both sides.'} ${ty[0]==='cyl'?'Held with a lever, pin or top clamp.':ty[0]==='cs1'||ty[0]==='cs2'?'Held with a screw through the countersunk hole.':ty[0]==='none'?'Held with a top clamp.':''}`:'Unknown type letter.'});
+  const icr=sh&&/^\d\d$/.test(p.size)?icFromCode(p.shape,p.size):null;
+  items.push({k:'size',v:p.size,label:'Size',ok:!!icr||(!!p.size&&!sh),miss:!p.size,h:icr?(p.shape==='R'?`Ø${icr.ic} mm round`:`Edge ≈ ${icr.edge.toFixed(1)} mm`):'',
+    t:icr?(p.shape==='R'?`The number is the insert diameter: ${icr.ic} mm.`:`The number is the cutting edge length in mm (decimals dropped). Inscribed circle (IC) = <b>Ø${icr.ic} mm</b>${icr.ic===12.7?' (1/2 inch)':icr.ic===9.525?' (3/8 inch)':icr.ic===15.875?' (5/8 inch)':icr.ic===6.35?' (1/4 inch)':icr.ic===19.05?' (3/4 inch)':icr.ic===25.4?' (1 inch)':''}.${icr.approx?' (Nearest standard size.)':''}`):(p.size?'This size does not match a standard insert for this shape.':'')});
+  const th=THICK[p.thick];
+  items.push({k:'thick',v:p.thick,label:'Thickness',ok:!!th,miss:!p.thick,h:th?th+' mm thick':'',t:th?`Insert thickness ${th} mm.${p.thick.startsWith('T')?' A "T" code is an in-between thickness.':''}`:(p.thick?'Unknown thickness code.':'')});
+  let rOk=false,rH='',rT='',rmm=null;
+  if(/^\d\d$/.test(p.rad)){rmm=parseInt(p.rad,10)/10;rOk=true;rH=rmm===0?'Sharp corner':'r = '+rmm.toFixed(1)+' mm';rT=rmm===0?'Sharp corner (no radius), for special tools.':`Nose radius ${rmm.toFixed(1)} mm. Bigger radius = stronger corner and better finish, but more vibration on thin parts. Rule of thumb: keep feed below about half the radius (here ${(rmm/2).toFixed(2)} mm/rev).`}
+  else if(p.rad==='M0'){rOk=true;rH='Round insert';rT='"M0" is used on metric round inserts, which have no corner.'}
+  else if(p.rad){rT='Unknown corner code.'}
+  items.push({k:'rad',v:p.rad,label:'Corner',ok:rOk,miss:!p.rad,h:rH,t:rT,rmm});
+  if(p.edge)items.push({k:'edge',v:p.edge,label:'Edge',ok:!!EDGE[p.edge],h:EDGE[p.edge]||'',t:'Optional position: how the cutting edge is prepared.'});
+  if(p.hand)items.push({k:'hand',v:p.hand,label:'Hand',ok:!!HAND[p.hand],h:HAND[p.hand]||'',t:'Optional position: which direction the insert cuts.'});
+  if(p.brand){const m=p.brand.match(/^([PMKNSH])([FMR])/);const mat={P:'steel',M:'stainless steel',K:'cast iron',N:'aluminium and non-ferrous',S:'heat-resistant alloys and titanium',H:'hardened steel'};const op={F:'finishing',M:'medium machining',R:'roughing'};
+    items.push({k:'brand',v:'-'+p.brand,label:'Brand',ok:true,brand:true,h:'Maker\'s chipbreaker / grade',t:m?`Set by the insert maker. Many brands use the first letter for material and the second for operation, so <b>${m[1]}${m[2]}</b> often means ${op[m[2]]} of ${mat[m[1]]}. Confirm in the maker's catalogue.`:'Set by the insert maker (chipbreaker style and/or grade). Check the maker\'s catalogue.'})}
+  return{items,icr,th,rmm,ty,sh};
+}
+
+/* ---------- drawing ---------- */
+function shapePoly(sh,r){ // vertices for inscribed radius r
+  const s=SHAPE[sh];let normals=[];
+  if(s.kind==='rh'){const a=s.ang;normals=[0,180-a,180,360-a]}
+  else if(s.kind==='poly'){for(let i=0;i<s.sides;i++)normals.push(i*360/s.sides)}
+  else if(s.kind==='trigon'){normals=[0,100,120,220,240,340]}
+  else if(s.kind==='para'){const a=s.ang;return[[-1.5*r,-r],[1.5*r-2*r/Math.tan(a*Math.PI/180),-r],[1.5*r,r],[-1.5*r+2*r/Math.tan(a*Math.PI/180),r]].map(([x,y])=>[x-r/Math.tan(a*Math.PI/180)*0,y])}
+  else if(s.kind==='rect'){return[[-1.6*r,-r],[1.6*r,-r],[1.6*r,r],[-1.6*r,r]]}
+  const v=[];const n=normals.length;
+  for(let i=0;i<n;i++){const a=normals[i]*Math.PI/180,b=(i+1<n?normals[i+1]:normals[0]+360)*Math.PI/180;const m=(a+b)/2,d=(b-a)/2;v.push([r*Math.cos(m)/Math.cos(d),r*Math.sin(m)/Math.cos(d)])}
+  return v;
+}
+function cornerAngle(v,i){const n=v.length,p=v[(i-1+n)%n],c=v[i],q=v[(i+1)%n];const a1=Math.atan2(p[1]-c[1],p[0]-c[0]),a2=Math.atan2(q[1]-c[1],q[0]-c[0]);let d=Math.abs(a1-a2);if(d>Math.PI)d=2*Math.PI-d;return d}
+function drawTop(D){
+  const svg=$('top');const sh=D.sh?Object.keys(SHAPE).find(k=>SHAPE[k]===D.sh):null;
+  if(!sh){svg.innerHTML=`<text x="180" y="150" text-anchor="middle" fill="#9aa1ab" font-size="14" font-weight="600">Enter a valid shape letter</text>`;return}
+  const cx=196,cy=140,R=88;let h='',kk=R;
+  const holeType=D.ty?D.ty[0]:'none',cb=D.ty?D.ty[2]:0;
+  if(sh==='R'){
+    h+=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="#e9ecef" stroke="#17191c" stroke-width="2.4"/>`;
+    if(cb)h+=`<circle cx="${cx}" cy="${cy}" r="${R-14}" fill="none" stroke="#8a909a" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+    h+=`<path d="M${cx-R*0.7} ${cy+R*0.7} A${R} ${R} 0 0 1 ${cx-R} ${cy}" fill="none" stroke="#ff8500" stroke-width="6" stroke-linecap="round"/>`;
+  }else{
+    let v=shapePoly(sh,1);
+    let ci=0,minA=9;v.forEach((_,i)=>{const a=cornerAngle(v,i);if(a<minA-1e-6){minA=a;ci=i}});
+    const target=200*Math.PI/180,cur=Math.atan2(v[ci][1],v[ci][0]),rot=target-cur;
+    v=v.map(([x,y])=>[x*Math.cos(rot)-y*Math.sin(rot),x*Math.sin(rot)+y*Math.cos(rot)]);
+    const maxR=Math.max(...v.map(p=>Math.hypot(p[0],p[1])));const k=Math.min(78,108/maxR);
+    const P=v.map(([x,y])=>[cx+x*k,cy-y*k]);kk=k;
+    h+=`<polygon points="${P.map(p=>p.join(',')).join(' ')}" fill="#e9ecef" stroke="#17191c" stroke-width="2.4" stroke-linejoin="round"/>`;
+    if(cb){const inner=v.map(([x,y])=>[cx+x*k*0.82,cy-y*k*0.82]);h+=`<polygon points="${inner.map(p=>p.join(',')).join(' ')}" fill="none" stroke="#8a909a" stroke-width="1.5" stroke-dasharray="5 4"/>`}
+    if(SHAPE[sh].kind!=='para'&&SHAPE[sh].kind!=='rect')h+=`<circle cx="${cx}" cy="${cy}" r="${k}" fill="none" stroke="#1D9E75" stroke-width="1.4" stroke-dasharray="6 4"/><text x="${cx}" y="${cy+k-10}" fill="#137547" font-size="12" font-weight="800" text-anchor="middle">IC${D.icr?' Ø'+D.icr.ic:''}</text>`;
+    const c=P[ci],pr=P[(ci-1+P.length)%P.length],nx=P[(ci+1)%P.length];
+    const u1=[pr[0]-c[0],pr[1]-c[1]],u2=[nx[0]-c[0],nx[1]-c[1]],L1=Math.hypot(...u1),L2=Math.hypot(...u2);
+    const e1=[c[0]+u1[0]/L1*48,c[1]+u1[1]/L1*48],e2=[c[0]+u2[0]/L2*48,c[1]+u2[1]/L2*48];
+    h+=`<path d="M${e1[0]} ${e1[1]} L${c[0]} ${c[1]} L${e2[0]} ${e2[1]}" fill="none" stroke="#ff8500" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>`;
+    h+=`<text x="10" y="${c[1]+34}" fill="#b45309" font-size="12" font-weight="800">Cutting corner ${Math.round(minA*180/Math.PI)}°</text>`;
+    if(D.rmm)h+=`<text x="10" y="${c[1]+50}" fill="#b45309" font-size="11.5" font-weight="700">nose r ${D.rmm.toFixed(1)}</text>`;
+  }
+  if(holeType!=='none'&&holeType!=='special'){const hr=sh==='R'?R*0.3:Math.max(7,Math.min(28,kk*0.36));
+    if(holeType==='cs1'||holeType==='cs2')h+=`<circle cx="${cx}" cy="${cy}" r="${hr*1.3}" fill="#d9dde3" stroke="#5f6672" stroke-width="1.2"/>`;
+    h+=`<circle cx="${cx}" cy="${cy}" r="${hr}" fill="#f8f9fb" stroke="#17191c" stroke-width="1.8"/>`}
+  h+=`<text x="12" y="22" fill="#17191c" font-size="13" font-weight="800">Top view · ${SHAPE[sh].n}</text>`;
+  if(cb)h+=`<text x="12" y="290" fill="#8a909a" font-size="11.5" font-weight="700">Dashed line = chipbreaker groove</text>`;
+  svg.innerHTML=h;
+}
+function drawSide(p,D){
+  const svg=$('side');const cl=CLEAR[p.clear];
+  if(cl===undefined||!D.sh){svg.innerHTML=`<text x="180" y="75" text-anchor="middle" fill="#9aa1ab" font-size="14" font-weight="600">Side view appears after shape and clearance</text>`;return}
+  const thick=D.th||4.76,ic=D.icr?D.icr.ic:12.7,w=196,hgt=Math.max(26,Math.min(70,thick/ic*w*1.4)),x0=60,y0=48;
+  const ang=(cl||0)*1.6*Math.PI/180,off=hgt*Math.tan(ang);
+  let h=`<polygon points="${x0},${y0} ${x0+w},${y0} ${x0+w-off},${y0+hgt} ${x0+off},${y0+hgt}" fill="#e9ecef" stroke="#17191c" stroke-width="2.2" stroke-linejoin="round"/>`;
+  const cb=D.ty?D.ty[2]:0;
+  if(cb>=1)h+=`<path d="M${x0+8} ${y0+1} q10 7 22 0" fill="none" stroke="#8a909a" stroke-width="1.6"/><path d="M${x0+w-30} ${y0+1} q10 7 22 0" fill="none" stroke="#8a909a" stroke-width="1.6"/>`;
+  if(cb===2)h+=`<path d="M${x0+off+8} ${y0+hgt-1} q10 -7 22 0" fill="none" stroke="#8a909a" stroke-width="1.6"/>`;
+  h+=`<line x1="${x0}" y1="${y0}" x2="${x0}" y2="${y0+hgt+16}" stroke="#9aa1ab" stroke-dasharray="4 3"/>`;
+  if(cl)h+=`<text x="${x0+off+6}" y="${y0+hgt+16}" fill="#b45309" font-size="12" font-weight="800">${cl}° clearance (positive)</text>`;
+  else h+=`<text x="${x0+4}" y="${y0+hgt+18}" fill="#b45309" font-size="12" font-weight="800">0° straight sides (negative)</text>`;
+  h+=`<line x1="${x0+w+16}" y1="${y0}" x2="${x0+w+16}" y2="${y0+hgt}" stroke="#17191c" stroke-width="1.2" marker-start="url(#a)" marker-end="url(#a)"/><text x="${x0+w+22}" y="${y0+hgt/2+4}" fill="#17191c" font-size="12" font-weight="800">${D.th?D.th+' mm':'s'}</text>`;
+  h+=`<text x="12" y="22" fill="#17191c" font-size="13" font-weight="800">Side view</text>`;
+  svg.innerHTML=`<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#17191c"/></marker></defs>`+h;
+}
+
+/* ---------- render ---------- */
+function render(){
+  const p=parse($('code').value),D=decode(p);
+  $('boxes').innerHTML=D.items.map(it=>`<button class="cbox ${it.miss?'miss':(!it.ok?'bad':'')}" data-k="${it.k}"><b>${it.miss?'·':it.v}</b><small>${it.label}</small></button>`).join('');
+  $('positions').innerHTML=D.items.map((it,i)=>`<div class="pos ${it.miss?'miss':(!it.ok?'bad':'')}" id="p-${it.k}"><h3><span class="n">${i+1}</span>${it.label}${it.h?` <span style="font-weight:600;color:#667085">· ${it.h}</span>`:''}<span class="v">${it.miss?'—':it.v}</span></h3><p>${it.miss?'Not entered yet.':it.t}</p>${it.k==='rad'&&it.rmm?`<div class="calc"><label for="feed">Feed (mm/rev)</label><input id="feed" type="number" step="0.01" min="0.01" value="${Math.min(0.25,(it.rmm/2)).toFixed(2)}"><span class="out" id="ra"></span></div>`:''}</div>`).join('');
+  document.querySelectorAll('.cbox').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.cbox').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('.pos').forEach(x=>x.classList.toggle('on',x.id==='p-'+b.dataset.k));const el=$('p-'+b.dataset.k);if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'})}));
+  const bad=D.items.filter(i=>!i.ok&&!i.miss);
+  $('err').textContent=bad.length?`Check position ${bad.map(b=>b.label).join(', ')}: "${bad.map(b=>b.v).join('", "')}" is not a standard code letter or number here.`:'';$('err').classList.toggle('show',bad.length>0);
+  // summary
+  const sh=D.sh,core=['shape','clear','tol','type','size','thick','rad'].every(k=>{const it=D.items.find(i=>i.k===k);return it&&it.ok&&!it.miss});
+  if(sh&&core){
+    const neg=p.clear==='N',twoSided=neg&&D.ty&&['G','F','J','U','N','C','Q','A'].includes(p.type);
+    const edges=p.shape==='R'?'Many (rotate to a fresh edge)':`${sh.corners*(twoSided?2:1)} (${sh.corners} per side${twoSided?' × 2 sides':', one side'})`;
+    $('summary').innerHTML=`<div><b>${p.shape}${p.clear}${p.tol}${p.type} ${p.size}${p.thick}${p.rad}</b> is a <b>${sh.n.toLowerCase()}</b>, <b>${neg?'negative':'positive '+CLEAR[p.clear]+'°'}</b> insert, ${TOL[p.tol][3].toLowerCase()} tolerance, ${HOLE_TXT[D.ty[0]].toLowerCase()} and ${D.ty[2]===0?'no chipbreaker':D.ty[2]===1?'a chipbreaker on one side':'chipbreakers on both sides'}. ${sh.use}</div>
+    <div class="facts"><div class="fact">Cutting edges<strong>${edges}</strong></div><div class="fact">IC size<strong>${D.icr?'Ø'+D.icr.ic+' mm':'—'}</strong></div><div class="fact">Thickness<strong>${D.th} mm</strong></div><div class="fact">Nose radius<strong>${D.rmm!==null&&D.rmm!==undefined?D.rmm.toFixed(1)+' mm':'Round'}</strong></div></div>`;
+    $('summary').classList.remove('hidden');
+  }else{$('summary').innerHTML='Enter all 7 positions (for example CNMG 120408) to see the full summary.';}
+  drawTop(D);drawSide(p,D);
+  const f=$('feed');if(f){const calc=()=>{const fv=parseFloat(f.value),r=D.rmm;$('ra').textContent=fv>0&&r>0?`Theoretical Ra ≈ ${(1000*fv*fv/(32*r)).toFixed(2)} µm`:'Enter a feed';};f.addEventListener('input',calc);calc()}
+}
+
+/* ---------- reference charts ---------- */
+function refTable(title,head,rows){return `<div><h3>${title}</h3><div class="tablewrap"><table class="ref"><thead><tr>${head.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`}
+$('refgrid').innerHTML=
+ refTable('1 · Shape',['Code','Shape and use'],Object.entries(SHAPE).map(([k,v])=>[k,`<b>${v.n}</b><br><span style="color:#667085">${v.use}</span>`]))+
+ refTable('2 · Clearance angle',['Code','Angle'],Object.entries(CLEAR).map(([k,v])=>[k,v===null?'Special':v+'°'+(v===0?' (negative)':'')]))+
+ refTable('3 · Tolerance (mm)',['Code','Corner m · Thickness s · IC d'],Object.entries(TOL).map(([k,v])=>[k,`${v[0]} · ${v[1]} · ${v[2]}<br><span style="color:#667085">${v[3]}</span>`]))+
+ refTable('4 · Type (hole and chipbreaker)',['Code','Hole · Chipbreaker'],Object.entries(TYPE).map(([k,v])=>[k,`${HOLE_TXT[v[0]]}${v[1]?' ('+v[1]+')':''} · ${v[2]===0?'none':v[2]===1?'one side':'both sides'}`]))+
+ refTable('6 · Thickness',['Code','mm'],Object.entries(THICK).map(([k,v])=>[k,v+' mm']))+
+ refTable('7 · Corner radius',['Code','Radius'],[['00','Sharp'],['01','0.1 mm'],['02','0.2 mm'],['04','0.4 mm'],['08','0.8 mm'],['12','1.2 mm'],['16','1.6 mm'],['20','2.0 mm'],['24','2.4 mm'],['32','3.2 mm'],['M0','Round insert (metric)']])+
+ refTable('5 · Size (edge length) for common shapes',['Code','Meaning'],[['C 06 / 09 / 12 / 16 / 19','IC 6.35 / 9.525 / 12.7 / 15.875 / 19.05'],['D 07 / 11 / 15','IC 6.35 / 9.525 / 12.7'],['S 09 / 12 / 15 / 19','IC 9.525 / 12.7 / 15.875 / 19.05'],['T 11 / 16 / 22 / 27','IC 6.35 / 9.525 / 12.7 / 15.875'],['V 11 / 16 / 22','IC 6.35 / 9.525 / 12.7'],['W 06 / 08','IC 9.525 / 12.7'],['R 10 / 12 / 16 / 20','Diameter in mm']].map(r=>[`<span style="font-size:12.5px">${r[0]}</span>`,r[1]]))+
+ refTable('8 · Edge prep · 9 · Hand (optional)',['Code','Meaning'],[...Object.entries(EDGE),...Object.entries(HAND)]);
+
+/* ---------- init ---------- */
+const EX=['CNMG 120408-PM','DNMG 150608','TNMG 160404','WNMG 080408','SNMG 120408','VBMT 160404','CCMT 09T304','DCGT 11T302','VNMG 160408','RCMT 1204M0'];
+$('examples').innerHTML=EX.map(e=>`<button class="chip">${e}</button>`).join('');
+document.querySelectorAll('#examples .chip').forEach(c=>c.addEventListener('click',()=>{$('code').value=c.textContent;render()}));
+$('code').addEventListener('input',render);
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('hidden',p.id!==b.dataset.tab));}));
+render();
+</script></body></html>
