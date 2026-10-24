@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
 import TutorialModal from '@/components/TutorialModal'
+import CycleIcon from '@/components/CycleIcon'
 
 type Cycle = {
   id: string
@@ -80,12 +81,12 @@ export default function StudioPage() {
         </button>
       </header>
 
-      <div style={{ padding: '48px 40px', maxWidth: 800, margin: '0 auto' }}>
+      <div style={{ padding: '48px 40px', maxWidth: 1100, margin: '0 auto' }}>
         <h2 style={{ color: '#fff', fontSize: 26, margin: '0 0 6px', fontWeight: 800 }}>{tool?.name}</h2>
-        <p style={{ color: '#999', fontSize: 14, marginBottom: 12 }}>Select a cycle to generate your program</p>
+        <p style={{ color: '#999', fontSize: 14, marginBottom: 20 }}>Select a cycle to generate your program</p>
 
         {!hasToolAccess && (
-          <div style={{ background: 'rgba(240,128,30,0.1)', border: '1px solid rgba(240,128,30,0.4)', borderRadius: 8, padding: '12px 16px', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+          <div style={{ background: 'rgba(240,128,30,0.1)', border: '1px solid rgba(240,128,30,0.4)', borderRadius: 8, padding: '12px 16px', marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
             <span style={{ color: '#F0801E', fontSize: 13 }}>You have free access to 1 cycle below. Upgrade to unlock all of {tool?.name}.</span>
             <button onClick={() => router.push('/membership')} style={{ background: '#F0801E', color: '#fff', border: 'none', borderRadius: 999, padding: '8px 18px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
               View Plans
@@ -93,55 +94,68 @@ export default function StudioPage() {
           </div>
         )}
 
-        <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 12, padding: 20 }}>
-          {cycles.length === 0 ? (
-            <p style={{ color: '#777', fontSize: 14 }}>No cycles added yet.</p>
-          ) : (
-            cycles.map(cycle => {
+        {cycles.length === 0 ? (
+          <p style={{ color: '#777', fontSize: 14 }}>No cycles added yet.</p>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 20 }}>
+            {cycles.map(cycle => {
               const isFree = freeCycleIds.includes(cycle.id)
               const unlocked = hasToolAccess || isFree
               return (
                 <div
                   key={cycle.id}
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 18px', border: '1px solid #3a3733', borderRadius: 8, marginBottom: 10, opacity: unlocked ? 1 : 0.65 }}
+                  style={{
+                    position: 'relative', background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 12,
+                    padding: 22, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
+                  }}
                 >
-                  <div>
-                    <span style={{ color: '#F0801E', fontFamily: 'Consolas, monospace', fontWeight: 800, marginRight: 14 }}>{cycle.code}</span>
-                    <span style={{ color: '#fff', fontSize: 14 }}>{cycle.name}</span>
-                    {isFree && !hasToolAccess && (
-                      <span style={{ marginLeft: 10, background: '#2fbf71', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>FREE</span>
-                    )}
+                  {isFree && !hasToolAccess && (
+                    <span style={{ position: 'absolute', top: 10, right: 10, background: '#2fbf71', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>FREE</span>
+                  )}
+
+                  <div style={{
+                    width: 56, height: 56, borderRadius: 12, background: 'rgba(240,128,30,0.12)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14, flexShrink: 0,
+                    opacity: unlocked ? 1 : 0.6,
+                  }}>
+                    <CycleIcon code={cycle.code} />
                   </div>
-                  <div style={{ display: 'flex', gap: 10 }}>
-                    {cycle.tutorial_video_url && (
-                      <button
-                        onClick={() => setTutorialFor(cycle)}
-                        style={{ padding: '8px 14px', fontSize: 12, borderRadius: 6, cursor: 'pointer', background: 'transparent', border: '1px solid #3a3733', color: '#ddd' }}
-                      >
-                        ▶ Tutorial
-                      </button>
-                    )}
-                    {unlocked ? (
-                      <button
-                        onClick={() => router.push(`/cycle/${cycle.id}`)}
-                        style={{ padding: '8px 14px', fontSize: 12, borderRadius: 6, cursor: 'pointer', background: '#F0801E', border: 'none', color: '#fff', fontWeight: 700 }}
-                      >
-                        Use Cycle
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => router.push('/membership')}
-                        style={{ padding: '8px 14px', fontSize: 12, borderRadius: 6, cursor: 'pointer', background: '#4a4744', border: 'none', color: '#fff', fontWeight: 700 }}
-                      >
-                        🔒 Unlock
-                      </button>
-                    )}
+
+                  <div style={{ minHeight: 58, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', marginBottom: 18 }}>
+                    <span style={{ color: '#F0801E', fontFamily: 'Consolas, monospace', fontWeight: 800, fontSize: 13, marginBottom: 4 }}>
+                      {cycle.code}
+                    </span>
+                    <span style={{ color: '#fff', fontSize: 14, fontWeight: 600, lineHeight: 1.3 }}>
+                      {cycle.name}
+                    </span>
                   </div>
+
+                  {unlocked ? (
+                    <button
+                      onClick={() => router.push(`/cycle/${cycle.id}`)}
+                      style={{ width: '100%', padding: '10px 14px', fontSize: 13, borderRadius: 6, cursor: 'pointer', background: '#F0801E', border: 'none', color: '#fff', fontWeight: 700, marginBottom: 8 }}
+                    >
+                      Use Cycle
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => router.push('/membership')}
+                      style={{ width: '100%', padding: '10px 14px', fontSize: 13, borderRadius: 6, cursor: 'pointer', background: '#4a4744', border: 'none', color: '#fff', fontWeight: 700, marginBottom: 8 }}
+                    >
+                      🔒 Unlock
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setTutorialFor(cycle)}
+                    style={{ width: '100%', padding: '9px 14px', fontSize: 12, borderRadius: 6, cursor: 'pointer', background: 'transparent', border: '1px solid #3a3733', color: '#ddd' }}
+                  >
+                    ▶ Tutorial
+                  </button>
                 </div>
               )
-            })
-          )}
-        </div>
+            })}
+          </div>
+        )}
       </div>
 
       {tutorialFor && (
