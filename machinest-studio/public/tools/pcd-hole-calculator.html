@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MachiNest | Free PCD Hole Calculator</title>
+<style>
+:root{color-scheme:light;--orange:#ff8500;--ink:#17191c;--muted:#667085;--line:#e5e7eb;--bg:#f5f6f8;--card:#fff;--green:#137547}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--ink)}
+.wrap{max-width:1180px;margin:auto;padding:24px 16px 40px}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.logo{width:42px;height:42px;border-radius:12px;background:var(--orange);display:grid;place-items:center;color:#111;font-weight:900;font-size:22px}
+.brand small{display:block;color:var(--muted);margin-top:3px}
+.hero{background:#17191c;color:#fff;border-radius:18px;padding:26px;margin-bottom:18px;position:relative;overflow:hidden}
+.hero:after{content:'M';position:absolute;right:22px;top:-42px;font-weight:900;font-size:190px;color:#ffffff0a}
+.eyebrow{color:#ffb65b;font-weight:700;font-size:12px;letter-spacing:.13em;text-transform:uppercase}
+.hero h1{margin:8px 0;font-size:clamp(26px,4vw,38px)}
+.hero p{margin:0;color:#d2d5da;max-width:690px;line-height:1.6}
+.pill{display:inline-block;border:1px solid #ffffff30;border-radius:999px;padding:6px 10px;font-size:12px;margin:16px 6px 0 0}
+.tabs{display:flex;gap:8px;margin:18px 0;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:#fff;color:var(--ink);font:inherit;border-radius:10px;padding:11px 16px;font-weight:700;cursor:pointer}
+.tab:hover{border-color:var(--orange)}
+.tab.active{background:var(--orange);border-color:var(--orange);color:#111}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;min-width:0}
+.card h2{font-size:18px;margin:0 0 16px}
+.fieldgrid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.field{display:flex;flex-direction:column;gap:7px;min-width:0}
+.field.full{grid-column:1/-1}
+label{font-size:13px;font-weight:700;color:#424852}
+.hint{font-size:11.5px;color:var(--muted);font-weight:500}
+select,input{color:var(--ink);width:100%;padding:12px;border:1px solid #d4d8de;border-radius:9px;background:#fff;font:inherit;min-height:44px}
+select:focus,input:focus{outline:2px solid #ff850055;border-color:var(--orange)}
+input:disabled{background:#f3f4f6;color:#9aa1ab}
+.seg{display:flex;border:1px solid #d4d8de;border-radius:9px;overflow:hidden;min-height:44px}
+.seg button{flex:1;border:0;background:#fff;font:inherit;font-weight:700;color:#424852;cursor:pointer;padding:0 10px}
+.seg button+button{border-left:1px solid #d4d8de}
+.seg button.on{background:var(--ink);color:#fff}
+.result{background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:16px;margin-top:16px}
+.result .label{font-size:12px;color:#8a4b08;font-weight:800;text-transform:uppercase;letter-spacing:.07em}
+.metricrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px}
+.metric{background:#fff;border:1px solid #fed7aa;border-radius:9px;padding:9px 10px;font-size:12px;color:#6b4a28}
+.metric b{display:block;font-size:19px;color:#17191c;margin-top:2px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.error{display:none;margin-top:14px;padding:12px 14px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;color:#991b1b;font-size:13px;font-weight:600}
+.error.show{display:block}
+.diagram{background:#17191c;border-radius:14px;padding:10px;margin-top:4px}
+.diagram svg{display:block;width:100%;height:auto;max-height:420px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.tablehead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.tablehead h2{margin:0}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:0;background:var(--ink);color:#fff;border-radius:9px;padding:10px 14px;font:inherit;font-weight:750;font-size:13px;cursor:pointer}
+.btn.orange{background:var(--orange);color:#111}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid #d4d8de}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px;max-height:480px}
+table{width:100%;border-collapse:collapse;background:#fff;white-space:nowrap;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:10px 12px;border-bottom:1px solid #eceef1;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:#f8f9fb;color:#4c5360;font-size:11px;text-transform:uppercase;letter-spacing:.04em;position:sticky;top:0}
+tr:last-child td{border-bottom:0}
+tr.first td{background:#fff7ed}
+.num{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#f0f1f3;font-weight:800;font-size:11px}
+tr.first .num{background:var(--orange);color:#111}
+.note{font-size:12px;line-height:1.55;color:var(--muted)}
+.notice{padding:12px 14px;background:#fff8e7;border:1px solid #f4d58a;border-radius:10px;color:#674b0b;font-size:13px;line-height:1.55;margin-top:14px}
+pre{background:#17191c;color:#f2f2f2;border-radius:12px;padding:14px;font-size:13px;line-height:1.6;overflow:auto;margin:0;max-height:360px}
+.hidden{display:none!important}
+.guides{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.guide{border:1px solid var(--line);border-radius:12px;padding:14px}
+.guide h3{margin:0 0 8px;font-size:15px}
+.guide ul{padding-left:18px;margin:0;color:#555e6b;font-size:13px;line-height:1.65}
+.guide code{background:#f0f1f3;border-radius:5px;padding:1px 5px;font-size:12px}
+.footer{margin-top:20px;text-align:center;color:var(--muted);font-size:12px;line-height:1.7}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;opacity:0;transition:.2s;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:860px){.grid{grid-template-columns:1fr}.guides{grid-template-columns:1fr}.hero{padding:21px}.wrap{padding:16px 12px 28px}}
+@media(max-width:430px){.fieldgrid{grid-template-columns:1fr}.field.full{grid-column:auto}.metricrow{grid-template-columns:1fr 1fr}}
+</style></head>
+<body><main class="wrap">
+<div class="brand"><div class="logo">M</div><div><strong>MachiNest</strong><small>Building a smarter CNC community.</small></div></div>
+
+<section class="hero"><div class="eyebrow">Free CNC Utility</div><h1>PCD Hole Calculator</h1><p>Get the X and Y coordinates of every hole on a pitch circle (bolt circle). Works for full circles and partial arcs, any start angle, CW or CCW, with a live drawing so you can check the pattern before you write the program.</p><span class="pill">BOLT CIRCLE</span><span class="pill">X / Y COORDINATES</span><span class="pill">PARTIAL ARC</span><span class="pill">NO LOGIN REQUIRED</span></section>
+
+<div class="tabs"><button class="tab active" data-tab="calc">PCD Calculator</button><button class="tab" data-tab="guide">How to use</button></div>
+
+<section id="calc" class="panel">
+<div class="grid">
+  <div class="card">
+    <h2>Pattern details</h2>
+    <div class="fieldgrid">
+      <div class="field"><label for="pcd">PCD diameter (mm)</label><input id="pcd" type="number" step="any" min="0" value="100"></div>
+      <div class="field"><label for="holes">Number of holes</label><input id="holes" type="number" step="1" min="1" max="360" value="6"></div>
+      <div class="field full"><label>Hole spacing</label><div class="seg" id="modeSeg"><button type="button" data-v="full" class="on">Equal on full circle</button><button type="button" data-v="arc">Fixed angle (arc)</button></div></div>
+      <div class="field"><label for="step">Angle between holes (°)</label><input id="step" type="number" step="any" value="60" disabled></div>
+      <div class="field"><label for="start">Start angle (°) <span class="hint">from X+</span></label><input id="start" type="number" step="any" value="0"></div>
+      <div class="field full"><label>Direction</label><div class="seg" id="dirSeg"><button type="button" data-v="ccw" class="on">CCW (G03 way)</button><button type="button" data-v="cw">CW (G02 way)</button></div></div>
+      <div class="field"><label for="cx">Centre X</label><input id="cx" type="number" step="any" value="0"></div>
+      <div class="field"><label for="cy">Centre Y</label><input id="cy" type="number" step="any" value="0"></div>
+      <div class="field"><label for="skip">Skip holes <span class="hint">e.g. 2, 5</span></label><input id="skip" type="text" placeholder="none"></div>
+      <div class="field"><label for="dec">Decimal places</label><select id="dec"><option>2</option><option selected>3</option><option>4</option></select></div>
+    </div>
+    <div class="error" id="err"></div>
+    <div class="result" id="summary">
+      <div class="label">Pattern summary</div>
+      <div class="metricrow">
+        <div class="metric">Radius<b id="mRad">50.000</b></div>
+        <div class="metric">Angle step<b id="mStep">60°</b></div>
+        <div class="metric">Hole-to-hole<b id="mChord">50.000</b></div>
+      </div>
+    </div>
+    <p class="note" style="margin-top:12px">Hole-to-hole is the straight (chord) distance between two neighbouring holes. Use it to check the pattern with a vernier after machining.</p>
+  </div>
+
+  <div class="card">
+    <h2>Pattern preview</h2>
+    <div class="diagram"><svg id="svg" viewBox="0 0 400 400" role="img" aria-label="PCD hole pattern drawing"></svg></div>
+    <div class="legend"><span><i style="background:#ff8500"></i>Hole 1 (start)</span><span><i style="background:#fff"></i>Other holes</span><span><i style="background:transparent;border:1px dashed #9aa1ab"></i>Skipped</span></div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:16px">
+  <div class="tablehead"><h2>Hole coordinates</h2><div class="btnrow"><button class="btn orange" id="copyXY">Copy X / Y list</button><button class="btn ghost" id="copyTable">Copy table</button></div></div>
+  <div class="tablewrap"><table><thead><tr><th>Hole</th><th>Angle (°)</th><th>X</th><th>Y</th><th>X from centre</th><th>Y from centre</th></tr></thead><tbody id="rows"></tbody></table></div>
+  <p class="note" style="margin-top:12px"><strong>X / Y</strong> are absolute positions (centre + offset). <strong>From centre</strong> columns are the offsets only, useful when your work zero is on the PCD centre.</p>
+</div>
+
+<div class="card" style="margin-top:16px">
+  <div class="tablehead"><h2>Point list for your program</h2></div>
+  <pre id="pts"></pre>
+  <p class="note" style="margin-top:12px">Paste these lines after your canned cycle line (G81 / G83 / G84). Add your own cycle, R plane, depth and feed.</p>
+</div>
+</section>
+
+<section id="guide" class="panel hidden"><div class="card"><h2>How to use this calculator</h2>
+<div class="guides">
+<div class="guide"><h3>Angle convention</h3><ul><li>0° is on the <strong>X+</strong> side (3 o'clock). 90° is Y+ (12 o'clock).</li><li>CCW counts holes anti-clockwise, the same way as Fanuc polar coordinates (G16).</li><li>CW counts holes clockwise. Use it when the drawing numbers holes clockwise.</li><li>Negative start angles are fine. For example −30° is the same as 330°.</li></ul></div>
+<div class="guide"><h3>Full circle vs arc</h3><ul><li><strong>Equal on full circle:</strong> holes are spaced 360° ÷ number of holes.</li><li><strong>Fixed angle (arc):</strong> you set the angle between holes. Use it for holes on a part of the circle, like 3 holes at 30° on a flange segment.</li><li>Need a missing hole in a full pattern? Keep the full count and type its number in <strong>Skip holes</strong>.</li></ul></div>
+<div class="guide"><h3>Checking the pattern</h3><ul><li>Hole-to-hole (chord) = PCD × sin(step ÷ 2).</li><li>Measure over two neighbouring holes and subtract one hole diameter to get the chord.</li><li>Check the drawing preview: hole 1 is orange and numbering follows your direction.</li></ul></div>
+<div class="guide"><h3>X/Y list or G16 polar?</h3><ul><li>X/Y points work on every control and are easy to verify on the screen.</li><li>On Fanuc, <code>G16</code> polar mode does the same thing with X = radius and Y = angle.</li><li>Always set the work zero at the PCD centre if you use G16, or shift with a local offset.</li></ul></div>
+</div>
+<div class="notice"><strong>Accuracy:</strong> These are theoretical positions from the values you enter. Always check the drawing datum, work offset and a dry run before cutting.</div>
+</div></section>
+
+<div class="footer">MachiNest PCD Hole Calculator · Free CNC utility<br>Verify the drawing datum, work offset and first-part dimensions before production.</div>
+</main>
+<div class="toast" id="toast">Copied</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let mode='full',dir='ccw',lastRows=[];
+
+function seg(id,cb){const el=$(id);el.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{el.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));cb(b.dataset.v);calc();}));}
+seg('modeSeg',v=>{mode=v;$('step').disabled=(v==='full');});
+seg('dirSeg',v=>{dir=v;});
+
+function n(id){return parseFloat($(id).value)}
+function fx(v,d){const s=v.toFixed(d);return /^-0\.?0*$/.test(s)?(0).toFixed(d):s}
+function norm(a){a=a%360;if(a<0)a+=360;return a}
+function showErr(m){const e=$('err');e.textContent=m;e.classList.toggle('show',!!m);$('summary').style.opacity=m?.35:1;}
+
+function calc(){
+  const pcd=n('pcd'),holes=Math.round(n('holes')),start=n('start'),cx=n('cx'),cy=n('cy'),dec=parseInt($('dec').value,10);
+  if(!(pcd>0)){fail('Enter a PCD diameter greater than 0.');return}
+  if(!(holes>=1&&holes<=360)){fail('Number of holes must be between 1 and 360.');return}
+  if(!isFinite(start)){fail('Enter a start angle.');return}
+  if(!isFinite(cx)||!isFinite(cy)){fail('Enter centre X and Y (use 0 if the PCD centre is your zero).');return}
+  let step;
+  if(mode==='full'){step=360/holes;$('step').value=+step.toFixed(4);}
+  else{step=n('step');if(!(step>0)){fail('Enter an angle between holes greater than 0.');return}
+    if(step*(holes-1)>=360){fail('Holes overlap: angle × (holes − 1) must be less than 360°. Use "Equal on full circle" for a full pattern.');return}}
+  const skip=new Set(($('skip').value.match(/\d+/g)||[]).map(Number));
+  showErr('');
+  const r=pcd/2,sgn=dir==='ccw'?1:-1,rows=[];
+  for(let i=0;i<holes;i++){
+    const a=norm(start+sgn*i*step),rad=a*Math.PI/180;
+    const dx=r*Math.cos(rad),dy=r*Math.sin(rad);
+    rows.push({no:i+1,a,dx,dy,x:cx+dx,y:cy+dy,skip:skip.has(i+1)});
+  }
+  lastRows=rows;
+  const chord=pcd*Math.sin(step*Math.PI/360);
+  $('mRad').textContent=fx(r,dec);
+  $('mStep').textContent=(+step.toFixed(4))+'°';
+  $('mChord').textContent=holes>1?fx(chord,dec):'—';
+  $('rows').innerHTML=rows.map(o=>`<tr class="${o.no===1?'first':''}"${o.skip?' style="opacity:.4"':''}><td><span class="num">${o.no}</span>${o.skip?' <span class="hint">skipped</span>':''}</td><td>${fx(o.a,3)}</td><td><strong>${fx(o.x,dec)}</strong></td><td><strong>${fx(o.y,dec)}</strong></td><td>${fx(o.dx,dec)}</td><td>${fx(o.dy,dec)}</td></tr>`).join('');
+  const used=rows.filter(o=>!o.skip);
+  $('pts').textContent=used.length?used.map(o=>`X${fx(o.x,dec)} Y${fx(o.y,dec)}`).join('\n'):'(all holes skipped)';
+  draw(rows,r,cx,cy);
+}
+function fail(m){showErr(m);lastRows=[];$('rows').innerHTML='';$('pts').textContent='';$('svg').innerHTML='';}
+
+function draw(rows,r,cx,cy){
+  const S=400,C=200,R=135,k=R/r,ns='http://www.w3.org/2000/svg';
+  const holeR=Math.max(5,Math.min(13,(Math.PI*R/Math.max(rows.length,1))*0.42));
+  let h='';
+  h+=`<line x1="${C-178}" y1="${C}" x2="${C+178}" y2="${C}" stroke="#4b4f56" stroke-width="1"/>`;
+  h+=`<line x1="${C}" y1="${C+178}" x2="${C}" y2="${C-178}" stroke="#4b4f56" stroke-width="1"/>`;
+  h+=`<text x="${C+182}" y="${C+4}" fill="#9aa1ab" font-size="12" font-weight="700" text-anchor="end" dy="-8">X+</text>`;
+  h+=`<text x="${C+8}" y="${C-168}" fill="#9aa1ab" font-size="12" font-weight="700">Y+</text>`;
+  h+=`<circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="#6b7280" stroke-width="1.2" stroke-dasharray="6 5"/>`;
+  h+=`<circle cx="${C}" cy="${C}" r="3.5" fill="#ff8500"/>`;
+  const f=rows[0];
+  if(f){const a=f.a*Math.PI/180;h+=`<line x1="${C}" y1="${C}" x2="${C+R*Math.cos(a)}" y2="${C-R*Math.sin(a)}" stroke="#ff8500" stroke-width="1.4" stroke-dasharray="3 3"/>`;}
+  h+=`<text x="${C-6}" y="${C+16}" fill="#9aa1ab" font-size="10.5" text-anchor="end">X${fmtS(cx)} Y${fmtS(cy)}</text>`;
+  rows.forEach(o=>{
+    const a=o.a*Math.PI/180,px=C+R*Math.cos(a),py=C-R*Math.sin(a);
+    const lx=C+(R+holeR+14)*Math.cos(a),ly=C-(R+holeR+14)*Math.sin(a);
+    if(o.skip)h+=`<circle cx="${px}" cy="${py}" r="${holeR}" fill="none" stroke="#9aa1ab" stroke-width="1.3" stroke-dasharray="3 2"/>`;
+    else h+=`<circle cx="${px}" cy="${py}" r="${holeR}" fill="${o.no===1?'#ff8500':'#ffffff'}" stroke="#17191c" stroke-width="1"/>`;
+    if(rows.length<=48)h+=`<text x="${lx}" y="${ly}" fill="${o.no===1?'#ffb65b':'#e5e7eb'}" font-size="12" font-weight="800" text-anchor="middle" dominant-baseline="central">${o.no}</text>`;
+  });
+  if(rows.length>1){
+    const a0=rows[0].a,a1=rows[1].a,sweep=dir==='ccw'?0:1,ar=R*0.38;
+    const p=a=>[C+ar*Math.cos(a*Math.PI/180),C-ar*Math.sin(a*Math.PI/180)];
+    const [x0,y0]=p(a0),[x1,y1]=p(a1);
+    const span=dir==='ccw'?norm(a1-a0):norm(a0-a1);
+    if(span<=180)h+=`<path d="M${x0} ${y0} A${ar} ${ar} 0 0 ${sweep} ${x1} ${y1}" fill="none" stroke="#ffb65b" stroke-width="1.6" marker-end="url(#arr)"/>`;
+  }
+  $('svg').innerHTML=`<defs><marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#ffb65b"/></marker></defs>`+h;
+}
+function fmtS(v){return(+v.toFixed(3)).toString()}
+
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1400)}
+async function copy(text){
+  try{await navigator.clipboard.writeText(text);toast('Copied');}
+  catch(e){const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('Copied');}catch(_){toast('Copy failed, select and copy manually');}ta.remove();}
+}
+$('copyXY').addEventListener('click',()=>{if(lastRows.length)copy($('pts').textContent)});
+$('copyTable').addEventListener('click',()=>{if(!lastRows.length)return;const d=parseInt($('dec').value,10);
+  copy(['Hole\tAngle\tX\tY'].concat(lastRows.map(o=>`${o.no}${o.skip?' (skip)':''}\t${fx(o.a,3)}\t${fx(o.x,d)}\t${fx(o.y,d)}`)).join('\n'))});
+
+['pcd','holes','step','start','cx','cy','skip','dec'].forEach(id=>$(id).addEventListener('input',calc));
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('hidden',p.id!==b.dataset.tab));}));
+calc();
+</script></body></html>
