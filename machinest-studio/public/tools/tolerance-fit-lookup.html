@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MachiNest | Free Tolerance &amp; Fit Lookup</title>
+<style>
+:root{color-scheme:light;--orange:#ff8500;--ink:#17191c;--muted:#667085;--line:#e5e7eb;--bg:#f5f6f8;--card:#fff;--green:#137547;--blue:#1d4ed8;--red:#b42318}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--ink)}
+.wrap{max-width:1180px;margin:auto;padding:24px 16px 40px}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.logo{width:42px;height:42px;border-radius:12px;background:var(--orange);display:grid;place-items:center;color:#111;font-weight:900;font-size:22px}
+.brand small{display:block;color:var(--muted);margin-top:3px}
+.hero{background:#17191c;color:#fff;border-radius:18px;padding:26px;margin-bottom:18px;position:relative;overflow:hidden}
+.hero:after{content:'M';position:absolute;right:22px;top:-42px;font-weight:900;font-size:190px;color:#ffffff0a}
+.eyebrow{color:#ffb65b;font-weight:700;font-size:12px;letter-spacing:.13em;text-transform:uppercase}
+.hero h1{margin:8px 0;font-size:clamp(26px,4vw,38px)}
+.hero p{margin:0;color:#d2d5da;max-width:690px;line-height:1.6}
+.pill{display:inline-block;border:1px solid #ffffff30;border-radius:999px;padding:6px 10px;font-size:12px;margin:16px 6px 0 0}
+.tabs{display:flex;gap:8px;margin:18px 0;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:#fff;color:var(--ink);font:inherit;border-radius:10px;padding:11px 16px;font-weight:700;cursor:pointer}
+.tab:hover{border-color:var(--orange)}
+.tab.active{background:var(--orange);border-color:var(--orange);color:#111}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;min-width:0}
+.card h2{font-size:18px;margin:0 0 16px}
+.fieldgrid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.field{display:flex;flex-direction:column;gap:7px;min-width:0}
+.field.full{grid-column:1/-1}
+label{font-size:13px;font-weight:700;color:#424852}
+.hint{font-size:11.5px;color:var(--muted);font-weight:500}
+select,input{color:var(--ink);width:100%;padding:12px;border:1px solid #d4d8de;border-radius:9px;background:#fff;font:inherit;min-height:44px}
+select:focus,input:focus{outline:2px solid #ff850055;border-color:var(--orange)}
+.quick{display:flex;gap:8px}
+.quick input{font-weight:700;font-size:16px;letter-spacing:.02em}
+.seg{display:flex;border:1px solid #d4d8de;border-radius:9px;overflow:hidden;min-height:44px}
+.seg button{flex:1;border:0;background:#fff;font:inherit;font-weight:700;color:#424852;cursor:pointer;padding:0 10px}
+.seg button+button{border-left:1px solid #d4d8de}
+.seg button.on{background:var(--ink);color:#fff}
+.result{background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:18px}
+.result .label{font-size:13px;color:#8a4b08;font-weight:800;letter-spacing:.02em}
+.big{font-size:34px;font-weight:850;letter-spacing:-.03em;margin:6px 0 2px;color:#17191c;font-variant-numeric:tabular-nums}
+.big small{font-size:16px;color:#8a4b08;font-weight:700;letter-spacing:0}
+.sub{font-size:13px;color:#6b4a28;line-height:1.5}
+.metricrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.metric{background:#fff;border:1px solid #fed7aa;border-radius:9px;padding:9px 10px;font-size:12px;color:#6b4a28}
+.metric b{display:block;font-size:19px;color:#17191c;margin-top:2px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.metric.hl{background:#17191c;border-color:#17191c;color:#ffb65b}
+.metric.hl b{color:#fff}
+.error{display:none;margin-bottom:14px;padding:12px 14px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;color:#991b1b;font-size:13px;font-weight:600}
+.error.show{display:block}
+.zone{background:#fff;border:1px solid var(--line);border-radius:12px;margin-top:14px;padding:8px}
+.zone svg{display:block;width:100%;height:auto}
+.badge{display:inline-block;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:800;margin-top:4px}
+.badge.clear{background:#dcfce7;color:#14532d}
+.badge.trans{background:#fef3c7;color:#78350f}
+.badge.inter{background:#fee2e2;color:#7f1d1d}
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid #d4d8de;background:#fff;border-radius:999px;padding:7px 11px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;color:var(--ink)}
+.chip:hover{border-color:var(--orange)}
+.limtable{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums;margin-top:12px;background:#fff;border-radius:9px;overflow:hidden}
+.limtable th,.limtable td{padding:9px 10px;border-bottom:1px solid #f3e1c8;text-align:right}
+.limtable th:first-child,.limtable td:first-child{text-align:left}
+.limtable th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#8a4b08;background:#fffaf3}
+.limtable tr:last-child td{border-bottom:0}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px}
+table.ref{width:100%;border-collapse:collapse;background:#fff;white-space:nowrap;font-size:13px;font-variant-numeric:tabular-nums}
+table.ref th,table.ref td{padding:10px 12px;border-bottom:1px solid #eceef1;text-align:right}
+table.ref th:first-child,table.ref td:first-child{text-align:left;position:sticky;left:0;background:inherit}
+table.ref th{background:#f8f9fb;color:#4c5360;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+table.ref tr{background:#fff}
+table.ref tr.cur{background:#fff7ed}
+table.ref tr:last-child td{border-bottom:0}
+.fits{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.fit{border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;background:#fff;text-align:left;font:inherit;color:inherit}
+.fit:hover{border-color:var(--orange)}
+.fit h3{margin:0 0 4px;font-size:16px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.fit p{margin:0;font-size:13px;color:#555e6b;line-height:1.55}
+.fit .badge{font-size:11px;padding:4px 9px;margin:0}
+.note{font-size:12px;line-height:1.55;color:var(--muted)}
+.notice{padding:12px 14px;background:#fff8e7;border:1px solid #f4d58a;border-radius:10px;color:#674b0b;font-size:13px;line-height:1.55;margin-top:14px}
+.hidden{display:none!important}
+.footer{margin-top:20px;text-align:center;color:var(--muted);font-size:12px;line-height:1.7}
+@media(max-width:860px){.grid{grid-template-columns:1fr}.fits{grid-template-columns:1fr}.hero{padding:21px}.wrap{padding:16px 12px 28px}}
+@media(max-width:430px){.big{font-size:28px}}
+</style></head>
+<body><main class="wrap">
+<div class="brand"><div class="logo">M</div><div><strong>MachiNest</strong><small>Building a smarter CNC community.</small></div></div>
+
+<section class="hero"><div class="eyebrow">Free CNC Utility</div><h1>Tolerance &amp; Fit Lookup</h1><p>Type a size and tolerance like <strong>25 H7</strong> or <strong>40 g6</strong> and get the upper and lower limits instantly. Check a hole and shaft fit like <strong>25 H7/k6</strong> for clearance or interference. Based on ISO 286 limits, sizes up to 500 mm.</p><span class="pill">ISO 286</span><span class="pill">HOLE &amp; SHAFT</span><span class="pill">FIT CHECK</span><span class="pill">NO LOGIN REQUIRED</span></section>
+
+<div class="tabs"><button class="tab active" data-tab="single">Tolerance Lookup</button><button class="tab" data-tab="fitp">Fit Checker</button><button class="tab" data-tab="common">Common Fits Guide</button><button class="tab" data-tab="it">IT Grade Table</button></div>
+
+<!-- SINGLE -->
+<section id="single" class="panel">
+<div class="grid">
+  <div class="card">
+    <h2>Size and tolerance</h2>
+    <div class="error" id="sErr"></div>
+    <div class="fieldgrid">
+      <div class="field full"><label for="sQuick">Quick entry <span class="hint">e.g. 25 H7, 40g6, 12 js6</span></label><div class="quick"><input id="sQuick" type="text" value="25 H7" autocomplete="off" spellcheck="false"></div></div>
+      <div class="field"><label for="sSize">Nominal size (mm)</label><input id="sSize" type="number" step="any" min="0" max="500" value="25"></div>
+      <div class="field"><label>Feature</label><div class="seg" id="sKind"><button type="button" data-v="hole" class="on">Hole (bore)</button><button type="button" data-v="shaft">Shaft (OD)</button></div></div>
+      <div class="field"><label for="sLetter">Tolerance letter</label><select id="sLetter"></select></div>
+      <div class="field"><label for="sGrade">Grade (IT)</label><select id="sGrade"></select></div>
+    </div>
+    <p class="note" style="margin-top:14px">Capital letters (H, G, K…) are holes. Small letters (h, g, k…) are shafts. Quick entry fills the fields for you.</p>
+  </div>
+  <div class="card">
+    <h2>Limits</h2>
+    <div class="result">
+      <div class="label" id="sTitle">25 H7 · Hole</div>
+      <div class="big" id="sDev">+0.021 <small>/</small> 0.000</div>
+      <div class="sub">Upper / lower deviation (mm)</div>
+      <div class="metricrow">
+        <div class="metric">Maximum size<b id="sMax">25.021</b></div>
+        <div class="metric">Minimum size<b id="sMin">25.000</b></div>
+        <div class="metric">Tolerance band<b id="sTol">0.021</b></div>
+        <div class="metric hl">Mean size (program at)<b id="sMean">25.0105</b></div>
+      </div>
+    </div>
+    <div class="zone"><svg id="sSvg" viewBox="0 0 520 210" role="img" aria-label="Tolerance zone"></svg></div>
+    <p class="note" style="margin-top:12px">On CNC, program the mean size and adjust with wear offset, so the part sits in the middle of the band.</p>
+  </div>
+</div>
+</section>
+
+<!-- FIT -->
+<section id="fitp" class="panel hidden">
+<div class="grid">
+  <div class="card">
+    <h2>Hole and shaft</h2>
+    <div class="error" id="fErr"></div>
+    <div class="fieldgrid">
+      <div class="field full"><label for="fQuick">Quick entry <span class="hint">e.g. 25 H7/g6</span></label><input id="fQuick" type="text" value="25 H7/g6" autocomplete="off" spellcheck="false" style="font-weight:700;font-size:16px"></div>
+      <div class="field full"><label for="fSize">Nominal size (mm)</label><input id="fSize" type="number" step="any" min="0" max="500" value="25"></div>
+      <div class="field"><label for="fHL">Hole letter</label><select id="fHL"></select></div>
+      <div class="field"><label for="fHG">Hole grade</label><select id="fHG"></select></div>
+      <div class="field"><label for="fSL">Shaft letter</label><select id="fSL"></select></div>
+      <div class="field"><label for="fSG">Shaft grade</label><select id="fSG"></select></div>
+      <div class="field full"><label>Popular fits</label><div class="presets" id="presets"></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Fit result</h2>
+    <div class="result">
+      <div class="label" id="fTitle">25 H7/g6</div>
+      <div><span class="badge clear" id="fBadge">Clearance fit</span></div>
+      <div class="metricrow" id="fMetrics"></div>
+      <table class="limtable"><thead><tr><th></th><th>Upper dev.</th><th>Lower dev.</th><th>Max</th><th>Min</th></tr></thead><tbody id="fRows"></tbody></table>
+    </div>
+    <div class="zone"><svg id="fSvg" viewBox="0 0 520 230" role="img" aria-label="Fit tolerance zones"></svg></div>
+    <p class="note" style="margin-top:12px" id="fNote"></p>
+  </div>
+</div>
+</section>
+
+<!-- COMMON -->
+<section id="common" class="panel hidden"><div class="card"><h2>Common hole-basis fits</h2>
+<p class="note" style="margin-top:-6px;margin-bottom:14px">Tap any fit to open it in the Fit Checker with your size.</p>
+<div class="fits" id="fitList"></div>
+<div class="notice"><strong>Hole basis:</strong> most shops keep the hole at H (easy with standard reamers and plug gauges) and change the shaft letter to get the fit you need.</div>
+</div></section>
+
+<!-- IT TABLE -->
+<section id="it" class="panel hidden"><div class="card"><h2>IT grade tolerance values (µm)</h2>
+<p class="note" style="margin-top:-6px;margin-bottom:14px">Tolerance band width for each grade and size range. 1 µm = 0.001 mm. The row for your current size is highlighted.</p>
+<div class="tablewrap"><table class="ref"><thead id="itHead"></thead><tbody id="itBody"></tbody></table></div>
+<p class="note" style="margin-top:12px">Rough guide: IT5–IT6 grinding and fine turning, IT7 reaming and good CNC turning/boring, IT8–IT9 general turning and milling, IT11 and above rough work.</p>
+</div></section>
+
+<div class="footer">MachiNest Tolerance &amp; Fit Lookup · Free CNC utility · Values per ISO 286 for sizes up to 500 mm<br>Always follow the tolerance written on your drawing. Check critical values against the standard.</div>
+</main>
+
+<script>
+/* ---------- ISO 286 data (all values in micrometres) ---------- */
+// Size ranges "over lo, up to and including hi"
+const R=[[0,3],[3,6],[6,10],[10,14],[14,18],[18,24],[24,30],[30,40],[40,50],[50,65],[65,80],[80,100],[100,120],[120,140],[140,160],[160,180],[180,200],[200,225],[225,250],[250,280],[280,315],[315,355],[355,400],[400,450],[450,500]];
+// main range index (for IT grades and most deviations)
+const M=[0,1,2,3,3,4,4,5,5,6,6,7,7,8,8,8,9,9,9,10,10,11,11,12,12];
+const MAINR=[[0,3],[3,6],[6,10],[10,18],[18,30],[30,50],[50,80],[80,120],[120,180],[180,250],[250,315],[315,400],[400,500]];
+const IT={
+1:[.8,1,1,1.2,1.5,1.5,2,2.5,3.5,4.5,6,7,8],
+2:[1.2,1.5,1.5,2,2.5,2.5,3,4,5,7,8,9,10],
+3:[2,2.5,2.5,3,4,4,5,6,8,10,12,13,15],
+4:[3,4,4,5,6,7,8,10,12,14,16,18,20],
+5:[4,5,6,8,9,11,13,15,18,20,23,25,27],
+6:[6,8,9,11,13,16,19,22,25,29,32,36,40],
+7:[10,12,15,18,21,25,30,35,40,46,52,57,63],
+8:[14,18,22,27,33,39,46,54,63,72,81,89,97],
+9:[25,30,36,43,52,62,74,87,100,115,130,140,155],
+10:[40,48,58,70,84,100,120,140,160,185,210,230,250],
+11:[60,75,90,110,130,160,190,220,250,290,320,360,400],
+12:[100,120,150,180,210,250,300,350,400,460,520,570,630],
+13:[140,180,220,270,330,390,460,540,630,720,810,890,970],
+14:[250,300,360,430,520,620,740,870,1000,1150,1300,1400,1550],
+15:[400,480,580,700,840,1000,1200,1400,1600,1850,2100,2300,2500],
+16:[600,750,900,1100,1300,1600,1900,2200,2500,2900,3200,3600,4000]};
+const fromMain=a=>M.map(i=>a[i]);
+// Shaft fundamental deviations: es for c..h (upper), ei for k..u (lower)
+const SD={
+ c:{t:'es',v:[-60,-70,-80,-95,-95,-110,-110,-120,-130,-140,-150,-170,-180,-200,-210,-230,-240,-260,-280,-300,-330,-360,-400,-440,-480]},
+ d:{t:'es',v:fromMain([-20,-30,-40,-50,-65,-80,-100,-120,-145,-170,-190,-210,-230])},
+ e:{t:'es',v:fromMain([-14,-20,-25,-32,-40,-50,-60,-72,-85,-100,-110,-125,-135])},
+ f:{t:'es',v:fromMain([-6,-10,-13,-16,-20,-25,-30,-36,-43,-50,-56,-62,-68])},
+ g:{t:'es',v:fromMain([-2,-4,-5,-6,-7,-9,-10,-12,-14,-15,-17,-18,-20])},
+ h:{t:'es',v:R.map(()=>0)},
+ k:{t:'ei',v:fromMain([0,1,1,1,2,2,2,3,3,4,4,4,5])}, // grades 4-7; other grades ei = 0
+ m:{t:'ei',v:fromMain([2,4,6,7,8,9,11,13,15,17,20,21,23])},
+ n:{t:'ei',v:fromMain([4,8,10,12,15,17,20,23,27,31,34,37,40])},
+ p:{t:'ei',v:fromMain([6,12,15,18,22,26,32,37,43,50,56,62,68])},
+ r:{t:'ei',v:[10,15,19,23,23,28,28,34,34,41,43,51,54,63,65,68,77,80,84,94,98,108,114,126,132]},
+ s:{t:'ei',v:[14,19,23,28,28,35,35,43,43,53,59,71,79,92,100,108,122,130,140,158,170,190,208,232,252]},
+ t:{t:'ei',v:[null,null,null,null,null,null,41,48,54,66,75,91,104,122,134,146,166,180,196,218,240,268,294,330,360]},
+ u:{t:'ei',v:[18,23,28,33,33,41,48,60,70,87,102,124,144,170,190,210,236,258,284,315,350,390,435,490,540]}
+};
+// Grades offered per letter
+const SHAFT_G={c:[8,9,10,11],d:[7,8,9,10,11],e:[6,7,8,9],f:[5,6,7,8,9],g:[4,5,6,7,8],h:[4,5,6,7,8,9,10,11,12,13,14],js:[4,5,6,7,8,9,10,11,12,13,14],k:[4,5,6,7,8,9],m:[4,5,6,7,8],n:[4,5,6,7,8,9],p:[4,5,6,7,8,9],r:[4,5,6,7,8,9],s:[4,5,6,7,8,9],t:[5,6,7,8],u:[5,6,7,8,9]};
+const HOLE_G={C:[8,9,10,11],D:[7,8,9,10,11],E:[6,7,8,9,10],F:[6,7,8,9],G:[5,6,7,8],H:[4,5,6,7,8,9,10,11,12,13,14],JS:[5,6,7,8,9,10,11,12,13,14],K:[5,6,7,8],M:[5,6,7,8],N:[5,6,7,8,9,10,11],P:[5,6,7,8,9],R:[5,6,7,8,9],S:[5,6,7,8,9],T:[6,7,8],U:[6,7,8,9]};
+
+function rangeIdx(size){for(let i=0;i<R.length;i++){if(size>R[i][0]&&size<=R[i][1])return i}return -1}
+function itv(g,fi){return IT[g][M[fi]]}
+function jsHalf(it,g){return(g>=7&&g<=11&&it%2===1)?(it-1)/2:it/2}
+
+function shaftDev(l,g,fi){
+  const it=itv(g,fi);
+  if(l==='js'){const h=jsHalf(it,g);return{up:h,lo:-h,it}}
+  const d=SD[l];let v=d.v[fi];
+  if(v===null||v===undefined)return null;
+  if(l==='k'&&(g<4||g>7))v=0;
+  return d.t==='es'?{up:v,lo:v-it,it}:{up:v+it,lo:v,it};
+}
+function holeDev(L,g,fi){
+  const it=itv(g,fi);
+  if(L==='JS'){const h=jsHalf(it,g);return{up:h,lo:-h,it}}
+  if(L==='H')return{up:it,lo:0,it};
+  const l=L.toLowerCase(),d=SD[l],v=d.v[fi];
+  if(v===null||v===undefined)return null;
+  if(d.t==='es'){const EI=-v;return{up:EI+it,lo:EI,it}} // C..G mirror of c..g
+  const delta=(fi===0)?0:(itv(g,fi)-itv(g-1,fi));
+  let ES;
+  if(L==='K')ES=g<=8?-v+delta:0;
+  else if(L==='M')ES=-v+delta;
+  else if(L==='N')ES=(g>8&&fi>0)?0:-v+delta;
+  else ES=-v+(g<=7?delta:0); // P..U
+  return{up:ES,lo:ES-it,it};
+}
+function dev(kind,letter,g,fi){return kind==='hole'?holeDev(letter,g,fi):shaftDev(letter,g,fi)}
+
+/* ---------- formatting ---------- */
+const $=id=>document.getElementById(id);
+function mm(um,signed){const v=um/1000;const d=Number.isInteger(um)?3:4;let s=Math.abs(v).toFixed(d);if(um===0)return(0).toFixed(3);return signed?(v>0?'+':'−')+s:(v<0?'−':'')+s}
+function size(v,um){const x=v+um/1000;return x.toFixed(Number.isInteger(um)?3:4)}
+function fillSel(sel,arr,val){sel.innerHTML=arr.map(x=>`<option value="${x}">${x}</option>`).join('');if(val!==undefined&&arr.map(String).includes(String(val)))sel.value=val}
+function letters(kind){return Object.keys(kind==='hole'?HOLE_G:SHAFT_G)}
+function grades(kind,l){return(kind==='hole'?HOLE_G:SHAFT_G)[l]||[]}
+function norml(kind,l){if(!l)return l;if(/^js$/i.test(l))return kind==='hole'?'JS':'js';return kind==='hole'?l.toUpperCase():l.toLowerCase()}
+
+/* ---------- zone drawing ---------- */
+function zoneSvg(svg,zones,W,H){
+  // zones: [{up,lo,label,color,fill}]
+  const vals=zones.flatMap(z=>[z.up,z.lo]).concat([0]);
+  let mx=Math.max(...vals),mn=Math.min(...vals);const pad=(mx-mn)*0.18||5;mx+=pad;mn-=pad;
+  const top=24,bot=H-22,y=v=>top+(mx-v)/(mx-mn)*(bot-top);
+  const y0=y(0);let h='';
+  h+=`<rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/>`;
+  h+=`<rect x="40" y="${top}" width="${W-60}" height="${y0-top}" fill="#f8f9fb"/>`;
+  h+=`<line x1="40" y1="${y0}" x2="${W-20}" y2="${y0}" stroke="#17191c" stroke-width="2"/>`;
+  h+=`<text x="46" y="${y0+15}" font-size="11" fill="#17191c" font-weight="800">Zero line = nominal size</text>`;
+  h+=`<text x="34" y="${top+10}" font-size="11" fill="#9aa1ab" text-anchor="end">+</text><text x="34" y="${bot}" font-size="11" fill="#9aa1ab" text-anchor="end">−</text>`;
+  const n=zones.length,bw=Math.min(110,(W-160)/n*0.5);
+  zones.forEach((z,i)=>{
+    const cx=110+(W-150)*(i+1)/(n+1),x=cx-bw/2,y1=y(z.up),y2=y(z.lo),hh=Math.max(2,y2-y1);
+    h+=`<rect x="${x}" y="${y1}" width="${bw}" height="${hh}" rx="4" fill="${z.fill}" stroke="${z.color}" stroke-width="2"/>`;
+    h+=`<text x="${cx}" y="${y1+hh/2}" font-size="14" font-weight="850" fill="${z.text||z.color}" text-anchor="middle" dominant-baseline="central">${z.label}</text>`;
+    const tall=hh>=26,uy=tall?y1+11:y1-3,ly=tall?y2-4:y2+12;
+    h+=`<text x="${x+bw+6}" y="${uy}" font-size="11" fill="#424852" font-weight="700">${mm(z.up,true)}</text>`;
+    h+=`<text x="${x+bw+6}" y="${ly}" font-size="11" fill="#424852" font-weight="700">${mm(z.lo,true)}</text>`;
+  });
+  svg.innerHTML=h;
+}
+
+/* ---------- single lookup ---------- */
+let sKind='hole';
+function setKind(k){sKind=k;$('sKind').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===k))}
+function refreshSingleSelects(letter,grade){
+  fillSel($('sLetter'),letters(sKind),letter);
+  if(!letters(sKind).includes($('sLetter').value))$('sLetter').value=sKind==='hole'?'H':'h';
+  const gs=grades(sKind,$('sLetter').value);
+  fillSel($('sGrade'),gs,grade);
+  if(grade===undefined||!gs.map(String).includes(String(grade)))$('sGrade').value=gs.includes(7)?7:gs[0];
+}
+function showSErr(m){$('sErr').textContent=m;$('sErr').classList.toggle('show',!!m)}
+function calcSingle(){
+  const s=parseFloat($('sSize').value),L=$('sLetter').value,g=+$('sGrade').value,fi=rangeIdx(s);
+  if(!(s>0)||fi<0){showSErr('Enter a size above 0 and up to 500 mm.');blankS();return}
+  const d=dev(sKind,L,g,fi);
+  if(!d){showSErr(`${L} is not defined for sizes up to 24 mm in ISO 286. Choose another letter.`);blankS();return}
+  showSErr('');
+  const name=`${fmtN(s)} ${L}${g}`;
+  $('sTitle').textContent=`${name} · ${sKind==='hole'?'Hole':'Shaft'} · size range ${R[fi][0]}–${R[fi][1]} mm`;
+  $('sDev').innerHTML=`${mm(d.up,true)} <small>/</small> ${mm(d.lo,true)}`;
+  $('sMax').textContent=size(s,d.up);$('sMin').textContent=size(s,d.lo);
+  $('sTol').textContent=mm(d.it)+'  ('+d.it+' µm)';
+  const mean=(d.up+d.lo)/2;$('sMean').textContent=(s+mean/1000).toFixed(4);
+  zoneSvg($('sSvg'),[{up:d.up,lo:d.lo,label:`${L}${g}`,color:'#ff8500',fill:'#fff1e0',text:'#8a4b08'}],520,210);
+  $('sQuick').value=`${fmtN(s)} ${L}${g}`;
+  markItRow(s);
+}
+function blankS(){['sMax','sMin','sTol','sMean'].forEach(i=>$(i).textContent='—');$('sDev').textContent='—';$('sSvg').innerHTML=''}
+function fmtN(v){return(+v.toFixed(4)).toString()}
+function parseSingle(t){
+  const m=t.trim().match(/^(\d+(?:\.\d+)?)\s*([A-Za-z]{1,2})\s*(\d{1,2})$/);
+  if(!m)return false;
+  const raw=m[2],kind=/^[A-Z]/.test(raw)?'hole':'shaft',L=norml(kind,raw),g=+m[3];
+  if(!grades(kind,L).includes(g)){showSErr(`${L}${g} is not in this calculator. Available ${L} grades: ${grades(kind,L).join(', ')||'none'}.`);return true}
+  setKind(kind);$('sSize').value=m[1];refreshSingleSelects(L,g);calcSingle();return true;
+}
+$('sQuick').addEventListener('input',e=>{const t=e.target.value;if(!parseSingle(t)&&t.trim())showSErr('Type like 25 H7 or 40 g6 (size, letter, grade).')});
+$('sQuick').addEventListener('blur',()=>{if($('sErr').classList.contains('show'))calcSingle()});
+$('sKind').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{const g=$('sGrade').value;const l=norml(b.dataset.v,$('sLetter').value);setKind(b.dataset.v);refreshSingleSelects(l,g);calcSingle()}));
+$('sLetter').addEventListener('change',()=>{const g=$('sGrade').value;refreshSingleSelects($('sLetter').value,g);calcSingle()});
+['sGrade','sSize'].forEach(id=>$(id).addEventListener('input',calcSingle));
+
+/* ---------- fit checker ---------- */
+const FITS=[
+ ['H11','c11','Loose running','Wide clearance for rough or dirty conditions, pins in loose hinges, agricultural parts.'],
+ ['H9','d9','Free running','Large clearance for high speed or big temperature change. Plain bearings with loose running.'],
+ ['H8','f7','Close running','Running fit for good lubricated bearings, spindles in sliding bushes, gearbox shafts.'],
+ ['H7','g6','Sliding','Small clearance. Parts move and turn freely but locate accurately: sliding gears, locating pins, fixtures.'],
+ ['H7','h6','Locational clearance','Snug fit that can still be assembled by hand. Spigots, pilot diameters, location of parts.'],
+ ['H7','js6','Locational transition','Very small clearance or interference. Light mallet assembly. Couplings, hubs that must locate well.'],
+ ['H7','k6','Locational transition','Accurate location, light press. Pulleys, gears and bearing inner rings on shafts (light loads).'],
+ ['H7','n6','Locational transition (tight)','More interference than k6. Needs a press. Bushes and gears that must not move.'],
+ ['H7','p6','Locational interference','Press fit for rigid location without high torque transfer. Bushings in housings.'],
+ ['H7','s6','Medium drive','Permanent press or shrink fit for ferrous parts. Sleeves, bushes, gear rims that carry load.'],
+ ['H7','u6','Force fit','Heavy press or shrink fit for high torque. Use heating or cooling to assemble.']
+];
+function fitTypeOf(maxC,minC){return minC>=0?'clear':(maxC<=0?'inter':'trans')}
+function refreshFitSelects(HL,HG,SL,SG){
+  fillSel($('fHL'),letters('hole'),HL);fillSel($('fHG'),grades('hole',$('fHL').value),HG);
+  if(!grades('hole',$('fHL').value).map(String).includes(String(HG)))$('fHG').value=grades('hole',$('fHL').value).includes(7)?7:grades('hole',$('fHL').value)[0];
+  fillSel($('fSL'),letters('shaft'),SL);fillSel($('fSG'),grades('shaft',$('fSL').value),SG);
+  if(!grades('shaft',$('fSL').value).map(String).includes(String(SG)))$('fSG').value=grades('shaft',$('fSL').value).includes(6)?6:grades('shaft',$('fSL').value)[0];
+}
+function showFErr(m){$('fErr').textContent=m;$('fErr').classList.toggle('show',!!m)}
+function calcFit(){
+  const s=parseFloat($('fSize').value),fi=rangeIdx(s),HL=$('fHL').value,HG=+$('fHG').value,SL=$('fSL').value,SG=+$('fSG').value;
+  if(!(s>0)||fi<0){showFErr('Enter a size above 0 and up to 500 mm.');blankF();return}
+  const h=holeDev(HL,HG,fi),sh=shaftDev(SL,SG,fi);
+  if(!h||!sh){showFErr('T / t are only defined above 24 mm in ISO 286. Choose another letter.');blankF();return}
+  showFErr('');
+  const maxC=h.up-sh.lo,minC=h.lo-sh.up,type=fitTypeOf(maxC,minC);
+  const name=`${fmtN(s)} ${HL}${HG}/${SL}${SG}`;
+  $('fTitle').textContent=name;$('fQuick').value=name;
+  const b=$('fBadge');b.className='badge '+type;b.textContent={clear:'Clearance fit',trans:'Transition fit',inter:'Interference fit'}[type];
+  let mets;
+  if(type==='clear')mets=[['Max clearance',maxC],['Min clearance',minC]];
+  else if(type==='inter')mets=[['Max interference',-minC],['Min interference',-maxC]];
+  else mets=[['Max clearance',maxC],['Max interference',-minC]];
+  $('fMetrics').innerHTML=mets.map(([t,v])=>`<div class="metric">${t}<b>${mm(v)}</b></div>`).join('');
+  $('fRows').innerHTML=[[`Hole ${HL}${HG}`,h],[`Shaft ${SL}${SG}`,sh]].map(([t,d])=>`<tr><td><strong>${t}</strong></td><td>${mm(d.up,true)}</td><td>${mm(d.lo,true)}</td><td>${size(s,d.up)}</td><td>${size(s,d.lo)}</td></tr>`).join('');
+  $('fNote').textContent={clear:'The shaft is always smaller than the hole. Parts assemble by hand and can move.',trans:'Depending on actual sizes, the parts may have a little clearance or a little interference. Usually a light press or mallet.',inter:'The shaft is always bigger than the hole. Assemble with a press, or by heating the hole / cooling the shaft.'}[type];
+  zoneSvg($('fSvg'),[{up:h.up,lo:h.lo,label:`${HL}${HG}`,color:'#ff8500',fill:'#fff1e0',text:'#8a4b08'},{up:sh.up,lo:sh.lo,label:`${SL}${SG}`,color:'#17191c',fill:'#e5e7eb',text:'#17191c'}],520,230);
+  markItRow(s);
+}
+function blankF(){$('fMetrics').innerHTML='';$('fRows').innerHTML='';$('fSvg').innerHTML='';$('fNote').textContent=''}
+function parseFit(t){
+  const m=t.trim().match(/^(\d+(?:\.\d+)?)\s*([A-Za-z]{1,2})\s*(\d{1,2})\s*\/\s*([A-Za-z]{1,2})\s*(\d{1,2})$/);
+  if(!m)return false;
+  const HL=norml('hole',m[2]),HG=+m[3],SL=norml('shaft',m[4]),SG=+m[5];
+  if(!grades('hole',HL).includes(HG)){showFErr(`Hole ${HL}${HG} is not in this calculator. Available ${HL} grades: ${grades('hole',HL).join(', ')||'none'}.`);return true}
+  if(!grades('shaft',SL).includes(SG)){showFErr(`Shaft ${SL}${SG} is not in this calculator. Available ${SL} grades: ${grades('shaft',SL).join(', ')||'none'}.`);return true}
+  $('fSize').value=m[1];refreshFitSelects(HL,HG,SL,SG);calcFit();return true;
+}
+$('fQuick').addEventListener('input',e=>{const t=e.target.value;if(!parseFit(t)&&t.trim())showFErr('Type like 25 H7/g6 (size, hole, slash, shaft).')});
+$('fHL').addEventListener('change',()=>{refreshFitSelects($('fHL').value,$('fHG').value,$('fSL').value,$('fSG').value);calcFit()});
+$('fSL').addEventListener('change',()=>{refreshFitSelects($('fHL').value,$('fHG').value,$('fSL').value,$('fSG').value);calcFit()});
+['fHG','fSG','fSize'].forEach(id=>$(id).addEventListener('input',calcFit));
+function loadFit(H,S){const hm=H.match(/^([A-Z]+)(\d+)$/),sm=S.match(/^([a-z]+)(\d+)$/);refreshFitSelects(hm[1],+hm[2],sm[1],+sm[2]);calcFit()}
+$('presets').innerHTML=FITS.map(f=>`<button class="chip" data-h="${f[0]}" data-s="${f[1]}">${f[0]}/${f[1]}</button>`).join('');
+$('presets').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>loadFit(c.dataset.h,c.dataset.s)));
+
+/* ---------- common fits ---------- */
+$('fitList').innerHTML=FITS.map(f=>{
+  const fi=rangeIdx(25),h=holeDev(f[0].replace(/\d+/,''),+f[0].replace(/\D+/,''),fi),s=shaftDev(f[1].replace(/\d+/,''),+f[1].replace(/\D+/,''),fi);
+  const t=fitTypeOf(h.up-s.lo,h.lo-s.up);
+  return `<button class="fit" data-h="${f[0]}" data-s="${f[1]}"><h3><span>${f[0]}/${f[1]} · ${f[2]}</span><span class="badge ${t}">${{clear:'Clearance',trans:'Transition',inter:'Interference'}[t]}</span></h3><p>${f[3]}</p></button>`}).join('');
+$('fitList').querySelectorAll('.fit').forEach(c=>c.addEventListener('click',()=>{const sz=parseFloat($('sSize').value);if(sz>0&&sz<=500)$('fSize').value=sz;loadFit(c.dataset.h,c.dataset.s);showTab('fitp');window.scrollTo({top:0,behavior:'smooth'})}));
+
+/* ---------- IT table ---------- */
+const IT_SHOW=[4,5,6,7,8,9,10,11,12,13,14];
+$('itHead').innerHTML='<tr><th>Size (mm)</th>'+IT_SHOW.map(g=>`<th>IT${g}</th>`).join('')+'</tr>';
+$('itBody').innerHTML=MAINR.map((r,i)=>`<tr data-i="${i}"><td><strong>${r[0]===0?'up to 3':'over '+r[0]+' to '+r[1]}</strong></td>`+IT_SHOW.map(g=>`<td>${IT[g][i]}</td>`).join('')+'</tr>').join('');
+function markItRow(s){const fi=rangeIdx(s);const mi=fi<0?-1:M[fi];document.querySelectorAll('#itBody tr').forEach(tr=>tr.classList.toggle('cur',+tr.dataset.i===mi))}
+
+/* ---------- tabs & init ---------- */
+function showTab(id){document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('hidden',p.id!==id))}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+refreshSingleSelects('H',7);calcSingle();
+refreshFitSelects('H',7,'g',6);calcFit();
+</script></body></html>
