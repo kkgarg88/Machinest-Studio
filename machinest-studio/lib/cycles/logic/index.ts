@@ -6,6 +6,7 @@ import { millingEllipse } from './milling-ellipse'
 import { buildPeckIntroSvg } from './peck-svg'
 import { turningChamfer } from './turning-chamfer'
 import { turningRadius } from './turning-radius'
+import { turningOdGroove } from './turning-odgroove'
 import { millingEngrave } from './milling-engrave'
 import { millingFaceMill } from './milling-facemill'
 import { millingHelical } from './milling-helical'
@@ -20,6 +21,7 @@ const registry: Record<string, Logic> = {
   'milling-studio:ELLIPSE': millingEllipse,
   'turning-studio:CHAMFER': turningChamfer,
   'turning-studio:RADIUS': turningRadius,
+  'turning-studio:OD-GROOVE': turningOdGroove,
   'milling-studio:ENGRAVE': millingEngrave,
   'milling-studio:CIRC-INTERP': millingHelical,
   'milling-studio:FACE-MILL': millingFaceMill,
