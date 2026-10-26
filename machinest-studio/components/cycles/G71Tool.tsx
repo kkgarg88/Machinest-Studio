@@ -1,6 +1,10 @@
 'use client'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { buildProfile, sampleProfile, fmt, InPoint, SegType, ProfileResult } from '@/lib/cycles/g71-geometry'
+import { Bi } from './g71/Bi'
+import MachinePicker, { Machine, Comp } from './g71/MachinePicker'
+import ToolTypePicker from './g71/ToolTypePicker'
+import SavedPrograms from './g71/SavedPrograms'
 
 const label = { fontSize: 13, color: '#ccc', marginBottom: 6, fontWeight: 600, display: 'block' } as const
 const input = { width: '100%', background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 6, color: '#fff', padding: '10px 12px', fontSize: 14 } as const
@@ -141,9 +145,10 @@ export default function G71Tool({ onGenerate, busy, error }: {
   const [showPasses, setShowPasses] = useState(true)
   const [pinSketch, setPinSketch] = useState(true)
   const [useFinish, setUseFinish] = useState(true)
-  const [comp, setComp] = useState<'none' | 'g42'>('none')
+  const [comp, setComp] = useState<Comp>('none')
+  const [machine, setMachine] = useState<Machine>('')
   const [noseR, setNoseR] = useState('0.4')
-  const [tipNo, setTipNo] = useState('3')
+  const [toolType, setToolType] = useState('3')
   const [progNum, setProgNum] = useState('')
   const [toolRough, setToolRough] = useState('1')
   const [toolFinish, setToolFinish] = useState('2')
@@ -156,6 +161,20 @@ export default function G71Tool({ onGenerate, busy, error }: {
   const [workOffset, setWorkOffset] = useState('G54')
   const [safeX, setSafeX] = useState('2')
   const [safeZ, setSafeZ] = useState('2')
+
+  // the machine type is remembered in this browser, so the user answers only once
+  useEffect(() => {
+    try {
+      const m = localStorage.getItem('ms_machine')
+      if (m === 'rear' || m === 'front' || m === 'other') setMachine(m)
+    } catch {}
+  }, [])
+  function pickMachine(m: 'rear' | 'front' | 'other') {
+    setMachine(m)
+    try { localStorage.setItem('ms_machine', m) } catch {}
+    if (m === 'rear') { setComp('g42'); setToolType('3') }
+    if (m === 'front') { setComp('g41'); setToolType('3') }
+  }
 
   const setRow = (i: number, patch: Partial<Row>) => setRows(rows.map((r, k) => (k === i ? { ...r, ...patch } : r)))
   const insertAfter = (i: number) => rows.length < 40 && setRows([...rows.slice(0, i + 1), blankRow(), ...rows.slice(i + 1)])
@@ -188,11 +207,46 @@ export default function G71Tool({ onGenerate, busy, error }: {
   const field = (l: string, el: React.ReactNode) => <div><label style={label}>{l}</label>{el}</div>
   const small = { ...input, padding: '9px 10px' } as const
 
+  // everything the user typed, so a program can be saved and loaded again
+  const snapshot = {
+    v: 1, rows, stock, depth, retract, allowX, allowZ, useFinish, comp, machine, noseR, toolType,
+    progNum, toolRough, toolFinish, spindleMode, speed, speedFinish, maxRpm, feed, feedFinish, workOffset, safeX, safeZ,
+  }
+
+  function applyData(raw: unknown) {
+    const d = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
+    const str = (k: string, def: string) => (typeof d[k] === 'string' ? (d[k] as string) : typeof d[k] === 'number' ? String(d[k]) : def)
+    const inList = <T extends string>(v: unknown, list: readonly T[], def: T): T => (list.includes(v as T) ? (v as T) : def)
+    let r: Row[] = [blankRow(), blankRow()]
+    if (Array.isArray(d.rows) && d.rows.length >= 2 && d.rows.length <= 40) {
+      r = d.rows.map((x: unknown) => {
+        const o = (x && typeof x === 'object' ? x : {}) as Record<string, unknown>
+        return {
+          type: inList(o.type, ['line', 'g02', 'g03'] as const, 'line'),
+          x: typeof o.x === 'string' ? o.x : '', z: typeof o.z === 'string' ? o.z : '', r: typeof o.r === 'string' ? o.r : '',
+        }
+      })
+    }
+    setRows(r)
+    setStock(str('stock', '')); setDepth(str('depth', '')); setRetract(str('retract', '0.5'))
+    setAllowX(str('allowX', '0.4')); setAllowZ(str('allowZ', '0.1'))
+    setUseFinish(d.useFinish === false ? false : true)
+    setComp(inList(d.comp, ['none', 'g41', 'g42'] as const, 'none'))
+    setMachine(inList(d.machine, ['', 'rear', 'front', 'other'] as const, ''))
+    setNoseR(str('noseR', '0.4')); setToolType(str('toolType', '3'))
+    setProgNum(str('progNum', '')); setToolRough(str('toolRough', '1')); setToolFinish(str('toolFinish', '2'))
+    setSpindleMode(inList(d.spindleMode, ['G96', 'G97'] as const, 'G96'))
+    setSpeed(str('speed', '')); setSpeedFinish(str('speedFinish', '')); setMaxRpm(str('maxRpm', ''))
+    setFeed(str('feed', '')); setFeedFinish(str('feedFinish', ''))
+    setWorkOffset(inList(d.workOffset, ['G54', 'G55', 'G56', 'G57', 'G58', 'G59'] as const, 'G54'))
+    setSafeX(str('safeX', '2')); setSafeZ(str('safeZ', '2'))
+  }
+
   function handleGenerate() {
     onGenerate({
       points: JSON.stringify(rows.map((r, i) => ({ type: i === 0 ? 'line' : r.type, x: r.x, z: r.z, r: r.type === 'line' ? '' : r.r }))),
       stock, depth, retract, allowX, allowZ,
-      useFinish: useFinish ? '1' : '0', comp, noseR, tipNo, progNum, toolRough, toolFinish,
+      useFinish: useFinish ? '1' : '0', comp, noseR, tipNo: toolType, progNum, toolRough, toolFinish,
       spindleMode, speed, speedFinish, maxRpm, feed, feedFinish, workOffset, safeX, safeZ,
     })
   }
@@ -214,10 +268,13 @@ export default function G71Tool({ onGenerate, busy, error }: {
         @media (max-width: 900px){.g71-pin{position:static}}
       `}</style>
 
+      <SavedPrograms cycleCode="G71" snapshot={snapshot} onLoad={applyData} onNew={() => applyData({})} />
+
       <div style={card}>
         <h3 style={{ color: '#fff', margin: '0 0 4px', fontSize: 20, fontWeight: 800 }}>Rough Turning profile (G71)</h3>
-        <p style={{ color: '#999', fontSize: 13, margin: '0 0 16px' }}>
-          Give the start point and then the end point of every segment, exactly as on the drawing. X is diameter, Z is negative towards the chuck.
+        <p style={{ color: '#999', fontSize: 13, margin: '0 0 16px', lineHeight: 1.5 }}>
+          <Bi en="Give the start point and then the end point of every segment, exactly as on the drawing. X is diameter, Z is negative towards the chuck."
+              hi="ड्रॉइंग के अनुसार पहले स्टार्ट पॉइंट दें, फिर हर सेगमेंट का एंड पॉइंट दें। X डायमीटर है, चक की तरफ Z माइनस में जाता है।" />
         </p>
         <h4 style={{ color: '#fff', margin: '0 0 12px', fontSize: 16 }}>Stock and roughing</h4>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14 }}>
@@ -259,7 +316,7 @@ export default function G71Tool({ onGenerate, busy, error }: {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                 <span style={badge}>{i + 1}</span>
                 <b style={{ color: '#fff', fontSize: 14 }}>{i === 0 ? 'Start point' : 'Next point'}</b>
-                <span style={{ color: '#888', fontSize: 12 }}>{i === 0 ? '(usually on the face, Z0)' : ''}</span>
+                <span style={{ color: '#888', fontSize: 12 }}>{i === 0 ? '(usually on the face, Z0 · आमतौर पर फेस पर, Z0)' : ''}</span>
                 <span style={{ flex: 1 }} />
                 {i > 0 && (
                   <>
@@ -316,9 +373,8 @@ export default function G71Tool({ onGenerate, busy, error }: {
             style={{ background: 'transparent', color: '#bbb', border: '1px solid #3a3733', borderRadius: 8, padding: '9px 16px', fontWeight: 600, cursor: 'pointer', fontSize: 13 }}>Load example</button>
         </div>
         <p style={{ color: '#888', fontSize: 12, margin: 0, lineHeight: 1.5 }}>
-          Every segment starts where the one before it ended. A chamfer is simply a line between its two end points, so any angle works.
-          For an arc give its end point, R and the direction: an outside (convex) corner is G03 and an inside (concave) corner is G02.
-          Diameter must not get smaller towards the chuck and Z must keep going towards the chuck (G71 Type I). Grooves are cut with the OD Groove cycle.
+          <Bi en="Every segment starts where the one before it ended. A chamfer is simply a line between its two end points, so any angle works. For an arc give its end point, R and the direction: an outside (convex) corner is G03 and an inside (concave) corner is G02. Diameter must not get smaller towards the chuck and Z must keep going towards the chuck (G71 Type I). Grooves are cut with the OD Groove cycle."
+              hi="हर सेगमेंट वहीं से शुरू होता है जहाँ पिछला खत्म हुआ। चैम्फर बस उसके दो एंड पॉइंट के बीच की लाइन है, इसलिए कोई भी एंगल बन सकता है। आर्क के लिए उसका एंड पॉइंट, R और दिशा दें: बाहरी (कॉन्वेक्स) कोना G03 और अंदर का (कॉन्केव) कोना G02 है। चक की तरफ डायमीटर छोटा नहीं होना चाहिए और Z लगातार चक की तरफ ही जाना चाहिए (G71 टाइप I)। ग्रूव के लिए OD Groove साइकिल इस्तेमाल करें।" />
         </p>
       </div>
 
@@ -330,20 +386,22 @@ export default function G71Tool({ onGenerate, busy, error }: {
         </label>
         {useFinish && (
           <>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-              {([['none', 'No nose radius compensation'], ['g42', 'Use G42 (nose radius compensation)']] as const).map(([k, t]) => (
-                <button key={k} onClick={() => setComp(k)}
-                  style={{ flex: '1 1 200px', padding: 11, borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: comp === k ? ORANGE : '#1c1b19', color: comp === k ? '#fff' : '#bbb' }}>{t}</button>
-              ))}
-            </div>
-            {comp === 'g42' && (
+            <MachinePicker machine={machine} comp={comp} onMachine={pickMachine} onComp={setComp} />
+            {comp !== 'none' && (
               <>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                  {field('Nose radius', num(noseR, setNoseR))}
-                  {field('Tool tip number', num(tipNo, setTipNo))}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
+                  {field('Nose radius · नोज़ रेडियस', num(noseR, setNoseR))}
+                  <div>
+                    <label style={label}>Tool type · टूल टाइप</label>
+                    <ToolTypePicker value={toolType} onChange={setToolType} />
+                  </div>
                 </div>
-                <p style={{ color: '#9ad7b0', fontSize: 12.5, margin: '10px 0 0' }}>
-                  The program will have a comment telling the operator to enter this nose radius and tool tip number in the finish tool offset.
+                <p style={{ color: '#9ad7b0', fontSize: 12.5, margin: '10px 0 0', lineHeight: 1.5 }}>
+                  <Bi en="The program will have a comment telling the operator to enter this nose radius and tool type in the finish tool offset."
+                      hi="प्रोग्राम में एक कमेंट होगा जो ऑपरेटर को बताएगा कि फिनिश टूल ऑफसेट में यह नोज़ रेडियस और टूल टाइप डालें।" hiColor="#9ad7b0" />
+                </p>
+                <p style={{ color: '#8a8782', fontSize: 12, margin: '8px 0 0', lineHeight: 1.5 }}>
+                  <span style={{ color: '#ff7a7a' }}>●</span> programmed tip (P) · प्रोग्राम किया गया टिप &nbsp; <span style={{ color: '#7aa7ff' }}>●</span> centre of the nose radius (C) · नोज़ रेडियस का सेंटर
                 </p>
               </>
             )}

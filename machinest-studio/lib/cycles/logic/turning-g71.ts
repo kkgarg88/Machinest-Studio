@@ -5,7 +5,7 @@ import { buildProfile, InPoint, SegType, Seg } from '../g71-geometry'
 const LIMITS = { progMax: 7999, feedMax: 5, rpmMax: 4000, diaMax: 500, maxPoints: 40, radiusMax: 1000 }
 const OFFSETS = ['G54', 'G55', 'G56', 'G57', 'G58', 'G59']
 const SPINDLE = ['G96', 'G97']
-const COMP = ['none', 'g42']
+const COMP = ['none', 'g41', 'g42']
 const EPS = 1e-6
 
 const f3 = (n: number) => {
@@ -39,7 +39,8 @@ export function turningG71(v: Record<string, unknown>): CycleResult {
   const allowZ = num(v.allowZ)
   const comp = String(v.comp)
   const noseR = opt(v.noseR)
-  const tipNo = opt(v.tipNo)
+  const tipRaw = String(v.tipNo ?? '').trim()
+  const tipNo = tipRaw === '' ? 3 : num(tipRaw) // tool type (imaginary tip number), 3 = normal OD tool
 
   if (!Number.isInteger(progNum) || progNum < 1 || progNum > LIMITS.progMax)
     return fail(`Program number must be a whole number between 0001 and ${LIMITS.progMax}`)
@@ -61,11 +62,12 @@ export function turningG71(v: Record<string, unknown>): CycleResult {
   if (!Number.isFinite(allowX) || allowX < 0 || !Number.isFinite(allowZ) || allowZ < 0) return fail('Finish allowance cannot be negative')
   if (!COMP.includes(comp)) return fail('Invalid compensation option')
   if (!Number.isFinite(noseR) || noseR < 0 || noseR > 3.2) return fail('Nose radius must be between 0 and 3.2 mm')
-  if (!Number.isFinite(tipNo) || tipNo < 0 || tipNo > 9 || !Number.isInteger(tipNo)) return fail('Tool tip number must be a whole number from 0 to 9')
+  if (!Number.isFinite(tipNo) || tipNo < 0 || tipNo > 9 || !Number.isInteger(tipNo)) return fail('Tool type must be a whole number from 0 to 9')
 
-  const usesComp = comp === 'g42'
-  if (usesComp && !useFinish) return fail('G42 works only in the finish pass. Turn on the G70 finish pass or switch compensation off')
-  if (usesComp && noseR <= 0) return fail('Enter the nose radius when using G42')
+  const usesComp = comp === 'g41' || comp === 'g42'
+  const G4x = comp.toUpperCase() // G41 or G42
+  if (usesComp && !useFinish) return fail(`${G4x} works only in the finish pass. Turn on the G70 finish pass or switch compensation off`)
+  if (usesComp && noseR <= 0) return fail(`Enter the nose radius when using ${G4x}`)
   if (useFinish) {
     if (!Number.isFinite(toolFinishRaw) || toolFinishRaw < 0 || toolFinishRaw > 99 || !Number.isInteger(toolFinishRaw)) return fail('Finish tool number must be between 1 and 99')
   }
@@ -121,7 +123,7 @@ export function turningG71(v: Record<string, unknown>): CycleResult {
   let nn = 10
   const N = () => { const s = `N${nn}`; nn += 10; return s }
   const first = N()
-  blocks.push(`${first} G00 ${usesComp ? 'G42 ' : ''}X${f3(pts[0].x)};`)
+  blocks.push(`${first} G00 ${usesComp ? G4x + ' ' : ''}X${f3(pts[0].x)};`)
   blocks.push(`${N()} G01 Z${f3(z0)} F${f3(feedFinish)};`)
   let cx = pts[0].x, cz = z0
   for (const s of prof.segs as Seg[]) {
@@ -150,8 +152,8 @@ export function turningG71(v: Record<string, unknown>): CycleResult {
   ]
   if (usesComp) {
     out.push(
-      '(NOSE RADIUS COMPENSATION G42 IS USED IN THE FINISH PASS G70);',
-      `(IN OFFSET ${tcode(toolFinish)} ENTER NOSE R = ${f3(noseR)} AND TOOL TIP NO. = ${tipNo > 0 ? tipNo : 3});`,
+      `(NOSE RADIUS COMPENSATION ${G4x} IS USED IN THE FINISH PASS G70);`,
+      `(IN OFFSET ${tcode(toolFinish)} ENTER NOSE R = ${f3(noseR)} AND TOOL TYPE = ${tipNo});`,
     )
   } else {
     out.push('(NO NOSE RADIUS COMPENSATION - PROFILE PROGRAMMED AS GIVEN);')
