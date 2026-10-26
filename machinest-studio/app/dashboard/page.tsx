@@ -21,6 +21,7 @@ export default function Dashboard() {
   const [hasResume, setHasResume] = useState(false)
   const [loading, setLoading] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
   const supabase = createClient()
   const router = useRouter()
 
@@ -30,7 +31,7 @@ export default function Dashboard() {
       if (!user) { router.push('/'); return }
 
       const nowIso = new Date().toISOString()
-      const [toolsRes, subsRes, plansRes, resRes, resumeRes] = await Promise.all([
+      const [toolsRes, subsRes, plansRes, resRes, resumeRes, meRes] = await Promise.all([
         supabase.from('tools').select('id, name, slug, description, features').order('created_at'),
         supabase.from('subscriptions').select('tool_id, expires_at').eq('user_id', user.id).eq('status', 'active')
           .or(`expires_at.is.null,expires_at.gt.${nowIso}`),
@@ -38,6 +39,7 @@ export default function Dashboard() {
         supabase.from('resources').select('id, title, description, resource_type, url, thumbnail_url')
           .eq('active', true).order('display_order', { ascending: true }),
         supabase.from('resumes').select('id').eq('user_id', user.id).maybeSingle(),
+        supabase.from('profiles').select('is_admin').eq('id', user.id).maybeSingle(),
       ])
 
       // cheapest active plan that includes each tool
@@ -65,6 +67,7 @@ export default function Dashboard() {
       setPriceMap(prices)
       setResources((resRes.data || []) as ResourceItem[])
       setHasResume(!!resumeRes.data)
+      setIsAdmin(!!meRes.data?.is_admin)
       setLoading(false)
     }
     loadData()
@@ -92,6 +95,7 @@ export default function Dashboard() {
     { label: 'My Resume', action: () => router.push('/resume') },
     { label: 'Machine Status', action: () => router.push('/machine-status') },
     { label: 'Ask a Question', action: () => router.push('/ask') },
+    ...(isAdmin ? [{ label: 'Admin Panel', action: () => router.push('/admin') }] : []),
     { label: 'Logout', action: handleLogout },
   ]
 
@@ -112,6 +116,7 @@ export default function Dashboard() {
         </div>
         <div className="dbx-topr">
           <button className="dbx-pill">Dashboard</button>
+          {isAdmin && <button className="dbx-pill" onClick={() => router.push('/admin')}>Admin</button>}
           <div style={{ position: 'relative' }}>
             <button className="dbx-burger" aria-label="Menu" onClick={() => setMenuOpen(!menuOpen)}>☰</button>
             {menuOpen && (

@@ -117,8 +117,6 @@ export default function AdminPage() {
 
   if (loading) return <div style={{ minHeight: '100vh', background: '#211f1d', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Segoe UI, sans-serif' }}>Loading...</div>
 
-  const inputStyle = { background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 6, color: '#fff', padding: '9px 12px', fontSize: 13 }
-
   const now = Date.now()
   const filteredProfiles = profiles.filter(p => {
     const matchesSearch = !search || (p.full_name || '').toLowerCase().includes(search.toLowerCase()) || (p.email || '').toLowerCase().includes(search.toLowerCase())
@@ -132,219 +130,207 @@ export default function AdminPage() {
     .filter(o => o.status === 'paid' && new Date(o.created_at).getTime() >= monthStart)
     .reduce((sum, o) => sum + Number(o.amount), 0)
 
+  const TABS: { key: 'users' | 'tools' | 'payments' | 'coupons'; label: string }[] = [
+    { key: 'users', label: 'Users' },
+    { key: 'tools', label: 'Tools' },
+    { key: 'payments', label: 'Payments' },
+    { key: 'coupons', label: 'Coupons' },
+  ]
+  const PAGES: { href: string; icon: string; label: string; note: string }[] = [
+    { href: '/admin/plans', icon: '💳', label: 'Plans', note: 'Prices and tools in each plan' },
+    { href: '/admin/cycle-media', icon: '🖼️', label: 'Cycle Media', note: 'Thumbnails and descriptions' },
+    { href: '/admin/resources', icon: '📚', label: 'Resources', note: 'Free PDFs, videos, web tools' },
+    { href: '/admin/leads', icon: '📞', label: 'Leads', note: 'Custom service requests' },
+    { href: '/admin/queries', icon: '💬', label: 'Questions', note: 'Questions from users' },
+    { href: '/admin/resumes', icon: '📄', label: 'Resumes', note: 'Uploaded CNC resumes' },
+  ]
+
+  const userCols = `minmax(150px,1.2fr) minmax(190px,1.4fr) minmax(110px,0.9fr) ${tools.map(() => 'minmax(110px,1fr)').join(' ')}`
+  const initial = (n: string, e: string) => ((n || e || '?').trim()[0] || '?').toUpperCase()
+
   return (
-    <div style={{ minHeight: '100vh', background: '#211f1d', fontFamily: 'Segoe UI, sans-serif' }}>
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 32px', background: '#161513', borderBottom: '2px solid #F0801E' }}>
-        <span style={{ fontSize: 19, fontWeight: 800, color: '#fff' }}>Admin Panel</span>
-        <button onClick={() => router.push('/dashboard')} style={{ background: '#F0801E', color: '#fff', border: 'none', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-          ← Dashboard
-        </button>
+    <div className="adm">
+      <style>{CSS}</style>
+      <header className="adm-top">
+        <div className="adm-title">Admin <span>Panel</span></div>
+        <button className="adm-back" onClick={() => router.push('/dashboard')}>← Dashboard</button>
       </header>
 
-      <div style={{ padding: '32px', maxWidth: 1200, margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 14, marginBottom: 26 }}>
-          <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 16 }}>
-            <div style={{ color: '#999', fontSize: 12 }}>Total Users</div>
-            <div style={{ color: '#fff', fontSize: 24, fontWeight: 800 }}>{profiles.length}</div>
-          </div>
-          <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 16 }}>
-            <div style={{ color: '#999', fontSize: 12 }}>Active Subscriptions</div>
-            <div style={{ color: '#F0801E', fontSize: 24, fontWeight: 800 }}>{activeSubsCount}</div>
-          </div>
-          <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 16 }}>
-            <div style={{ color: '#999', fontSize: 12 }}>Tools Live</div>
-            <div style={{ color: '#fff', fontSize: 24, fontWeight: 800 }}>{tools.length}</div>
-          </div>
-          <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 16 }}>
-            <div style={{ color: '#999', fontSize: 12 }}>This Month's Revenue</div>
-            <div style={{ color: '#2fbf71', fontSize: 24, fontWeight: 800 }}>₹{monthRevenue}</div>
-          </div>
+      <div className="adm-wrap">
+        <div className="adm-stats">
+          <div className="adm-stat"><div className="adm-sl">Total Users</div><div className="adm-sv">{profiles.length}</div></div>
+          <div className="adm-stat"><div className="adm-sl">Active Subscriptions</div><div className="adm-sv" style={{ color: '#F0801E' }}>{activeSubsCount}</div></div>
+          <div className="adm-stat"><div className="adm-sl">Tools Live</div><div className="adm-sv">{tools.length}</div></div>
+          <div className="adm-stat"><div className="adm-sl">This Month&apos;s Revenue</div><div className="adm-sv" style={{ color: '#2fbf71' }}>₹{monthRevenue}</div></div>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
-          <button onClick={() => setTab('users')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: tab === 'users' ? '#F0801E' : '#2b2a28', color: '#fff' }}>Users</button>
-          <button onClick={() => setTab('tools')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: tab === 'tools' ? '#F0801E' : '#2b2a28', color: '#fff' }}>Tools</button>
-          <button onClick={() => setTab('payments')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: tab === 'payments' ? '#F0801E' : '#2b2a28', color: '#fff' }}>Payments</button>
-          <button onClick={() => setTab('coupons')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: tab === 'coupons' ? '#F0801E' : '#2b2a28', color: '#fff' }}>Coupons</button>
-          <button onClick={() => router.push('/admin/resources')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: '#2b2a28', color: '#fff' }}>
-            Resources →
-          </button>
-          <button onClick={() => router.push('/admin/resumes')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: '#2b2a28', color: '#fff' }}>
-            Resumes →
-          </button>
-          <button onClick={() => router.push('/admin/queries')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: '#2b2a28', color: '#fff' }}>
-            Questions →
-          </button>
-          <button onClick={() => router.push('/admin/plans')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: '#2b2a28', color: '#fff' }}>
-            Plans →
-          </button>
-          <button onClick={() => router.push('/admin/leads')} style={{ padding: '9px 18px', borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: '#2b2a28', color: '#fff' }}>
-            Leads →
-          </button>
+        <div className="adm-sec">Manage</div>
+        <div className="adm-pages">
+          {PAGES.map(pg => (
+            <button key={pg.href} className="adm-page" onClick={() => router.push(pg.href)}>
+              <span className="adm-pi">{pg.icon}</span>
+              <span className="adm-pt"><b>{pg.label}</b><small>{pg.note}</small></span>
+              <span className="adm-pa">→</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="adm-tabs">
+          {TABS.map(t => (
+            <button key={t.key} className={`adm-tab${tab === t.key ? ' on' : ''}`} onClick={() => setTab(t.key)}>{t.label}</button>
+          ))}
         </div>
 
         {tab === 'users' && (
           <div>
-            <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
-              <input placeholder="Search name or email..." value={search} onChange={e => setSearch(e.target.value)} style={{ ...inputStyle, flex: 1, minWidth: 220 }} />
-              <select value={toolFilter} onChange={e => setToolFilter(e.target.value)} style={inputStyle}>
+            <div className="adm-bar">
+              <input className="adm-in" placeholder="Search name or email..." value={search} onChange={e => setSearch(e.target.value)} style={{ flex: 1, minWidth: 200 }} />
+              <select className="adm-in" value={toolFilter} onChange={e => setToolFilter(e.target.value)}>
                 <option value="all">All users</option>
                 {tools.map(t => <option key={t.id} value={t.id}>Has: {t.name}</option>)}
               </select>
+              <span className="adm-count">{filteredProfiles.length} {filteredProfiles.length === 1 ? 'user' : 'users'}</span>
             </div>
 
-            <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, overflow: 'auto' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: `1.3fr 1.3fr 1fr ${tools.map(() => '1.2fr').join(' ')}`, padding: '12px 16px', fontSize: 12, color: '#999', fontWeight: 700, borderBottom: '1px solid #3a3733', minWidth: 700 }}>
+            <div className="adm-table">
+              <div className="adm-th" style={{ gridTemplateColumns: userCols }}>
                 <span>Name</span><span>Email</span><span>Phone</span>
                 {tools.map(t => <span key={t.id}>{t.name}</span>)}
               </div>
               {filteredProfiles.map(p => (
-                <div key={p.id} style={{ display: 'grid', gridTemplateColumns: `1.3fr 1.3fr 1fr ${tools.map(() => '1.2fr').join(' ')}`, padding: '12px 16px', fontSize: 13, color: '#ddd', borderBottom: '1px solid #3a3733', alignItems: 'center', minWidth: 700 }}>
-                  <span>{p.full_name || '—'}</span>
-                  <span style={{ color: '#999', fontSize: 12 }}>{p.email}</span>
-                  <span style={{ color: '#999' }}>{p.phone}</span>
+                <div key={p.id} className="adm-tr" style={{ gridTemplateColumns: userCols }}>
+                  <span className="adm-who"><i>{initial(p.full_name, p.email)}</i><b>{p.full_name || '—'}</b></span>
+                  <span className="adm-mut adm-ell">{p.email}</span>
+                  <span className="adm-mut">{p.phone}</span>
                   {tools.map(t => {
                     const sub = subs.find(s => s.user_id === p.id && s.tool_id === t.id && s.status === 'active')
                     const expired = sub?.expires_at && new Date(sub.expires_at).getTime() < now
+                    const on = !!sub && !expired
                     return (
-                      <div key={t.id} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                      <div key={t.id} className="adm-sub">
                         <button
+                          className={`adm-pill ${on ? 'on' : expired ? 'exp' : 'off'}`}
                           onClick={() => toggleSub(p.id, t.id, !sub)}
-                          style={{ padding: '5px 10px', fontSize: 11, borderRadius: 12, border: 'none', cursor: 'pointer', fontWeight: 700, background: sub && !expired ? '#F0801E' : '#4a4744', color: '#fff', width: 'fit-content' }}
+                          title={on ? 'Click to cancel this subscription' : 'Click to grant access'}
                         >
-                          {sub && !expired ? 'Active' : expired ? 'Expired' : 'Grant'}
+                          {on ? 'Active' : expired ? 'Expired' : 'Grant'}
                         </button>
                         {sub?.expires_at && (
-                          <span style={{ fontSize: 10, color: expired ? '#ff6b6b' : '#888' }}>
+                          <small style={{ color: expired ? '#ff6b6b' : '#8a8782' }}>
                             till {new Date(sub.expires_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' })}
-                          </span>
+                          </small>
                         )}
                       </div>
                     )
                   })}
                 </div>
               ))}
-              {filteredProfiles.length === 0 && <p style={{ color: '#777', padding: 16, fontSize: 13 }}>No users match this filter.</p>}
+              {filteredProfiles.length === 0 && <p className="adm-empty">No users match this filter.</p>}
             </div>
           </div>
         )}
 
         {tab === 'tools' && (
           <div>
-            <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 20, marginBottom: 20 }}>
-              <h4 style={{ color: '#fff', marginTop: 0 }}>{form.id ? 'Edit Tool' : 'Add New Tool'}</h4>
-              <p style={{ color: '#999', fontSize: 12.5, margin: '-6px 0 14px' }}>
-                Prices are set per plan. After adding a tool, include it in a plan under <a onClick={() => router.push('/admin/plans')} style={{ color: '#F0801E', cursor: 'pointer', fontWeight: 700 }}>Plans →</a>
+            <div className="adm-card">
+              <h4>{form.id ? 'Edit Tool' : 'Add New Tool'}</h4>
+              <p className="adm-hint">
+                Prices are set per plan. After adding a tool, include it in a plan under <a onClick={() => router.push('/admin/plans')}>Plans →</a>
               </p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-                <input placeholder="Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} style={inputStyle} />
-                <input placeholder="Slug (e.g. calibration-tracker)" value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} style={inputStyle} disabled={!!form.id} />
+              <div className="adm-g2">
+                <input className="adm-in" placeholder="Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+                <input className="adm-in" placeholder="Slug (e.g. calibration-tracker)" value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} disabled={!!form.id} />
               </div>
-              <input placeholder="Short description (shown on dashboard tile)" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} style={{ ...inputStyle, width: '100%', marginBottom: 10 }} />
+              <input className="adm-in" placeholder="Short description (shown on dashboard tile)" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} style={{ width: '100%', marginBottom: 10 }} />
               <textarea
+                className="adm-in"
                 placeholder={'Feature bullet points, one per line\ne.g.\nG71 Rough Turning\nOD Threading cycle'}
                 value={form.features}
                 onChange={e => setForm({ ...form, features: e.target.value })}
                 rows={4}
-                style={{ ...inputStyle, width: '100%', marginBottom: 12, fontFamily: 'inherit' }}
+                style={{ width: '100%', marginBottom: 12, fontFamily: 'inherit' }}
               />
               <div style={{ display: 'flex', gap: 10 }}>
-                <button onClick={saveTool} style={{ background: '#F0801E', color: '#fff', border: 'none', borderRadius: 6, padding: '9px 18px', fontWeight: 700, cursor: 'pointer' }}>
-                  {form.id ? 'Save Changes' : 'Add Tool'}
-                </button>
-                {form.id && (
-                  <button onClick={() => setForm(emptyForm)} style={{ background: 'transparent', color: '#ddd', border: '1px solid #3a3733', borderRadius: 6, padding: '9px 18px', cursor: 'pointer' }}>
-                    Cancel
-                  </button>
-                )}
+                <button className="adm-btn" onClick={saveTool}>{form.id ? 'Save Changes' : 'Add Tool'}</button>
+                {form.id && <button className="adm-btn ghost" onClick={() => setForm(emptyForm)}>Cancel</button>}
               </div>
             </div>
 
-            <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 20 }}>
-              {tools.map(t => (
-                <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #3a3733' }}>
-                  <div style={{ color: '#ddd', fontSize: 13 }}>
-                    <b style={{ color: '#fff' }}>{t.name}</b>
-                    {(() => {
-                      const inPlans = plans.filter(pl => (pl.tool_ids || []).includes(t.id))
-                      return inPlans.length > 0
-                        ? <span style={{ color: '#999' }}> — in plans: {inPlans.map(pl => pl.name).join(', ')}</span>
-                        : <span style={{ color: '#ff6b6b' }}> — not in any plan yet</span>
-                    })()}
+            <div className="adm-card">
+              {tools.map(t => {
+                const inPlans = plans.filter(pl => (pl.tool_ids || []).includes(t.id))
+                return (
+                  <div key={t.id} className="adm-row">
+                    <div>
+                      <b style={{ color: '#fff' }}>{t.name}</b>
+                      {inPlans.length > 0
+                        ? <span className="adm-mut"> — in plans: {inPlans.map(pl => pl.name).join(', ')}</span>
+                        : <span style={{ color: '#ff6b6b' }}> — not in any plan yet</span>}
+                    </div>
+                    <button className="adm-btn ghost sm" onClick={() => startEdit(t)}>Edit</button>
                   </div>
-                  <button onClick={() => startEdit(t)} style={{ background: 'transparent', border: '1px solid #3a3733', color: '#F0801E', borderRadius: 6, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                    Edit
-                  </button>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         )}
 
         {tab === 'payments' && (
-          <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, overflow: 'auto' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 1fr 1fr 1fr 1fr', padding: '12px 16px', fontSize: 12, color: '#999', fontWeight: 700, borderBottom: '1px solid #3a3733', minWidth: 700 }}>
+          <div className="adm-table">
+            <div className="adm-th" style={{ gridTemplateColumns: '1.3fr 1.6fr 1.2fr 0.8fr 0.8fr 0.8fr' }}>
               <span>Date</span><span>User</span><span>Tools</span><span>Cycle</span><span>Amount</span><span>Status</span>
             </div>
             {orders.map(o => {
               const userEmail = profiles.find(p => p.id === o.user_id)?.email || o.user_id
               const toolNames = o.tool_ids.map(id => tools.find(t => t.id === id)?.name || '—').join(', ')
               return (
-                <div key={o.id} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 1fr 1fr 1fr 1fr', padding: '12px 16px', fontSize: 13, color: '#ddd', borderBottom: '1px solid #3a3733', minWidth: 700 }}>
-                  <span style={{ color: '#999', fontSize: 12 }}>{new Date(o.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
-                  <span style={{ fontSize: 12 }}>{userEmail}</span>
-                  <span style={{ fontSize: 12 }}>{toolNames}</span>
-                  <span style={{ fontSize: 12, textTransform: 'capitalize' }}>{o.billing_cycle}</span>
+                <div key={o.id} className="adm-tr" style={{ gridTemplateColumns: '1.3fr 1.6fr 1.2fr 0.8fr 0.8fr 0.8fr' }}>
+                  <span className="adm-mut">{new Date(o.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className="adm-ell">{userEmail}</span>
+                  <span>{toolNames}</span>
+                  <span style={{ textTransform: 'capitalize' }}>{o.billing_cycle}</span>
                   <span style={{ color: '#2fbf71', fontWeight: 700 }}>₹{o.amount}</span>
-                  <span style={{
-                    fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 10, width: 'fit-content',
-                    color: '#fff', background: o.status === 'paid' ? '#2fbf71' : '#555',
-                  }}>
-                    {o.status}
-                  </span>
+                  <span className={`adm-pill static ${o.status === 'paid' ? 'paid' : 'off'}`}>{o.status}</span>
                 </div>
               )
             })}
-            {orders.length === 0 && <p style={{ color: '#777', padding: 16, fontSize: 13 }}>No payments yet.</p>}
+            {orders.length === 0 && <p className="adm-empty">No payments yet.</p>}
           </div>
         )}
 
         {tab === 'coupons' && (
           <div>
-            <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 20, marginBottom: 20 }}>
-              <h4 style={{ color: '#fff', marginTop: 0 }}>Create Coupon</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
-                <input placeholder="Code (e.g. DIWALI20)" value={couponForm.code} onChange={e => setCouponForm({ ...couponForm, code: e.target.value })} style={inputStyle} />
-                <select value={couponForm.discount_type} onChange={e => setCouponForm({ ...couponForm, discount_type: e.target.value })} style={inputStyle}>
+            <div className="adm-card">
+              <h4>Create Coupon</h4>
+              <div className="adm-g3">
+                <input className="adm-in" placeholder="Code (e.g. DIWALI20)" value={couponForm.code} onChange={e => setCouponForm({ ...couponForm, code: e.target.value })} />
+                <select className="adm-in" value={couponForm.discount_type} onChange={e => setCouponForm({ ...couponForm, discount_type: e.target.value })}>
                   <option value="percent">Percent (%)</option>
                   <option value="flat">Flat (₹)</option>
                 </select>
-                <input placeholder="Discount value" type="number" value={couponForm.discount_value} onChange={e => setCouponForm({ ...couponForm, discount_value: e.target.value })} style={inputStyle} />
-                <input placeholder="Max uses (optional)" type="number" value={couponForm.max_uses} onChange={e => setCouponForm({ ...couponForm, max_uses: e.target.value })} style={inputStyle} />
-                <input placeholder="Expiry date (optional)" type="date" value={couponForm.expires_at} onChange={e => setCouponForm({ ...couponForm, expires_at: e.target.value })} style={inputStyle} />
+                <input className="adm-in" placeholder="Discount value" type="number" value={couponForm.discount_value} onChange={e => setCouponForm({ ...couponForm, discount_value: e.target.value })} />
+                <input className="adm-in" placeholder="Max uses (optional)" type="number" value={couponForm.max_uses} onChange={e => setCouponForm({ ...couponForm, max_uses: e.target.value })} />
+                <input className="adm-in" placeholder="Expiry date (optional)" type="date" value={couponForm.expires_at} onChange={e => setCouponForm({ ...couponForm, expires_at: e.target.value })} />
               </div>
-              <button onClick={createCoupon} style={{ background: '#F0801E', color: '#fff', border: 'none', borderRadius: 6, padding: '9px 18px', fontWeight: 700, cursor: 'pointer' }}>
-                Create Coupon
-              </button>
+              <button className="adm-btn" onClick={createCoupon}>Create Coupon</button>
             </div>
 
-            <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 10, padding: 20 }}>
+            <div className="adm-card">
               {coupons.map(c => (
-                <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #3a3733' }}>
-                  <div style={{ color: '#ddd', fontSize: 13 }}>
+                <div key={c.id} className="adm-row">
+                  <div>
                     <b style={{ color: '#F0801E' }}>{c.code}</b> — {c.discount_type === 'percent' ? `${c.discount_value}%` : `₹${c.discount_value}`} off
-                    {' · '}used {c.used_count}{c.max_uses ? `/${c.max_uses}` : ''}
-                    {c.expires_at ? ` · expires ${new Date(c.expires_at).toLocaleDateString('en-IN')}` : ''}
+                    <span className="adm-mut">
+                      {' · '}used {c.used_count}{c.max_uses ? `/${c.max_uses}` : ''}
+                      {c.expires_at ? ` · expires ${new Date(c.expires_at).toLocaleDateString('en-IN')}` : ''}
+                    </span>
                   </div>
-                  <button
-                    onClick={() => toggleCoupon(c.id, !c.active)}
-                    style={{ padding: '5px 12px', fontSize: 11, borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 700, background: c.active ? '#2fbf71' : '#555', color: '#fff' }}
-                  >
+                  <button className={`adm-pill ${c.active ? 'paid' : 'off'}`} onClick={() => toggleCoupon(c.id, !c.active)}>
                     {c.active ? 'Active' : 'Disabled'}
                   </button>
                 </div>
               ))}
-              {coupons.length === 0 && <p style={{ color: '#777', fontSize: 13, margin: 0 }}>No coupons yet.</p>}
+              {coupons.length === 0 && <p className="adm-empty" style={{ padding: 0 }}>No coupons yet.</p>}
             </div>
           </div>
         )}
@@ -352,3 +338,53 @@ export default function AdminPage() {
     </div>
   )
 }
+
+const CSS = `
+.adm{min-height:100vh;background:#211f1d;font-family:'Segoe UI',sans-serif;color:#ddd}
+.adm *{box-sizing:border-box}
+.adm-top{display:flex;align-items:center;justify-content:space-between;padding:14px 32px;background:#161513;border-bottom:2px solid #F0801E;position:sticky;top:0;z-index:5}
+.adm-title{font-size:20px;font-weight:800;color:#fff}.adm-title span{color:#F0801E}
+.adm-back{background:#F0801E;color:#fff;border:none;border-radius:999px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer}
+.adm-wrap{padding:28px 32px 48px;max-width:1240px;margin:0 auto}
+.adm-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:30px}
+.adm-stat{background:#2b2a28;border:1px solid #3a3733;border-radius:12px;padding:18px 20px}
+.adm-sl{color:#9a958d;font-size:12.5px;margin-bottom:6px}.adm-sv{color:#fff;font-size:30px;font-weight:800;line-height:1.1}
+.adm-sec{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#8a8782;margin:0 0 12px}
+.adm-pages{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-bottom:34px}
+.adm-page{display:flex;align-items:center;gap:12px;background:#2b2a28;border:1px solid #3a3733;border-radius:12px;padding:14px 16px;cursor:pointer;text-align:left;color:#fff;transition:border-color .15s,transform .15s}
+.adm-page:hover{border-color:#F0801E;transform:translateY(-1px)}
+.adm-pi{width:40px;height:40px;border-radius:10px;background:rgba(240,128,30,.14);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.adm-pt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.adm-pt b{font-size:14.5px}.adm-pt small{color:#8a8782;font-size:12px}
+.adm-pa{color:#F0801E;font-weight:800}
+.adm-tabs{display:flex;gap:4px;border-bottom:1px solid #3a3733;margin-bottom:22px;overflow-x:auto}
+.adm-tab{background:none;border:none;color:#9a958d;font-weight:700;font-size:14px;padding:12px 20px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.adm-tab:hover{color:#fff}.adm-tab.on{color:#F0801E;border-bottom-color:#F0801E}
+.adm-bar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.adm-in{background:#1c1b19;border:1px solid #3a3733;border-radius:8px;color:#fff;padding:10px 12px;font-size:13.5px}
+.adm-in:focus{outline:none;border-color:#F0801E}
+.adm-count{color:#8a8782;font-size:12.5px;margin-left:4px}
+.adm-table{background:#2b2a28;border:1px solid #3a3733;border-radius:12px;overflow-x:auto}
+.adm-th,.adm-tr{display:grid;gap:12px;padding:13px 18px;align-items:center;min-width:760px}
+.adm-th{font-size:11.5px;color:#8a8782;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:#242321;border-bottom:1px solid #3a3733}
+.adm-tr{font-size:13.5px;border-bottom:1px solid #353230}.adm-tr:last-child{border-bottom:none}.adm-tr:hover{background:#302e2b}
+.adm-who{display:flex;align-items:center;gap:10px;min-width:0}.adm-who b{color:#fff;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.adm-who i{font-style:normal;width:30px;height:30px;border-radius:50%;background:rgba(240,128,30,.18);color:#F0801E;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.adm-mut{color:#9a958d}.adm-ell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.adm-sub{display:flex;flex-direction:column;gap:3px;align-items:flex-start}.adm-sub small{font-size:10.5px}
+.adm-pill{padding:5px 13px;font-size:11.5px;border-radius:999px;border:1px solid transparent;cursor:pointer;font-weight:700;color:#fff;background:#4a4744}
+.adm-pill.on,.adm-pill.paid{background:#F0801E}.adm-pill.paid{background:#2fbf71}
+.adm-pill.off{background:transparent;border-color:#4a4744;color:#bbb}.adm-pill.off:hover{border-color:#F0801E;color:#F0801E}
+.adm-pill.exp{background:rgba(255,107,107,.15);border-color:#ff6b6b;color:#ff8a8a}
+.adm-pill.static{cursor:default;width:fit-content;text-transform:capitalize}.adm-pill.static.off{background:#3a3733;border-color:transparent;color:#ddd}
+.adm-empty{color:#777;padding:18px;font-size:13px;margin:0}
+.adm-card{background:#2b2a28;border:1px solid #3a3733;border-radius:12px;padding:20px;margin-bottom:18px}
+.adm-card h4{color:#fff;margin:0 0 12px;font-size:16px}
+.adm-hint{color:#9a958d;font-size:12.5px;margin:-4px 0 14px}.adm-hint a{color:#F0801E;cursor:pointer;font-weight:700}
+.adm-g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.adm-g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:14px}
+.adm-btn{background:#F0801E;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-weight:700;font-size:13.5px;cursor:pointer}
+.adm-btn.ghost{background:transparent;color:#F0801E;border:1px solid #3a3733}.adm-btn.sm{padding:6px 14px;font-size:12px}
+.adm-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #353230;font-size:13.5px}
+.adm-row:last-child{border-bottom:none}
+@media(max-width:640px){.adm-top{padding:12px 16px}.adm-wrap{padding:20px 16px 40px}.adm-g2{grid-template-columns:1fr}.adm-sv{font-size:26px}}
+`
