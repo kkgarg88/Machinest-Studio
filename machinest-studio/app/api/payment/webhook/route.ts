@@ -1,58 +1,42 @@
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { fulfilOrder, safeEqualHex } from '@/lib/payments/fulfil'
 
 export async function POST(req: Request) {
+  const secret = process.env.RAZORPAY_WEBHOOK_SECRET
+  if (!secret) {
+    console.error('RAZORPAY_WEBHOOK_SECRET is not set')
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  }
+
   const rawBody = await req.text()
   const signature = req.headers.get('x-razorpay-signature')
 
-  const expected = crypto
-    .createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET!)
-    .update(rawBody)
-    .digest('hex')
+  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex')
 
-  if (signature !== expected) {
+  if (!safeEqualHex(expected, signature)) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
-  const payload = JSON.parse(rawBody)
-  if (payload.event !== 'payment.captured') {
+  let payload: any
+  try {
+    payload = JSON.parse(rawBody)
+  } catch {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
+  }
+
+  if (payload?.event !== 'payment.captured') {
     return NextResponse.json({ ok: true })
   }
 
-  const orderId = payload.payload.payment.entity.order_id
+  const orderId = payload?.payload?.payment?.entity?.order_id
+  if (typeof orderId !== 'string' || !orderId) return NextResponse.json({ ok: true })
+
   const admin = createAdminClient()
+  const result = await fulfilOrder(admin, orderId)
 
-  const { data: order } = await admin
-    .from('payment_orders')
-    .select('*')
-    .eq('razorpay_order_id', orderId)
-    .single()
-
-  if (!order) return NextResponse.json({ ok: true })
-  if (order.status === 'paid') return NextResponse.json({ ok: true })
-
-  const days = order.billing_cycle === 'monthly' ? 30 : 365
-  const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString()
-
-  const rows = order.tool_ids.map((toolId: string) => ({
-    user_id: order.user_id,
-    tool_id: toolId,
-    status: 'active',
-    billing_cycle: order.billing_cycle,
-    expires_at: expiresAt,
-  }))
-
-  await admin.from('subscriptions').upsert(rows, { onConflict: 'user_id,tool_id' })
-  await admin.from('payment_orders').update({ status: 'paid' }).eq('id', order.id)
-
-  if (order.coupon_code) {
-    const cleanCode = order.coupon_code.trim().toUpperCase()
-    const { data: coupon } = await admin.from('coupons').select('id, used_count').ilike('code', cleanCode).maybeSingle()
-    if (coupon) {
-      await admin.from('coupons').update({ used_count: coupon.used_count + 1 }).eq('id', coupon.id)
-    }
-  }
-
+  // On a real failure answer with an error so Razorpay sends the webhook again later.
+  if (result === 'error') return NextResponse.json({ error: 'Could not process' }, { status: 500 })
   return NextResponse.json({ ok: true })
 }

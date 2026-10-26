@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { fulfilOrder, safeEqualHex } from '@/lib/payments/fulfil'
 
 export async function POST(req: Request) {
   try {
@@ -11,7 +12,10 @@ export async function POST(req: Request) {
 
     const body = await req.json().catch(() => null)
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = body || {}
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    if (
+      typeof razorpay_order_id !== 'string' || typeof razorpay_payment_id !== 'string' ||
+      typeof razorpay_signature !== 'string' || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature
+    ) {
       return NextResponse.json({ error: 'Invalid payment data' }, { status: 400 })
     }
 
@@ -20,59 +24,23 @@ export async function POST(req: Request) {
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest('hex')
 
-    if (expectedSignature !== razorpay_signature) {
+    if (!safeEqualHex(expectedSignature, razorpay_signature)) {
       return NextResponse.json({ error: 'Payment verification failed' }, { status: 400 })
     }
 
     const admin = createAdminClient()
+    const result = await fulfilOrder(admin, razorpay_order_id, user.id)
 
-    const { data: order } = await admin
-      .from('payment_orders')
-      .select('*')
-      .eq('razorpay_order_id', razorpay_order_id)
-      .eq('user_id', user.id)
-      .single()
-
-    if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 })
-    if (order.status === 'paid') return NextResponse.json({ ok: true }) // dobara verify na ho
-
-    const days = order.billing_cycle === 'monthly' ? 30 : 365
-    const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString()
-
-    const rows = order.tool_ids.map((toolId: string) => ({
-      user_id: user.id,
-      tool_id: toolId,
-      status: 'active',
-      billing_cycle: order.billing_cycle,
-      expires_at: expiresAt,
-    }))
-
-    const { error: subError } = await admin.from('subscriptions').upsert(rows, { onConflict: 'user_id,tool_id' })
-    if (subError) return NextResponse.json({ error: subError.message }, { status: 500 })
-
-    await admin.from('payment_orders').update({ status: 'paid' }).eq('id', order.id)
-if (order.coupon_code) {
-  const cleanCode = order.coupon_code.trim().toUpperCase()
-  const { data: coupon, error: couponFetchErr } = await admin
-    .from('coupons')
-    .select('id, used_count')
-    .ilike('code', cleanCode)
-    .maybeSingle()
-
-  if (couponFetchErr) {
-    console.error('Coupon fetch error:', couponFetchErr.message)
-  } else if (coupon) {
-    const { error: couponUpdateErr } = await admin
-      .from('coupons')
-      .update({ used_count: coupon.used_count + 1 })
-      .eq('id', coupon.id)
-    if (couponUpdateErr) console.error('Coupon update error:', couponUpdateErr.message)
-  } else {
-    console.error('Coupon not found for code:', cleanCode)
-  }
-}
+    if (result === 'not_found') return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+    if (result === 'error') {
+      return NextResponse.json(
+        { error: 'Your payment was received but we could not activate it yet. Please try again in a minute or contact support.' },
+        { status: 500 }
+      )
+    }
     return NextResponse.json({ ok: true })
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Server error' }, { status: 500 })
+  } catch (e: unknown) {
+    console.error('Payment verify error:', e instanceof Error ? e.message : e)
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }

@@ -91,9 +91,9 @@ export async function POST(req: Request) {
       notes: { user_id: user.id, cycle, plan: plan.name, coupon: couponCode || 'none' },
     })
 
-    // tool_ids carries the plan's tools, so the existing verify + webhook routes
-    // grant access exactly as before with no changes.
-    const { error } = await supabase.from('payment_orders').insert({
+    // The order row is written by the server (not by the browser user), so nobody can
+    // create or edit their own order rows. verify and the webhook read tool_ids from here.
+    const { error } = await admin.from('payment_orders').insert({
       user_id: user.id,
       razorpay_order_id: order.id,
       tool_ids: toolIds,
@@ -103,7 +103,10 @@ export async function POST(req: Request) {
       discount,
       plan_id: plan.id,
     })
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error('Order insert error:', error.message)
+      return NextResponse.json({ error: 'Could not start the payment. Please try again.' }, { status: 500 })
+    }
 
     return NextResponse.json({
       orderId: order.id,
@@ -112,7 +115,8 @@ export async function POST(req: Request) {
       subtotal,
       discount,
     })
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Server error' }, { status: 500 })
+  } catch (e: unknown) {
+    console.error('Create order error:', e instanceof Error ? e.message : e)
+    return NextResponse.json({ error: 'Could not start the payment. Please try again.' }, { status: 500 })
   }
 }
