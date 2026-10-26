@@ -1,21 +1,25 @@
 'use client'
-import { useCallback, useEffect, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Bi } from './Bi'
+import { useT } from './lang'
 
 const ORANGE = '#F0801E'
 const MAX = 30
 
+type Pair = [string, string]
 type Item = { id: string; name: string; updated_at: string }
 type Current = { id: string; name: string; json: string | null } | null
-type Msg = { ok: boolean; text: string } | null
+type Msg = { ok: boolean; text: Pair } | null
 
-function niceError(err: { code?: string; message?: string } | null): string {
-  if (!err) return 'Something went wrong'
-  if (err.code === '23505') return 'A saved program with this name already exists. Use another name, or load that program and save changes.'
-  if (err.code === '42P01' || err.code === 'PGRST205') return 'Saving is not set up yet. Please contact support.'
-  if (err.message && /up to 30/.test(err.message)) return 'You can save up to 30 programs. Delete one to save a new program.'
-  return `Could not complete this (${err.code || 'error'}). Please try again.`
+const LIMIT_MSG: Pair = ['You can save up to 30 programs. Delete one to save a new program.', 'आप अधिकतम 30 प्रोग्राम सेव कर सकते हैं। नया सेव करने के लिए कोई हटाएँ।']
+
+function niceError(err: { code?: string; message?: string } | null): Pair {
+  if (!err) return ['Something went wrong', 'कुछ गड़बड़ हो गई']
+  if (err.code === '23505') return ['A saved program with this name already exists. Use another name, or load that program and save changes.', 'इस नाम का प्रोग्राम पहले से सेव है। दूसरा नाम दें, या उस प्रोग्राम को खोलकर बदलाव सेव करें।']
+  if (err.code === '42P01' || err.code === 'PGRST205') return ['Saving is not set up yet. Please contact support.', 'सेव करने की सुविधा अभी चालू नहीं है। कृपया सपोर्ट से संपर्क करें।']
+  if (err.message && /up to 30/.test(err.message)) return LIMIT_MSG
+  const c = err.code || 'error'
+  return [`Could not complete this (${c}). Please try again.`, `यह पूरा नहीं हो सका (${c})। कृपया फिर कोशिश करें।`]
 }
 
 const fmtDate = (s: string) => {
@@ -27,16 +31,24 @@ const fmtDate = (s: string) => {
 const btn = { background: 'transparent', border: '1px solid #3a3733', color: '#ddd', borderRadius: 6, padding: '6px 10px', fontSize: 12, fontWeight: 600, cursor: 'pointer' } as const
 const input = { width: '100%', background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 6, color: '#fff', padding: '10px 12px', fontSize: 14 } as const
 
-export default function SavedPrograms({ cycleCode, snapshot, onLoad, onNew }: {
+// used by the screen to ask "save before generating?"
+export type SavedProgramsHandle = {
+  state: () => { available: boolean; hasCurrent: boolean; dirty: boolean; name: string }
+  saveCurrent: () => Promise<{ ok: boolean; error?: Pair }>
+  saveNew: (name: string) => Promise<{ ok: boolean; error?: Pair }>
+}
+
+const SavedPrograms = forwardRef<SavedProgramsHandle, {
   cycleCode: string
   snapshot: object
   onLoad: (data: unknown) => void
   onNew: () => void
-}) {
+}>(function SavedPrograms({ cycleCode, snapshot, onLoad, onNew }, ref) {
+  const t = useT()
   const [supabase] = useState(() => createClient())
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
-  const [listError, setListError] = useState('')
+  const [listError, setListError] = useState<Pair | null>(null)
   const [name, setName] = useState('')
   const [current, setCurrent] = useState<Current>(null)
   const [busy, setBusy] = useState(false)
@@ -56,7 +68,7 @@ export default function SavedPrograms({ cycleCode, snapshot, onLoad, onNew }: {
       .select('id, name, updated_at')
       .eq('cycle_code', cycleCode)
       .order('updated_at', { ascending: false })
-    if (error) { setListError(niceError(error)); setItems([]) } else { setListError(''); setItems((data || []) as Item[]) }
+    if (error) { setListError(niceError(error)); setItems([]) } else { setListError(null); setItems((data || []) as Item[]) }
     setLoading(false)
   }, [supabase, cycleCode])
 
@@ -67,7 +79,7 @@ export default function SavedPrograms({ cycleCode, snapshot, onLoad, onNew }: {
     if (current && current.json === null) setCurrent({ ...current, json: snapJson })
   }, [current, snapJson])
 
-  function flash(ok: boolean, text: string) { setMsg({ ok, text }) }
+  function flash(ok: boolean, text: Pair) { setMsg({ ok, text }) }
 
   function uniqueName(base: string): string {
     const taken = new Set(items.map(i => i.name.toLowerCase()))
@@ -79,27 +91,42 @@ export default function SavedPrograms({ cycleCode, snapshot, onLoad, onNew }: {
     return `${base} (${Date.now()})`
   }
 
-  async function save(asNew: boolean) {
-    const nm = name.trim()
-    if (!nm || busy) return
+  // Saves the program. Returns the result so the screen can use it before generating.
+  async function doSave(nm: string, asNew: boolean): Promise<{ ok: boolean; error?: Pair }> {
+    const clean = nm.trim()
+    if (!clean) return { ok: false, error: ['Enter a program name', 'प्रोग्राम का नाम लिखें'] }
     setBusy(true); setMsg(null)
-    if (current && !asNew) {
-      const { error } = await supabase.from('saved_programs').update({ name: nm, data: snapshot }).eq('id', current.id)
-      if (error) flash(false, niceError(error))
-      else { setCurrent({ id: current.id, name: nm, json: snapJson }); await refresh(); flash(true, 'Saved · सेव हो गया') }
-    } else {
-      if (items.length >= MAX) { setBusy(false); flash(false, 'You can save up to 30 programs. Delete one to save a new program.'); return }
-      const finalName = asNew ? uniqueName(nm) : nm
-      const { data, error } = await supabase
-        .from('saved_programs')
-        .insert({ cycle_code: cycleCode, name: finalName, data: snapshot })
-        .select('id, name, updated_at')
-        .single()
-      if (error || !data) flash(false, niceError(error))
-      else { setCurrent({ id: data.id, name: data.name, json: snapJson }); setName(data.name); await refresh(); flash(true, 'Saved · सेव हो गया') }
+    try {
+      if (current && !asNew) {
+        const { error } = await supabase.from('saved_programs').update({ name: clean, data: snapshot }).eq('id', current.id)
+        if (error) { const e = niceError(error); flash(false, e); return { ok: false, error: e } }
+        setCurrent({ id: current.id, name: clean, json: snapJson })
+        setName(clean)
+      } else {
+        if (items.length >= MAX) { flash(false, LIMIT_MSG); return { ok: false, error: LIMIT_MSG } }
+        const finalName = asNew ? uniqueName(clean) : clean
+        const { data, error } = await supabase
+          .from('saved_programs')
+          .insert({ cycle_code: cycleCode, name: finalName, data: snapshot })
+          .select('id, name, updated_at')
+          .single()
+        if (error || !data) { const e = niceError(error); flash(false, e); return { ok: false, error: e } }
+        setCurrent({ id: data.id, name: data.name, json: snapJson })
+        setName(data.name)
+      }
+      await refresh()
+      flash(true, ['Saved', 'सेव हो गया'])
+      return { ok: true }
+    } finally {
+      setBusy(false)
     }
-    setBusy(false)
   }
+
+  useImperativeHandle(ref, () => ({
+    state: () => ({ available: !listError, hasCurrent: !!current, dirty, name: current?.name || name }),
+    saveCurrent: () => doSave(current?.name || name, false),
+    saveNew: (nm: string) => doSave(nm, false),
+  }))
 
   async function load(id: string) {
     setAskLoad(null); setBusy(true); setMsg(null)
@@ -109,7 +136,7 @@ export default function SavedPrograms({ cycleCode, snapshot, onLoad, onNew }: {
     setName(data.name)
     setCurrent({ id: data.id, name: data.name, json: null })
     setBusy(false)
-    flash(true, 'Loaded · प्रोग्राम खुल गया')
+    flash(true, ['Loaded', 'प्रोग्राम खुल गया'])
   }
 
   async function rename(id: string) {
@@ -122,11 +149,11 @@ export default function SavedPrograms({ cycleCode, snapshot, onLoad, onNew }: {
     setRenameId(null)
     if (current?.id === id) { setCurrent({ ...current, name: nm }); setName(nm) }
     await refresh()
-    flash(true, 'Renamed · नाम बदल गया')
+    flash(true, ['Renamed', 'नाम बदल गया'])
   }
 
   async function duplicate(id: string) {
-    if (items.length >= MAX) { flash(false, 'You can save up to 30 programs. Delete one to save a new program.'); return }
+    if (items.length >= MAX) { flash(false, LIMIT_MSG); return }
     setBusy(true); setMsg(null)
     const src = items.find(i => i.id === id)
     const { data: row, error: e1 } = await supabase.from('saved_programs').select('data').eq('id', id).single()
@@ -135,7 +162,7 @@ export default function SavedPrograms({ cycleCode, snapshot, onLoad, onNew }: {
     setBusy(false)
     if (e2) { flash(false, niceError(e2)); return }
     await refresh()
-    flash(true, 'Copied · कॉपी बन गई')
+    flash(true, ['Copied', 'कॉपी बन गई'])
   }
 
   async function remove(id: string) {
@@ -146,7 +173,7 @@ export default function SavedPrograms({ cycleCode, snapshot, onLoad, onNew }: {
     if (error) { flash(false, niceError(error)); return }
     if (current?.id === id) setCurrent(null)
     await refresh()
-    flash(true, 'Deleted · हटा दिया')
+    flash(true, ['Deleted', 'हटा दिया'])
   }
 
   function startNew() {
@@ -156,50 +183,50 @@ export default function SavedPrograms({ cycleCode, snapshot, onLoad, onNew }: {
   }
 
   const status = current
-    ? (dirty ? { c: '#ffb34d', t: 'Unsaved changes · बदलाव सेव नहीं हुए' } : { c: '#2fbf71', t: 'Saved ✓ · सेव है' })
-    : { c: '#8a8782', t: 'Not saved yet · अभी सेव नहीं हुआ' }
+    ? (dirty ? { c: '#ffb34d', t: t('Unsaved changes', 'बदलाव सेव नहीं हुए') } : { c: '#2fbf71', t: t('Saved ✓', 'सेव है ✓') })
+    : { c: '#8a8782', t: t('Not saved yet', 'अभी सेव नहीं हुआ') }
 
   return (
     <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 12, padding: 24 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
-        <h4 style={{ color: '#fff', margin: 0, fontSize: 16 }}><Bi en="My saved G71 programs" hi="मेरे सेव किए G71 प्रोग्राम" /></h4>
+        <h4 style={{ color: '#fff', margin: 0, fontSize: 16 }}>{t('My saved G71 programs', 'मेरे सेव किए G71 प्रोग्राम')}</h4>
         <span style={{ color: '#888', fontSize: 12.5 }}>{items.length}/{MAX}</span>
         <span style={{ flex: 1 }} />
         <span style={{ color: status.c, fontSize: 12.5, fontWeight: 700 }}>{status.t}</span>
       </div>
       <p style={{ color: '#999', fontSize: 12.5, margin: '0 0 12px', lineHeight: 1.5 }}>
-        <Bi en="Give the program a name (for example the part number) and press Save. You can load it later, change it and save again."
-            hi="प्रोग्राम का नाम दें (जैसे पार्ट नंबर) और Save दबाएँ। बाद में इसे खोलकर बदल सकते हैं और फिर सेव कर सकते हैं।" />
+        {t('Give the program a name (for example the part number) and press Save. You can load it later, change it and save again.',
+           'प्रोग्राम का नाम दें (जैसे पार्ट नंबर) और सेव दबाएँ। बाद में इसे खोलकर बदल सकते हैं और फिर सेव कर सकते हैं।')}
       </p>
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ flex: '1 1 220px' }}>
-          <input style={input} maxLength={80} placeholder="Program name · प्रोग्राम का नाम" value={name} onChange={e => setName(e.target.value)} />
+          <input style={input} maxLength={80} placeholder={t('Program name', 'प्रोग्राम का नाम')} value={name} onChange={e => setName(e.target.value)} />
         </div>
-        <button onClick={() => save(false)} disabled={!name.trim() || busy}
+        <button onClick={() => doSave(name, false)} disabled={!name.trim() || busy}
           style={{ background: name.trim() ? ORANGE : '#4a4744', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 16px', fontWeight: 700, fontSize: 13, cursor: name.trim() && !busy ? 'pointer' : 'not-allowed' }}>
-          {current ? 'Save changes · सेव' : 'Save · सेव'}
+          {current ? t('Save changes', 'बदलाव सेव करें') : t('Save', 'सेव करें')}
         </button>
         {current && (
-          <button onClick={() => save(true)} disabled={!name.trim() || busy} style={{ ...btn, padding: '10px 14px' }}>Save as new · नया सेव</button>
+          <button onClick={() => doSave(name, true)} disabled={!name.trim() || busy} style={{ ...btn, padding: '10px 14px' }}>{t('Save as new', 'नया सेव करें')}</button>
         )}
-        <button onClick={() => (dirty ? setAskNew(true) : startNew())} disabled={busy} style={{ ...btn, padding: '10px 14px' }}>New · नया</button>
+        <button onClick={() => (dirty ? setAskNew(true) : startNew())} disabled={busy} style={{ ...btn, padding: '10px 14px' }}>{t('New', 'नया')}</button>
       </div>
 
       {askNew && (
         <div style={{ marginTop: 10, color: '#ffb34d', fontSize: 13, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <span>Unsaved changes will be lost. Start a new program? · बदलाव सेव नहीं हैं, नया प्रोग्राम शुरू करें?</span>
-          <button style={btn} onClick={startNew}>Yes · हाँ</button>
-          <button style={btn} onClick={() => setAskNew(false)}>No · नहीं</button>
+          <span>{t('Unsaved changes will be lost. Start a new program?', 'बदलाव सेव नहीं हैं। नया प्रोग्राम शुरू करें?')}</span>
+          <button style={btn} onClick={startNew}>{t('Yes', 'हाँ')}</button>
+          <button style={btn} onClick={() => setAskNew(false)}>{t('No', 'नहीं')}</button>
         </div>
       )}
-      {msg && <div style={{ marginTop: 10, fontSize: 13, color: msg.ok ? '#2fbf71' : '#ff8a8a' }}>{msg.text}</div>}
+      {msg && <div style={{ marginTop: 10, fontSize: 13, color: msg.ok ? '#2fbf71' : '#ff8a8a' }}>{t(msg.text[0], msg.text[1])}</div>}
 
       <div style={{ marginTop: 14, maxHeight: 280, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {loading && <div style={{ color: '#888', fontSize: 13 }}>Loading… · खुल रहा है…</div>}
-        {!loading && listError && <div style={{ color: '#ff8a8a', fontSize: 13 }}>{listError}</div>}
+        {loading && <div style={{ color: '#888', fontSize: 13 }}>{t('Loading…', 'खुल रहा है…')}</div>}
+        {!loading && listError && <div style={{ color: '#ff8a8a', fontSize: 13 }}>{t(listError[0], listError[1])}</div>}
         {!loading && !listError && items.length === 0 && (
-          <div style={{ color: '#777', fontSize: 13 }}><Bi en="No saved programs yet." hi="अभी कोई प्रोग्राम सेव नहीं है।" /></div>
+          <div style={{ color: '#777', fontSize: 13 }}>{t('No saved programs yet.', 'अभी कोई प्रोग्राम सेव नहीं है।')}</div>
         )}
         {items.map(it => {
           const active = current?.id === it.id
@@ -210,7 +237,7 @@ export default function SavedPrograms({ cycleCode, snapshot, onLoad, onNew }: {
                   <>
                     <input style={{ ...input, flex: '1 1 160px', padding: '7px 10px' }} maxLength={80} value={renameText} autoFocus
                       onChange={e => setRenameText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') rename(it.id); if (e.key === 'Escape') setRenameId(null) }} />
-                    <button style={btn} onClick={() => rename(it.id)} disabled={!renameText.trim() || busy}>OK · ठीक</button>
+                    <button style={btn} onClick={() => rename(it.id)} disabled={!renameText.trim() || busy}>{t('OK', 'ठीक')}</button>
                     <button style={btn} onClick={() => setRenameId(null)}>✕</button>
                   </>
                 ) : (
@@ -220,25 +247,25 @@ export default function SavedPrograms({ cycleCode, snapshot, onLoad, onNew }: {
                       <div style={{ color: '#888', fontSize: 11.5 }}>{fmtDate(it.updated_at)}</div>
                     </div>
                     <button style={{ ...btn, borderColor: ORANGE, color: '#FFB34D' }} disabled={busy}
-                      onClick={() => (dirty && !active ? setAskLoad(it.id) : load(it.id))}>Load · खोलें</button>
-                    <button style={btn} disabled={busy} onClick={() => { setRenameId(it.id); setRenameText(it.name) }}>Rename · नाम बदलें</button>
-                    <button style={btn} disabled={busy} onClick={() => duplicate(it.id)}>Copy · कॉपी</button>
-                    <button style={{ ...btn, color: '#ff8a8a' }} disabled={busy} onClick={() => setDeleteId(it.id)}>Delete · हटाएँ</button>
+                      onClick={() => (dirty && !active ? setAskLoad(it.id) : load(it.id))}>{t('Load', 'खोलें')}</button>
+                    <button style={btn} disabled={busy} onClick={() => { setRenameId(it.id); setRenameText(it.name) }}>{t('Rename', 'नाम बदलें')}</button>
+                    <button style={btn} disabled={busy} onClick={() => duplicate(it.id)}>{t('Copy', 'कॉपी')}</button>
+                    <button style={{ ...btn, color: '#ff8a8a' }} disabled={busy} onClick={() => setDeleteId(it.id)}>{t('Delete', 'हटाएँ')}</button>
                   </>
                 )}
               </div>
               {askLoad === it.id && (
                 <div style={{ marginTop: 8, color: '#ffb34d', fontSize: 12.5, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <span>Unsaved changes will be lost. Load anyway? · बदलाव सेव नहीं हैं, फिर भी खोलें?</span>
-                  <button style={btn} onClick={() => load(it.id)}>Yes · हाँ</button>
-                  <button style={btn} onClick={() => setAskLoad(null)}>No · नहीं</button>
+                  <span>{t('Unsaved changes will be lost. Load anyway?', 'बदलाव सेव नहीं हैं। फिर भी खोलें?')}</span>
+                  <button style={btn} onClick={() => load(it.id)}>{t('Yes', 'हाँ')}</button>
+                  <button style={btn} onClick={() => setAskLoad(null)}>{t('No', 'नहीं')}</button>
                 </div>
               )}
               {deleteId === it.id && (
                 <div style={{ marginTop: 8, color: '#ff8a8a', fontSize: 12.5, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <span>Delete “{it.name}”? This cannot be undone. · “{it.name}” हटाएँ? यह वापस नहीं आएगा।</span>
-                  <button style={{ ...btn, color: '#ff8a8a', borderColor: '#ff8a8a' }} onClick={() => remove(it.id)}>Yes, delete · हाँ, हटाएँ</button>
-                  <button style={btn} onClick={() => setDeleteId(null)}>No · नहीं</button>
+                  <span>{t(`Delete “${it.name}”? This cannot be undone.`, `“${it.name}” हटाएँ? यह वापस नहीं आएगा।`)}</span>
+                  <button style={{ ...btn, color: '#ff8a8a', borderColor: '#ff8a8a' }} onClick={() => remove(it.id)}>{t('Yes, delete', 'हाँ, हटाएँ')}</button>
+                  <button style={btn} onClick={() => setDeleteId(null)}>{t('No', 'नहीं')}</button>
                 </div>
               )}
             </div>
@@ -247,4 +274,6 @@ export default function SavedPrograms({ cycleCode, snapshot, onLoad, onNew }: {
       </div>
     </div>
   )
-}
+})
+
+export default SavedPrograms

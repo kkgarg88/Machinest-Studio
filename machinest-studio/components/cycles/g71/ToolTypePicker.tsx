@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { Bi } from './Bi'
+import { useT } from './lang'
 
 const OR = '#F0801E'
 const ST = '#8a8782'
@@ -82,6 +83,7 @@ export function TypeIcon({ dir, size = 78 }: { dir: string; size?: number }) {
 }
 
 export default function ToolTypePicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const t = useT()
   const [open, setOpen] = useState(false)
   const box = useRef<HTMLDivElement>(null)
   const current = TOOL_TYPES.find(t => String(t.n) === value) ?? TOOL_TYPES[0]
@@ -107,24 +109,24 @@ export default function ToolTypePicker({ value, onChange }: { value: string; onC
 
       {open && (
         <div style={{ position: 'absolute', left: 0, right: 0, top: 'calc(100% + 6px)', background: '#1c1b19', border: `1px solid ${OR}`, borderRadius: 10, zIndex: 30, maxHeight: 460, overflow: 'auto', boxShadow: '0 14px 40px rgba(0,0,0,.55)' }}>
-          {TOOL_TYPES.map(t => {
-            const head = t.grp[0] !== last
-            last = t.grp[0]
+          {TOOL_TYPES.map(tt => {
+            const head = tt.grp[0] !== last
+            last = tt.grp[0]
             return (
-              <div key={t.n}>
+              <div key={tt.n}>
                 {head && (
                   <div style={{ padding: '6px 12px', fontSize: 11, letterSpacing: '.05em', textTransform: 'uppercase', color: '#8a8782', background: '#232120' }}>
-                    {t.grp[0]} · <span lang="hi" style={{ textTransform: 'none', letterSpacing: 0 }}>{t.grp[1]}</span>
+                    {t(tt.grp[0], tt.grp[1])}
                   </div>
                 )}
-                <div onClick={() => { onChange(String(t.n)); setOpen(false) }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #2a2826', background: t.n === current.n ? 'rgba(240,128,30,.2)' : 'transparent' }}>
-                  <TypeIcon dir={t.dir} />
+                <div onClick={() => { onChange(String(tt.n)); setOpen(false) }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #2a2826', background: tt.n === current.n ? 'rgba(240,128,30,.2)' : 'transparent' }}>
+                  <TypeIcon dir={tt.dir} />
                   <div style={{ fontSize: 13.5, lineHeight: 1.4, color: '#eee' }}>
-                    <b style={{ fontSize: 14.5 }}>Type {t.n}</b>
-                    {t.common && <span style={{ display: 'inline-block', background: OR, color: '#171513', fontSize: 10.5, fontWeight: 800, borderRadius: 99, padding: '1px 8px', marginLeft: 6 }}>common · सामान्य</span>}
-                    <div><Bi en={t.name[0]} hi={t.name[1]} /></div>
-                    <div style={{ color: '#a39d94', fontSize: 12 }}><Bi en={t.desc[0]} hi={t.desc[1]} /></div>
+                    <b style={{ fontSize: 14.5 }}>Type {tt.n}</b>
+                    {tt.common && <span style={{ display: 'inline-block', background: OR, color: '#171513', fontSize: 10.5, fontWeight: 800, borderRadius: 99, padding: '1px 8px', marginLeft: 6 }}>{t('common', 'सामान्य')}</span>}
+                    <div><Bi en={tt.name[0]} hi={tt.name[1]} /></div>
+                    <div style={{ color: '#a39d94', fontSize: 12 }}><Bi en={tt.desc[0]} hi={tt.desc[1]} /></div>
                   </div>
                 </div>
               </div>

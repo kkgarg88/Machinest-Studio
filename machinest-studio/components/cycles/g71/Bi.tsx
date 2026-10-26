@@ -1,12 +1,9 @@
 'use client'
 import type { ReactNode } from 'react'
+import { useLang } from './lang'
 
-// English line with the Hindi line (Devanagari) under it.
-export function Bi({ en, hi, hiColor }: { en: ReactNode; hi: ReactNode; hiColor?: string }) {
-  return (
-    <>
-      <span style={{ display: 'block' }}>{en}</span>
-      <span lang="hi" style={{ display: 'block', marginTop: 2, fontSize: '0.96em', color: hiColor, opacity: hiColor ? 1 : 0.92 }}>{hi}</span>
-    </>
-  )
+// Shows the English text or the Hindi (Devanagari) text, depending on the language switch.
+export function Bi({ en, hi }: { en: ReactNode; hi: ReactNode; hiColor?: string }) {
+  const { lang } = useLang()
+  return lang === 'hi' ? <span lang="hi">{hi}</span> : <span>{en}</span>
 }

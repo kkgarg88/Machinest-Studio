@@ -1,10 +1,11 @@
 'use client'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { buildProfile, sampleProfile, fmt, InPoint, SegType, ProfileResult } from '@/lib/cycles/g71-geometry'
 import { Bi } from './g71/Bi'
 import MachinePicker, { Machine, Comp } from './g71/MachinePicker'
 import ToolTypePicker from './g71/ToolTypePicker'
-import SavedPrograms from './g71/SavedPrograms'
+import SavedPrograms, { SavedProgramsHandle } from './g71/SavedPrograms'
+import { LangProvider, LangSwitch, useT } from './g71/lang'
 
 const label = { fontSize: 13, color: '#ccc', marginBottom: 6, fontWeight: 600, display: 'block' } as const
 const input = { width: '100%', background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 6, color: '#fff', padding: '10px 12px', fontSize: 14 } as const
@@ -131,11 +132,25 @@ function Sketch({ pts, res, stock, depth, allowX, passes, compact }: {
   )
 }
 
-export default function G71Tool({ onGenerate, busy, error }: {
+export default function G71Tool(props: {
   onGenerate: (values: Record<string, string>) => void
   busy: boolean
   error: string
 }) {
+  return <LangProvider><G71Inner {...props} /></LangProvider>
+}
+
+function G71Inner({ onGenerate, busy, error }: {
+  onGenerate: (values: Record<string, string>) => void
+  busy: boolean
+  error: string
+}) {
+  const t = useT()
+  const saveRef = useRef<SavedProgramsHandle>(null)
+  const [gate, setGate] = useState<null | { hasCurrent: boolean; name: string }>(null)
+  const [gateName, setGateName] = useState('')
+  const [gateErr, setGateErr] = useState<[string, string] | null>(null)
+  const [gateBusy, setGateBusy] = useState(false)
   const [rows, setRows] = useState<Row[]>([blankRow(), blankRow()])
   const [stock, setStock] = useState('')
   const [depth, setDepth] = useState('')
@@ -242,7 +257,29 @@ export default function G71Tool({ onGenerate, busy, error }: {
     setSafeX(str('safeX', '2')); setSafeZ(str('safeZ', '2'))
   }
 
+  // Generate: if the program has changes that are not saved, ask first so nothing is forgotten
   function handleGenerate() {
+    const st = saveRef.current?.state()
+    if (st && st.available && (!st.hasCurrent || st.dirty)) {
+      setGateName(st.name || '')
+      setGateErr(null)
+      setGate({ hasCurrent: st.hasCurrent, name: st.name })
+      return
+    }
+    runGenerate()
+  }
+
+  async function saveThenGenerate() {
+    if (!gate) return
+    setGateBusy(true); setGateErr(null)
+    const r = gate.hasCurrent ? await saveRef.current?.saveCurrent() : await saveRef.current?.saveNew(gateName)
+    setGateBusy(false)
+    if (!r || !r.ok) { setGateErr(r?.error ?? ['Could not save', 'सेव नहीं हो सका']); return }
+    setGate(null)
+    runGenerate()
+  }
+
+  function runGenerate() {
     onGenerate({
       points: JSON.stringify(rows.map((r, i) => ({ type: i === 0 ? 'line' : r.type, x: r.x, z: r.z, r: r.type === 'line' ? '' : r.r }))),
       stock, depth, retract, allowX, allowZ,
@@ -268,7 +305,8 @@ export default function G71Tool({ onGenerate, busy, error }: {
         @media (max-width: 900px){.g71-pin{position:static}}
       `}</style>
 
-      <SavedPrograms cycleCode="G71" snapshot={snapshot} onLoad={applyData} onNew={() => applyData({})} />
+      <LangSwitch />
+      <SavedPrograms ref={saveRef} cycleCode="G71" snapshot={snapshot} onLoad={applyData} onNew={() => applyData({})} />
 
       <div style={card}>
         <h3 style={{ color: '#fff', margin: '0 0 4px', fontSize: 20, fontWeight: 800 }}>Rough Turning profile (G71)</h3>
@@ -316,7 +354,7 @@ export default function G71Tool({ onGenerate, busy, error }: {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                 <span style={badge}>{i + 1}</span>
                 <b style={{ color: '#fff', fontSize: 14 }}>{i === 0 ? 'Start point' : 'Next point'}</b>
-                <span style={{ color: '#888', fontSize: 12 }}>{i === 0 ? '(usually on the face, Z0 · आमतौर पर फेस पर, Z0)' : ''}</span>
+                <span style={{ color: '#888', fontSize: 12 }}>{i === 0 ? t('(usually on the face, Z0)', '(आमतौर पर फेस पर, Z0)') : ''}</span>
                 <span style={{ flex: 1 }} />
                 {i > 0 && (
                   <>
@@ -354,12 +392,12 @@ export default function G71Tool({ onGenerate, busy, error }: {
 
               {s && s.kind === 'line' && (
                 <div style={{ color: '#9ad7b0', fontSize: 12, marginTop: 8 }}>
-                  Angle {fmt(s.angle)}° to the Z axis · length {fmt(s.len)}
+                  {t(`Angle ${fmt(s.angle)}° to the Z axis · length ${fmt(s.len)}`, `एंगल ${fmt(s.angle)}° (Z अक्ष से) · लंबाई ${fmt(s.len)}`)}
                 </div>
               )}
               {s && s.kind === 'arc' && (
                 <div style={{ color: '#9ad7b0', fontSize: 12, marginTop: 8 }}>
-                  {s.ccw ? 'G03' : 'G02'} · sweep {fmt(s.sweep)}° · centre X{fmt(s.cx)} Z{fmt(s.cz)}
+                  {s.ccw ? 'G03' : 'G02'} · {t(`sweep ${fmt(s.sweep)}° · centre X${fmt(s.cx)} Z${fmt(s.cz)}`, `स्वीप ${fmt(s.sweep)}° · सेंटर X${fmt(s.cx)} Z${fmt(s.cz)}`)}
                 </div>
               )}
             </div>
@@ -390,9 +428,9 @@ export default function G71Tool({ onGenerate, busy, error }: {
             {comp !== 'none' && (
               <>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
-                  {field('Nose radius · नोज़ रेडियस', num(noseR, setNoseR))}
+                  {field(t('Nose radius', 'नोज़ रेडियस'), num(noseR, setNoseR))}
                   <div>
-                    <label style={label}>Tool type · टूल टाइप</label>
+                    <label style={label}>{t('Tool type', 'टूल टाइप')}</label>
                     <ToolTypePicker value={toolType} onChange={setToolType} />
                   </div>
                 </div>
@@ -401,7 +439,7 @@ export default function G71Tool({ onGenerate, busy, error }: {
                       hi="प्रोग्राम में एक कमेंट होगा जो ऑपरेटर को बताएगा कि फिनिश टूल ऑफसेट में यह नोज़ रेडियस और टूल टाइप डालें।" hiColor="#9ad7b0" />
                 </p>
                 <p style={{ color: '#8a8782', fontSize: 12, margin: '8px 0 0', lineHeight: 1.5 }}>
-                  <span style={{ color: '#ff7a7a' }}>●</span> programmed tip (P) · प्रोग्राम किया गया टिप &nbsp; <span style={{ color: '#7aa7ff' }}>●</span> centre of the nose radius (C) · नोज़ रेडियस का सेंटर
+                  <span style={{ color: '#ff7a7a' }}>●</span> {t('programmed tip (P)', 'प्रोग्राम किया गया टिप (P)')} &nbsp; <span style={{ color: '#7aa7ff' }}>●</span> {t('centre of the nose radius (C)', 'नोज़ रेडियस का सेंटर (C)')}
                 </p>
               </>
             )}
@@ -444,6 +482,39 @@ export default function G71Tool({ onGenerate, busy, error }: {
         </button>
         {error && <p style={{ color: '#ff6b6b', fontSize: 13, marginTop: 12, marginBottom: 0 }}>{error}</p>}
       </div>
+
+      {gate && (
+        <div role="dialog" aria-modal="true" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.65)', zIndex: 100, display: 'grid', placeItems: 'center', padding: 16 }}>
+          <div style={{ background: '#2b2a28', border: `1px solid ${ORANGE}`, borderRadius: 14, padding: 24, maxWidth: 460, width: '100%' }}>
+            <h4 style={{ color: '#fff', margin: '0 0 8px', fontSize: 18 }}>{t('Save before generating?', 'जनरेट करने से पहले सेव करें?')}</h4>
+            <p style={{ color: '#ccc', fontSize: 14, lineHeight: 1.5, margin: '0 0 14px' }}>
+              {gate.hasCurrent
+                ? t(`You changed “${gate.name}” after the last save. Save the changes so you do not lose them.`, `“${gate.name}” में आख़िरी सेव के बाद बदलाव हुए हैं। उन्हें सेव कर लें ताकि खो न जाएँ।`)
+                : t('This program is not saved yet. Give it a name to keep it for later.', 'यह प्रोग्राम अभी सेव नहीं हुआ है। बाद के लिए रखने हेतु इसे नाम दें।')}
+            </p>
+            {!gate.hasCurrent && (
+              <input style={{ ...input, marginBottom: 12 }} maxLength={80} autoFocus value={gateName}
+                placeholder={t('Program name (for example the part number)', 'प्रोग्राम का नाम (जैसे पार्ट नंबर)')}
+                onChange={e => setGateName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && gateName.trim() && !gateBusy) saveThenGenerate() }} />
+            )}
+            {gateErr && <div style={{ color: '#ff8a8a', fontSize: 13, marginBottom: 12 }}>{t(gateErr[0], gateErr[1])}</div>}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <button onClick={saveThenGenerate} disabled={gateBusy || (!gate.hasCurrent && !gateName.trim())}
+                style={{ background: (gate.hasCurrent || gateName.trim()) ? ORANGE : '#4a4744', color: '#fff', border: 'none', borderRadius: 8, padding: 12, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+                {gateBusy ? t('Saving…', 'सेव हो रहा है…') : gate.hasCurrent ? t('Save changes and generate', 'बदलाव सेव करके जनरेट करें') : t('Save and generate', 'सेव करके जनरेट करें')}
+              </button>
+              <button onClick={() => { setGate(null); runGenerate() }} disabled={gateBusy}
+                style={{ background: 'transparent', color: '#ddd', border: '1px solid #3a3733', borderRadius: 8, padding: 11, fontWeight: 600, fontSize: 13.5, cursor: 'pointer' }}>
+                {t('Generate without saving', 'बिना सेव किए जनरेट करें')}
+              </button>
+              <button onClick={() => setGate(null)} disabled={gateBusy}
+                style={{ background: 'transparent', color: '#999', border: 'none', padding: 8, fontSize: 13, cursor: 'pointer' }}>
+                {t('Cancel', 'रद्द करें')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
