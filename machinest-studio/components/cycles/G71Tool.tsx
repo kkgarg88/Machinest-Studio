@@ -1,77 +1,129 @@
 'use client'
 import { useMemo, useState } from 'react'
-import { buildProfile, sampleProfile, ProfilePoint, Corner } from '@/lib/cycles/g71-geometry'
+import { buildProfile, sampleProfile, fmt, InPoint, SegType, ProfileResult } from '@/lib/cycles/g71-geometry'
 
 const label = { fontSize: 13, color: '#ccc', marginBottom: 6, fontWeight: 600, display: 'block' } as const
 const input = { width: '100%', background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 6, color: '#fff', padding: '10px 12px', fontSize: 14 } as const
-const cellInput = { ...input, padding: '8px 8px', fontSize: 14, textAlign: 'center' } as const
 const card = { background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 12, padding: 24 } as const
 const ORANGE = '#F0801E'
+const SPARK = '#FFB34D'
 
-type Row = { x: string; z: string; corner: Corner; size: string }
+type Row = { type: SegType; x: string; z: string; r: string }
+
+// Same part as the earlier example: taper, cylinder, inside radius R2 (G02), shoulder, 45 degree chamfer, cylinder
 const EXAMPLE: Row[] = [
-  { x: '12', z: '0', corner: 'sharp', size: '' },
-  { x: '20', z: '-10', corner: 'sharp', size: '' },
-  { x: '20', z: '-25', corner: 'radius', size: '2' },
-  { x: '28', z: '-25', corner: 'sharp', size: '' },
-  { x: '28', z: '-40', corner: 'chamfer', size: '1' },
-  { x: '30', z: '-40', corner: 'sharp', size: '' },
-  { x: '30', z: '-50', corner: 'sharp', size: '' },
+  { type: 'line', x: '12', z: '0', r: '' },
+  { type: 'line', x: '20', z: '-10', r: '' },
+  { type: 'line', x: '20', z: '-23', r: '' },
+  { type: 'g02', x: '24', z: '-25', r: '2' },
+  { type: 'line', x: '28', z: '-25', r: '' },
+  { type: 'line', x: '28', z: '-39', r: '' },
+  { type: 'line', x: '30', z: '-40', r: '' },
+  { type: 'line', x: '30', z: '-50', r: '' },
 ]
 
-function Preview({ rows, stock }: { rows: Row[]; stock: string }) {
-  const parsed = useMemo(() => {
-    const pts: ProfilePoint[] = []
-    for (const r of rows) {
-      const x = parseFloat(r.x), z = parseFloat(r.z)
-      if (isNaN(x) || isNaN(z)) return { err: '', pts: null as ProfilePoint[] | null }
-      pts.push({ x, z, corner: r.corner, size: parseFloat(r.size) || 0 })
-    }
-    return { err: '', pts }
-  }, [rows])
+const blankRow = (): Row => ({ type: 'line', x: '', z: '', r: '' })
+const blockE = (e: React.KeyboardEvent) => { if (e.key === 'e' || e.key === 'E') e.preventDefault() }
 
-  const W = 640, H = 300, pad = 36
-  if (!parsed.pts || parsed.pts.length < 2) {
-    return <div style={{ color: '#777', fontSize: 14, padding: '40px 0', textAlign: 'center' }}>Add at least 2 points with X and Z to see the profile.</div>
+// Rows that are complete, up to the first incomplete one, so the sketch grows while the user types
+function completePrefix(rows: Row[]): InPoint[] {
+  const out: InPoint[] = []
+  for (let i = 0; i < rows.length; i++) {
+    const x = parseFloat(rows[i].x), z = parseFloat(rows[i].z), r = parseFloat(rows[i].r)
+    if (isNaN(x) || isNaN(z)) break
+    if (i > 0 && rows[i].type !== 'line' && !(r > 0)) break
+    out.push({ x, z, type: i === 0 ? 'line' : rows[i].type, r: rows[i].type === 'line' || isNaN(r) ? 0 : r })
   }
-  const res = buildProfile(parsed.pts)
-  const st = parseFloat(stock)
-  const maxX = Math.max(...parsed.pts.map(p => p.x), isNaN(st) ? 0 : st)
-  const zs = parsed.pts.map(p => p.z)
+  return out
+}
+
+function Sketch({ pts, res, stock, depth, allowX, passes, compact }: {
+  pts: InPoint[]; res: ProfileResult; stock: number; depth: number; allowX: number; passes: boolean; compact: boolean
+}) {
+  const W = 700, H = 300, pad = 34
+  if (pts.length < 2) {
+    return (
+      <div style={{ background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 10, color: '#777', fontSize: 14, padding: '70px 20px', textAlign: 'center' }}>
+        Enter the start point and the end point of the first segment to see the profile.
+      </div>
+    )
+  }
+  const stockOk = !isNaN(stock) && stock > 0
+  const maxX = Math.max(...pts.map(p => p.x), stockOk ? stock : 0)
+  const zs = pts.map(p => p.z)
   const zMax = Math.max(...zs), zMin = Math.min(...zs)
-  const zSpan = Math.max(zMax - zMin, 1), rSpan = Math.max(maxX / 2, 1)
+  const zSpan = Math.max(zMax - zMin, 1)
+  const rSpan = Math.max(maxX / 2, 1)
   const k = Math.min((W - 2 * pad) / zSpan, (H - 2 * pad) / rSpan)
   const ox = pad + ((W - 2 * pad) - zSpan * k) / 2
   const oy = H - pad
-  const sx = (z: number) => ox + (z - zMin) * k
-  const sy = (r: number) => oy - r * k
+  const X = (z: number) => ox + (z - zMin) * k
+  const Y = (r: number) => oy - r * k
 
-  let path = ''
-  if (res.ok) {
-    const sp = sampleProfile(res.start, res.segs)
-    path = sp.map((p, i) => `${i ? 'L' : 'M'}${sx(p.z).toFixed(1)},${sy(p.r).toFixed(1)}`).join(' ')
-  } else {
-    path = parsed.pts.map((p, i) => `${i ? 'L' : 'M'}${sx(p.z).toFixed(1)},${sy(p.x / 2).toFixed(1)}`).join(' ')
+  const sp = res.ok ? sampleProfile(res.start, res.segs) : pts.map(p => ({ z: p.z, r: p.x / 2 }))
+  const path = sp.map((p, i) => `${i ? 'L' : 'M'}${X(p.z).toFixed(1)},${Y(p.r).toFixed(1)}`).join(' ')
+
+  // roughing passes: a pass at radius r stops where the profile (plus the allowance) reaches r
+  const lines: { r: number; zEnd: number }[] = []
+  const ax = isNaN(allowX) ? 0 : allowX
+  if (passes && res.ok && stockOk && depth > 0) {
+    const minR = sp.reduce((m, p) => Math.min(m, p.r), 1e9) + ax / 2
+    let idx = 0
+    for (let r = stock / 2 - depth; r >= Math.max(minR, 0) - 1e-9 && idx < 40; r -= depth, idx++) {
+      let zEnd = zMin
+      for (let i = 1; i < sp.length; i++) {
+        const a = sp[i - 1], b = sp[i]
+        if (a.r >= r - ax / 2) { zEnd = a.z; break }
+        if (b.r >= r - ax / 2) { const t = (r - ax / 2 - a.r) / ((b.r - a.r) || 1); zEnd = a.z + (b.z - a.z) * t; break }
+      }
+      lines.push({ r, zEnd })
+    }
   }
+
+  // labels for arcs (G02 / G03 and R) at the middle of each arc
+  const arcLabels: { x: number; y: number; t: string }[] = []
+  if (res.ok) {
+    let cz = res.start.z, cr = res.start.x / 2
+    for (const s of res.segs) {
+      if (s.kind === 'arc') {
+        const oz = s.cz, or = s.cx / 2
+        const a0 = Math.atan2(cr - or, cz - oz)
+        const mid = a0 + ((s.sweep / 180) * Math.PI * (s.ccw ? 1 : -1)) / 2
+        const mx = X(oz + s.r * Math.cos(mid)), my = Y(or + s.r * Math.sin(mid))
+        arcLabels.push({ x: mx + Math.cos(mid) * 20, y: my - Math.sin(mid) * 14 + 4, t: `${s.ccw ? 'G03' : 'G02'} R${fmt(s.r)}` })
+      }
+      cz = s.z; cr = s.x / 2
+    }
+  }
+
+  const firstPassR = stockOk && depth > 0 ? stock / 2 - depth : null
   return (
-    <div>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', display: 'block', background: '#1c1b19', borderRadius: 10, border: '1px solid #3a3733' }}>
-        {!isNaN(st) && st > 0 && (
-          <rect x={sx(zMin)} y={sy(st / 2)} width={zSpan * k} height={(st / 2) * k} fill="rgba(240,128,30,.07)" stroke="#8a8782" strokeDasharray="5 4" />
-        )}
-        <line x1={pad - 10} y1={oy} x2={W - pad + 10} y2={oy} stroke="#6a655f" strokeDasharray="14 4 3 4" />
-        <path d={path} fill="none" stroke={res.ok ? ORANGE : '#ff6b6b'} strokeWidth="2.6" strokeLinejoin="round" />
-        {parsed.pts.map((p, i) => (
-          <g key={i}>
-            <circle cx={sx(p.z)} cy={sy(p.x / 2)} r="4.5" fill="#fff" stroke="#111" />
-            <text x={sx(p.z) + 7} y={sy(p.x / 2) - 7} fill="#ddd" fontSize="12" fontWeight="700">{i + 1}</text>
-          </g>
-        ))}
-        <text x={W - pad} y={18} fill="#8a8782" fontSize="12" textAnchor="end">Z-  towards chuck  ◄</text>
-        <text x={pad - 10} y={18} fill="#8a8782" fontSize="12">dashed = stock</text>
-      </svg>
-      {!res.ok && <p style={{ color: '#ff6b6b', fontSize: 13, margin: '10px 0 0' }}>{res.error}</p>}
-    </div>
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxHeight: compact ? 230 : undefined, display: 'block', background: '#1c1b19', borderRadius: 10, border: '1px solid #3a3733' }}>
+      {stockOk && (
+        <rect x={X(zMin)} y={Y(stock / 2)} width={zSpan * k} height={(stock / 2) * k} fill="rgba(240,128,30,.07)" stroke="#8a8782" strokeDasharray="5 4" />
+      )}
+      <line x1={pad - 10} y1={oy} x2={W - pad + 10} y2={oy} stroke="#6a655f" strokeDasharray="14 4 3 4" />
+      {lines.map((l, i) => (
+        <line key={i} x1={X(zMax)} y1={Y(l.r)} x2={X(l.zEnd)} y2={Y(l.r)} stroke={SPARK} strokeWidth="1.4" strokeDasharray="6 5" opacity=".75" />
+      ))}
+      <path d={path} fill="none" stroke={res.ok ? ORANGE : '#ff6b6b'} strokeWidth="2.8" strokeLinejoin="round" />
+      {pts.map((p, i) => (
+        <g key={i}>
+          <circle cx={X(p.z)} cy={Y(p.x / 2)} r="3.8" fill="#fff" stroke="#111" />
+          <text x={X(p.z) + 6} y={Y(p.x / 2) - 6} fill="#ddd" fontSize="11" fontWeight="700">{i + 1}</text>
+        </g>
+      ))}
+      {arcLabels.map((a, i) => (
+        <text key={i} x={a.x} y={a.y} fill={SPARK} fontSize="11" fontWeight="700" textAnchor="middle">{a.t}</text>
+      ))}
+      {lines.length > 0 && firstPassR !== null && (
+        <circle r="5" cy={Y(firstPassR)} fill={SPARK}>
+          <animate attributeName="cx" values={`${X(zMax)};${X(zMin)};${X(zMax)}`} dur="5s" repeatCount="indefinite" />
+        </circle>
+      )}
+      <text x={W - pad} y={18} fill="#8a8782" fontSize="12" textAnchor="end">Z-  towards chuck  ◄</text>
+      <text x={pad - 10} y={18} fill="#8a8782" fontSize="12">dashed box = stock · dashed lines = rough passes</text>
+    </svg>
   )
 }
 
@@ -80,15 +132,14 @@ export default function G71Tool({ onGenerate, busy, error }: {
   busy: boolean
   error: string
 }) {
-  const [rows, setRows] = useState<Row[]>([
-    { x: '', z: '', corner: 'sharp', size: '' },
-    { x: '', z: '', corner: 'sharp', size: '' },
-  ])
+  const [rows, setRows] = useState<Row[]>([blankRow(), blankRow()])
   const [stock, setStock] = useState('')
   const [depth, setDepth] = useState('')
   const [retract, setRetract] = useState('0.5')
   const [allowX, setAllowX] = useState('0.4')
   const [allowZ, setAllowZ] = useState('0.1')
+  const [showPasses, setShowPasses] = useState(true)
+  const [pinSketch, setPinSketch] = useState(true)
   const [useFinish, setUseFinish] = useState(true)
   const [comp, setComp] = useState<'none' | 'g42'>('none')
   const [noseR, setNoseR] = useState('0.4')
@@ -107,87 +158,172 @@ export default function G71Tool({ onGenerate, busy, error }: {
   const [safeZ, setSafeZ] = useState('2')
 
   const setRow = (i: number, patch: Partial<Row>) => setRows(rows.map((r, k) => (k === i ? { ...r, ...patch } : r)))
-  const filled = rows.every(r => r.x !== '' && r.z !== '')
-  const ready = filled && rows.length >= 2 && !!stock && !!depth && !!progNum && !!feed && !!speed && (spindleMode === 'G97' || !!maxRpm) && (!useFinish || !!feedFinish)
+  const insertAfter = (i: number) => rows.length < 40 && setRows([...rows.slice(0, i + 1), blankRow(), ...rows.slice(i + 1)])
+  const remove = (i: number) => rows.length > 2 && setRows(rows.filter((_, k) => k !== i))
+  const move = (i: number, dir: 1 | -1) => {
+    const j = i + dir
+    if (i < 1 || j < 1 || j >= rows.length) return
+    const next = [...rows]; [next[i], next[j]] = [next[j], next[i]]
+    setRows(next)
+  }
+
+  const pts = useMemo(() => completePrefix(rows), [rows])
+  const res = useMemo(() => buildProfile(pts), [pts])
+  const stockN = parseFloat(stock)
+
+  const warnings: string[] = []
+  if (pts.length >= 2 && !res.ok) warnings.push(res.error)
+  if (!isNaN(stockN)) {
+    const k = pts.findIndex(p => p.x > stockN + 1e-6)
+    if (k >= 0) warnings.push(`Point ${k + 1}: X ${fmt(pts[k].x)} is larger than the stock diameter ${fmt(stockN)}`)
+  }
+
+  const complete = rows.every((r, i) => r.x !== '' && r.z !== '' && (i === 0 || r.type === 'line' || r.r !== ''))
+  const ready = complete && rows.length >= 2 && !!stock && !!depth && !!progNum && !!feed && !!speed
+    && (spindleMode === 'G97' || !!maxRpm) && (!useFinish || !!feedFinish)
 
   const num = (val: string, set: (v: string) => void, ph = '') => (
-    <input style={input} type="number" step="any" value={val} placeholder={ph}
-      onKeyDown={e => { if (e.key === 'e' || e.key === 'E') e.preventDefault() }}
-      onChange={e => set(e.target.value)} />
+    <input style={input} type="number" step="any" value={val} placeholder={ph} onKeyDown={blockE} onChange={e => set(e.target.value)} />
   )
   const field = (l: string, el: React.ReactNode) => <div><label style={label}>{l}</label>{el}</div>
+  const small = { ...input, padding: '9px 10px' } as const
 
   function handleGenerate() {
     onGenerate({
-      points: JSON.stringify(rows), stock, depth, retract, allowX, allowZ,
+      points: JSON.stringify(rows.map((r, i) => ({ type: i === 0 ? 'line' : r.type, x: r.x, z: r.z, r: r.type === 'line' ? '' : r.r }))),
+      stock, depth, retract, allowX, allowZ,
       useFinish: useFinish ? '1' : '0', comp, noseR, tipNo, progNum, toolRough, toolFinish,
       spindleMode, speed, speedFinish, maxRpm, feed, feedFinish, workOffset, safeX, safeZ,
     })
   }
 
+  const ib = { background: 'transparent', border: '1px solid #3a3733', color: '#ccc', borderRadius: 6, width: 30, height: 30, cursor: 'pointer', fontSize: 13 } as const
+  const seg = { border: '1px solid #3a3733', borderLeft: `4px solid ${ORANGE}`, borderRadius: 10, padding: 12, marginBottom: 12, background: '#222120' } as const
+  const badge = { background: ORANGE, color: '#171513', borderRadius: '50%', width: 24, height: 24, display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 800, flex: '0 0 auto' } as const
+
+  const TYPES: { t: SegType; name: string; tip: string }[] = [
+    { t: 'line', name: 'Line G01', tip: 'Straight line (cylinder, taper, face, chamfer)' },
+    { t: 'g02', name: 'Arc G02 ↻', tip: 'Clockwise arc' },
+    { t: 'g03', name: 'Arc G03 ↺', tip: 'Counter-clockwise arc' },
+  ]
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <style>{`
+        .g71-pin{position:sticky;top:8px;z-index:5;background:#2b2a28;padding:0 0 12px;margin-bottom:6px}
+        @media (max-width: 900px){.g71-pin{position:static}}
+      `}</style>
+
       <div style={card}>
         <h3 style={{ color: '#fff', margin: '0 0 4px', fontSize: 20, fontWeight: 800 }}>Rough Turning profile (G71)</h3>
         <p style={{ color: '#999', fontSize: 13, margin: '0 0 16px' }}>
-          Enter the finished profile point by point, from the face (Z0 side) towards the chuck. X is diameter, Z is negative towards the chuck.
+          Give the start point and then the end point of every segment, exactly as on the drawing. X is diameter, Z is negative towards the chuck.
         </p>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }}>
+        <h4 style={{ color: '#fff', margin: '0 0 12px', fontSize: 16 }}>Stock and roughing</h4>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14 }}>
           {field('Stock diameter', num(stock, setStock, 'e.g. 30'))}
+          {field('Depth of cut (radial)', num(depth, setDepth, 'e.g. 2'))}
+          {field('Retract (radial)', num(retract, setRetract))}
+          {field('Finish allowance X (dia)', num(allowX, setAllowX))}
+          {field('Finish allowance Z', num(allowZ, setAllowZ))}
+        </div>
+      </div>
+
+      <div style={card}>
+        <h4 style={{ color: '#fff', margin: '0 0 12px', fontSize: 16 }}>Build the profile (from the face to the chuck)</h4>
+
+        <div className={pinSketch ? 'g71-pin' : undefined} style={pinSketch ? undefined : { marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', margin: '0 0 8px' }}>
+            <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>Live sketch</span>
+            <span style={{ flex: 1 }} />
+            <label style={{ display: 'flex', gap: 6, alignItems: 'center', color: '#ddd', fontSize: 12.5, cursor: 'pointer' }}>
+              <input type="checkbox" checked={showPasses} onChange={e => setShowPasses(e.target.checked)} /> show roughing passes
+            </label>
+            <label style={{ display: 'flex', gap: 6, alignItems: 'center', color: '#ddd', fontSize: 12.5, cursor: 'pointer' }}>
+              <input type="checkbox" checked={pinSketch} onChange={e => setPinSketch(e.target.checked)} /> keep sketch in view
+            </label>
+          </div>
+          <Sketch pts={pts} res={res} stock={stockN} depth={parseFloat(depth)} allowX={parseFloat(allowX)} passes={showPasses} compact={pinSketch} />
+          {warnings.length > 0 && (
+            <div style={{ color: '#ff8a8a', fontSize: 13, margin: '8px 0 0' }}>
+              {warnings.map((w, i) => <div key={i}>{w}</div>)}
+            </div>
+          )}
         </div>
 
-        <div style={{ overflowX: 'auto' }}>
-          <div style={{ minWidth: 440 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '32px 1fr 1fr 1.3fr 1fr 34px', gap: 8, marginBottom: 6, color: '#999', fontSize: 12, fontWeight: 700 }}>
-              <span>#</span><span>X (dia)</span><span>Z</span><span>Corner at this point</span><span>Size</span><span />
-            </div>
-            {rows.map((r, i) => {
-              const middle = i > 0 && i < rows.length - 1
-              return (
-                <div key={i} style={{ display: 'grid', gridTemplateColumns: '32px 1fr 1fr 1.3fr 1fr 34px', gap: 8, marginBottom: 8, alignItems: 'center' }}>
-                  <span style={{ color: ORANGE, fontWeight: 800 }}>{i + 1}</span>
-                  <input style={cellInput} type="number" step="any" value={r.x} onChange={e => setRow(i, { x: e.target.value })} onKeyDown={e => { if (e.key === 'e' || e.key === 'E') e.preventDefault() }} />
-                  <input style={cellInput} type="number" step="any" value={r.z} onChange={e => setRow(i, { z: e.target.value })} onKeyDown={e => { if (e.key === 'e' || e.key === 'E') e.preventDefault() }} />
-                  {middle ? (
-                    <select style={{ ...cellInput, textAlign: 'left' }} value={r.corner} onChange={e => setRow(i, { corner: e.target.value as Corner })}>
-                      <option value="sharp">Sharp</option>
-                      <option value="chamfer">Chamfer C</option>
-                      <option value="radius">Radius R</option>
-                    </select>
-                  ) : <span style={{ color: '#666', fontSize: 12 }}>{i === 0 ? 'start' : 'end'}</span>}
-                  {middle && r.corner !== 'sharp'
-                    ? <input style={cellInput} type="number" step="any" value={r.size} onChange={e => setRow(i, { size: e.target.value })} />
-                    : <span />}
-                  <button onClick={() => rows.length > 2 && setRows(rows.filter((_, k) => k !== i))} disabled={rows.length <= 2}
-                    style={{ background: 'transparent', border: '1px solid #3a3733', borderRadius: 6, color: rows.length > 2 ? '#ff8a8a' : '#555', cursor: rows.length > 2 ? 'pointer' : 'not-allowed', height: 36 }} aria-label="Remove point">✕</button>
+        {rows.map((r, i) => {
+          const s = res.ok && i >= 1 ? res.segs[i - 1] : undefined
+          const arc = i > 0 && r.type !== 'line'
+          return (
+            <div key={i} data-seg={i} style={seg}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <span style={badge}>{i + 1}</span>
+                <b style={{ color: '#fff', fontSize: 14 }}>{i === 0 ? 'Start point' : 'Next point'}</b>
+                <span style={{ color: '#888', fontSize: 12 }}>{i === 0 ? '(usually on the face, Z0)' : ''}</span>
+                <span style={{ flex: 1 }} />
+                {i > 0 && (
+                  <>
+                    <button style={ib} title="Move up" aria-label="Move up" onClick={() => move(i, -1)} disabled={i < 2}>↑</button>
+                    <button style={ib} title="Move down" aria-label="Move down" onClick={() => move(i, 1)} disabled={i >= rows.length - 1}>↓</button>
+                  </>
+                )}
+                <button style={ib} title="Add a point below" aria-label="Add a point below" onClick={() => insertAfter(i)}>＋</button>
+                {i > 0 && (
+                  <button style={{ ...ib, color: rows.length > 2 ? '#ff8a8a' : '#555' }} title="Remove" aria-label="Remove point" onClick={() => remove(i)} disabled={rows.length <= 2}>✕</button>
+                )}
+              </div>
+
+              {i > 0 && (
+                <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+                  {TYPES.map(t => (
+                    <button key={t.t} title={t.tip} onClick={() => setRow(i, { type: t.t })}
+                      style={{ flex: '1 1 110px', padding: 9, borderRadius: 6, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, background: r.type === t.t ? ORANGE : '#1c1b19', color: r.type === t.t ? '#fff' : '#bbb' }}>
+                      {t.name}
+                    </button>
+                  ))}
                 </div>
-              )
-            })}
-          </div>
+              )}
+
+              <div style={{ display: 'grid', gridTemplateColumns: arc ? '1fr 1fr 1fr' : '1fr 1fr', gap: 10 }}>
+                <div><label style={{ ...label, fontSize: 12 }}>{i === 0 ? 'X start (dia)' : 'X end (dia)'}</label>
+                  <input style={small} type="number" step="any" value={r.x} onKeyDown={blockE} onChange={e => setRow(i, { x: e.target.value })} /></div>
+                <div><label style={{ ...label, fontSize: 12 }}>{i === 0 ? 'Z start' : 'Z end'}</label>
+                  <input style={small} type="number" step="any" value={r.z} onKeyDown={blockE} onChange={e => setRow(i, { z: e.target.value })} /></div>
+                {arc && (
+                  <div><label style={{ ...label, fontSize: 12 }}>Radius R</label>
+                    <input style={small} type="number" step="any" min="0" value={r.r} onKeyDown={blockE} onChange={e => setRow(i, { r: e.target.value })} /></div>
+                )}
+              </div>
+
+              {s && s.kind === 'line' && (
+                <div style={{ color: '#9ad7b0', fontSize: 12, marginTop: 8 }}>
+                  Angle {fmt(s.angle)}° to the Z axis · length {fmt(s.len)}
+                </div>
+              )}
+              {s && s.kind === 'arc' && (
+                <div style={{ color: '#9ad7b0', fontSize: 12, marginTop: 8 }}>
+                  {s.ccw ? 'G03' : 'G02'} · sweep {fmt(s.sweep)}° · centre X{fmt(s.cx)} Z{fmt(s.cz)}
+                </div>
+              )}
+            </div>
+          )
+        })}
+
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', margin: '6px 0 12px' }}>
+          <button onClick={() => rows.length < 40 && setRows([...rows, blankRow()])}
+            style={{ background: 'transparent', color: ORANGE, border: `1px solid ${ORANGE}`, borderRadius: 8, padding: '9px 16px', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>＋ Add point</button>
+          <button onClick={() => { setRows(EXAMPLE); setStock('30'); setDepth(d => d || '2') }}
+            style={{ background: 'transparent', color: '#bbb', border: '1px solid #3a3733', borderRadius: 8, padding: '9px 16px', fontWeight: 600, cursor: 'pointer', fontSize: 13 }}>Load example</button>
         </div>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', margin: '6px 0 16px' }}>
-          <button onClick={() => rows.length < 40 && setRows([...rows, { x: '', z: '', corner: 'sharp', size: '' }])}
-            style={{ background: 'transparent', color: ORANGE, border: `1px solid ${ORANGE}`, borderRadius: 6, padding: '8px 16px', fontWeight: 700, cursor: 'pointer', fontSize: 13 }}>+ Add point</button>
-          <button onClick={() => { setRows(EXAMPLE); setStock('30') }}
-            style={{ background: 'transparent', color: '#bbb', border: '1px solid #3a3733', borderRadius: 6, padding: '8px 16px', fontWeight: 600, cursor: 'pointer', fontSize: 13 }}>Load example</button>
-        </div>
-        <Preview rows={rows} stock={stock} />
-        <p style={{ color: '#888', fontSize: 12, margin: '10px 0 0' }}>
-          Diameter must not get smaller towards the chuck, and Z must keep going towards the chuck (no undercuts). The first and last point cannot have a chamfer or radius.
+        <p style={{ color: '#888', fontSize: 12, margin: 0, lineHeight: 1.5 }}>
+          Every segment starts where the one before it ended. A chamfer is simply a line between its two end points, so any angle works.
+          For an arc give its end point, R and the direction: an outside (convex) corner is G03 and an inside (concave) corner is G02.
+          Diameter must not get smaller towards the chuck and Z must keep going towards the chuck (G71 Type I). Grooves are cut with the OD Groove cycle.
         </p>
       </div>
 
       <div style={card}>
-        <h4 style={{ color: '#fff', margin: '0 0 14px', fontSize: 16 }}>Roughing</h4>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-          {field('Depth of cut (radial)', num(depth, setDepth, 'e.g. 2'))}
-          {field('Retract (radial)', num(retract, setRetract))}
-          {field('Finish allowance X (diameter)', num(allowX, setAllowX))}
-          {field('Finish allowance Z', num(allowZ, setAllowZ))}
-        </div>
-
-        <h4 style={{ color: '#fff', margin: '22px 0 12px', fontSize: 16 }}>Finishing</h4>
+        <h4 style={{ color: '#fff', margin: '0 0 12px', fontSize: 16 }}>Finishing</h4>
         <label style={{ display: 'flex', gap: 10, alignItems: 'center', color: '#ddd', fontSize: 14, cursor: 'pointer', marginBottom: 12 }}>
           <input type="checkbox" checked={useFinish} onChange={e => { setUseFinish(e.target.checked); if (!e.target.checked) setComp('none') }} />
           Add G70 finish pass

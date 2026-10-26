@@ -1,89 +1,95 @@
 // Shared by the G71 logic (server) and the G71 screen (browser preview).
 // Plane: horizontal = Z, vertical = radius (X / 2). Z is negative towards the chuck.
+// The user gives the real start and end point of every segment, so any chamfer angle
+// or radius is possible. A segment is a line (G01) or an arc (G02 clockwise / G03 counter-clockwise).
 
-export type Corner = 'sharp' | 'chamfer' | 'radius'
-export type ProfilePoint = { x: number; z: number; corner: Corner; size: number }
+export type SegType = 'line' | 'g02' | 'g03'
+export type InPoint = { x: number; z: number; type: SegType; r: number } // type and r of the first point are ignored
 
 export type Seg =
-  | { kind: 'line'; x: number; z: number }
-  | { kind: 'arc'; x: number; z: number; r: number; ccw: boolean; cx: number; cz: number } // x = diameter, cx = centre radius*2
+  | { kind: 'line'; x: number; z: number; len: number; angle: number } // angle in degrees to the Z axis
+  | { kind: 'arc'; x: number; z: number; r: number; ccw: boolean; cx: number; cz: number; sweep: number } // cx = centre as diameter, sweep in degrees
 
 export type ProfileResult =
-  | { ok: true; start: { x: number; z: number }; segs: Seg[]; concave: number[] } // concave = point numbers (1-based) of concave radius corners
+  | { ok: true; start: { x: number; z: number }; segs: Seg[]; concave: { point: number; r: number }[] } // segs[i] ends at point i + 2
   | { ok: false; error: string }
 
 const EPS = 1e-6
+const RAD = 180 / Math.PI
 
-export function buildProfile(pts: ProfilePoint[]): ProfileResult {
+export const fmt = (n: number) => String(Number(n.toFixed(3)))
+
+export function buildProfile(pts: InPoint[]): ProfileResult {
   const n = pts.length
   if (n < 2) return { ok: false, error: 'Add at least 2 points' }
-  const P = pts.map(p => ({ z: p.z, r: p.x / 2 }))
-
-  const u: { z: number; r: number }[] = []
-  const len: number[] = []
-  for (let i = 1; i < n; i++) {
-    const dz = P[i].z - P[i - 1].z
-    const dr = P[i].r - P[i - 1].r
-    const l = Math.hypot(dz, dr)
-    if (l < EPS) return { ok: false, error: `Point ${i} and point ${i + 1} are at the same position` }
-    u[i] = { z: dz / l, r: dr / l }
-    len[i] = l
-  }
-
-  // tangent length for each corner
-  const t: number[] = new Array(n).fill(0)
-  const turn: number[] = new Array(n).fill(0) // cross product sign
-  for (let i = 1; i < n - 1; i++) {
-    const c = pts[i].corner
-    if (c === 'sharp') continue
-    const size = pts[i].size
-    if (!Number.isFinite(size) || size <= 0) return { ok: false, error: `Point ${i + 1}: chamfer / radius size must be greater than 0` }
-    const cross = u[i].z * u[i + 1].r - u[i].r * u[i + 1].z
-    const dot = u[i].z * u[i + 1].z + u[i].r * u[i + 1].r
-    const phi = Math.atan2(Math.abs(cross), dot) // deflection angle
-    if (phi < 1e-4) return { ok: false, error: `Point ${i + 1}: the two lines are straight, so there is no corner to ${c === 'chamfer' ? 'chamfer' : 'round'}` }
-    t[i] = c === 'chamfer' ? size : size * Math.tan(phi / 2)
-    turn[i] = cross
-  }
-  for (let i = 1; i < n; i++) {
-    if (t[i - 1] + t[i] > len[i] + 1e-6) {
-      const where = t[i - 1] > 0 && t[i] > 0 ? `points ${i} and ${i + 1}` : t[i] > 0 ? `point ${i + 1}` : `point ${i}`
-      return { ok: false, error: `Chamfer / radius at ${where} is too large for the line between point ${i} and point ${i + 1}` }
-    }
-  }
+  const err = (error: string): ProfileResult => ({ ok: false, error })
 
   const segs: Seg[] = []
-  const concave: number[] = []
-  const D = (r: number) => r * 2
+  const concave: { point: number; r: number }[] = []
+
   for (let i = 1; i < n; i++) {
-    if (t[i] > 0) {
-      const a = { z: P[i].z - u[i].z * t[i], r: P[i].r - u[i].r * t[i] }
-      const b = { z: P[i].z + u[i + 1].z * t[i], r: P[i].r + u[i + 1].r * t[i] }
-      if (Math.hypot(a.z - (segs.length ? lastZ(segs, P[0]) : P[0].z), a.r - (segs.length ? lastR(segs, P[0]) : P[0].r)) > 1e-9)
-        segs.push({ kind: 'line', x: D(a.r), z: a.z })
-      if (pts[i].corner === 'chamfer') {
-        segs.push({ kind: 'line', x: D(b.r), z: b.z })
-      } else {
-        const ccw = turn[i] > 0
-        const rf = pts[i].size
-        const nrm = { z: -u[i].r, r: u[i].z } // left normal
-        const sgn = ccw ? 1 : -1
-        const cz = a.z + nrm.z * rf * sgn
-        const cr = a.r + nrm.r * rf * sgn
-        segs.push({ kind: 'arc', x: D(b.r), z: b.z, r: rf, ccw, cx: D(cr), cz })
-        if (!ccw) concave.push(i + 1)
-      }
-    } else {
-      segs.push({ kind: 'line', x: D(P[i].r), z: P[i].z })
+    const a = { z: pts[i - 1].z, r: pts[i - 1].x / 2 }
+    const b = { z: pts[i].z, r: pts[i].x / 2 }
+    const dz = b.z - a.z
+    const dr = b.r - a.r
+    const d = Math.hypot(dz, dr)
+    const no = i + 1 // point number shown to the user
+
+    if (d < EPS) return err(`Point ${i} and point ${no} are at the same position`)
+    if (dz > EPS) return err(`Point ${no}: Z moves back towards the face. G71 Type I needs Z to keep going towards the chuck`)
+    if (dr < -EPS) return err(`Point ${no}: diameter gets smaller towards the chuck. That is an undercut and G71 Type I cannot rough it`)
+
+    const t = pts[i].type
+    if (t === 'line') {
+      segs.push({ kind: 'line', x: pts[i].x, z: pts[i].z, len: d, angle: Math.atan2(Math.abs(dr), Math.abs(dz)) * RAD })
+      continue
     }
+
+    // ----- arc: end point + R + direction -----
+    const R = pts[i].r
+    if (!Number.isFinite(R) || R <= 0) return err(`Point ${no}: enter the arc radius R (greater than 0)`)
+    const half = d / 2
+    if (R < half - EPS) {
+      return err(`Point ${no}: R${fmt(R)} is too small. The two points are ${fmt(d)} apart, so R must be at least ${fmt(half)}`)
+    }
+    const h = Math.sqrt(Math.max(0, R * R - half * half))
+    const ccw = t === 'g03'
+    const uz = dz / d
+    const ur = dr / d
+    const nz = -ur // left normal of the direction of travel
+    const nr = uz
+    const sg = ccw ? 1 : -1 // arc up to 180 degrees: centre is on the left for G03, on the right for G02
+    const cz = (a.z + b.z) / 2 + nz * h * sg
+    const cr = (a.r + b.r) / 2 + nr * h * sg
+
+    let a0 = Math.atan2(a.r - cr, a.z - cz)
+    let a1 = Math.atan2(b.r - cr, b.z - cz)
+    if (ccw) { if (a1 < a0) a1 += Math.PI * 2 } else { if (a1 > a0) a1 -= Math.PI * 2 }
+
+    // Type I: along the arc Z must never go back and the diameter must never get smaller
+    const steps = 64
+    let pz = a.z, pr = a.r
+    for (let k = 1; k <= steps; k++) {
+      const ang = a0 + ((a1 - a0) * k) / steps
+      const z = cz + R * Math.cos(ang)
+      const r = cr + R * Math.sin(ang)
+      if (z > pz + 1e-7 || r < pr - 1e-7) {
+        return err(
+          `Point ${no}: this arc turns the wrong way for G71 Type I (Z would go back or the diameter would get smaller). ` +
+          `An outside (convex) corner is G03 and an inside (concave) corner is G02, and the arc can be at most a quarter circle. Check G02 / G03 and R`
+        )
+      }
+      pz = z; pr = r
+    }
+
+    segs.push({ kind: 'arc', x: pts[i].x, z: pts[i].z, r: R, ccw, cx: cr * 2, cz, sweep: Math.abs(a1 - a0) * RAD })
+    if (!ccw) concave.push({ point: no, r: R })
   }
+
   return { ok: true, start: { x: pts[0].x, z: pts[0].z }, segs, concave }
 }
 
-function lastZ(segs: Seg[], p0: { z: number; r: number }) { return segs.length ? segs[segs.length - 1].z : p0.z }
-function lastR(segs: Seg[], p0: { z: number; r: number }) { return segs.length ? segs[segs.length - 1].x / 2 : p0.r }
-
-// points for drawing (arcs sampled)
+// points for drawing (arcs sampled): { z, r } with r = X / 2
 export function sampleProfile(start: { x: number; z: number }, segs: Seg[]): { z: number; r: number }[] {
   const out = [{ z: start.z, r: start.x / 2 }]
   let cz = start.z, cr = start.x / 2
@@ -91,14 +97,13 @@ export function sampleProfile(start: { x: number; z: number }, segs: Seg[]): { z
     if (s.kind === 'line') {
       out.push({ z: s.z, r: s.x / 2 })
     } else {
-      const ox = s.cz, or = s.cx / 2
-      const a0 = Math.atan2(cr - or, cz - ox)
-      let a1 = Math.atan2(s.x / 2 - or, s.z - ox)
-      if (s.ccw) { while (a1 < a0) a1 += Math.PI * 2 } else { while (a1 > a0) a1 -= Math.PI * 2 }
-      const steps = 16
+      const oz = s.cz, or = s.cx / 2
+      const a0 = Math.atan2(cr - or, cz - oz)
+      const sweep = (s.sweep / RAD) * (s.ccw ? 1 : -1)
+      const steps = Math.max(8, Math.ceil(s.sweep / 4))
       for (let k = 1; k <= steps; k++) {
-        const a = a0 + ((a1 - a0) * k) / steps
-        out.push({ z: ox + s.r * Math.cos(a), r: or + s.r * Math.sin(a) })
+        const a = a0 + (sweep * k) / steps
+        out.push({ z: oz + s.r * Math.cos(a), r: or + s.r * Math.sin(a) })
       }
     }
     cz = s.z; cr = s.x / 2

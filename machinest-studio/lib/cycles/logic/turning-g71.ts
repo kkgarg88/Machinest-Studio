@@ -1,8 +1,8 @@
 import 'server-only'
 import { CycleResult, fail, num } from './common'
-import { buildProfile, ProfilePoint, Corner, Seg } from '../g71-geometry'
+import { buildProfile, InPoint, SegType, Seg } from '../g71-geometry'
 
-const LIMITS = { progMax: 7999, feedMax: 5, rpmMax: 4000, diaMax: 500, maxPoints: 40 }
+const LIMITS = { progMax: 7999, feedMax: 5, rpmMax: 4000, diaMax: 500, maxPoints: 40, radiusMax: 1000 }
 const OFFSETS = ['G54', 'G55', 'G56', 'G57', 'G58', 'G59']
 const SPINDLE = ['G96', 'G97']
 const COMP = ['none', 'g42']
@@ -81,35 +81,30 @@ export function turningG71(v: Record<string, unknown>): CycleResult {
   if (raw.length < 2) return fail('Add at least 2 profile points')
   if (raw.length > LIMITS.maxPoints) return fail(`Maximum ${LIMITS.maxPoints} profile points`)
 
-  const pts: ProfilePoint[] = []
+  const pts: InPoint[] = []
   for (let i = 0; i < raw.length; i++) {
     const r = raw[i] as Record<string, unknown>
     const x = num(r?.x), z = num(r?.z)
-    const corner = String(r?.corner ?? 'sharp') as Corner
-    const size = opt(r?.size)
+    const type = (i === 0 ? 'line' : String(r?.type ?? 'line')) as SegType
+    const rad = opt(r?.r)
     if (!Number.isFinite(x) || !Number.isFinite(z)) return fail(`Point ${i + 1}: X and Z are required`)
-    if (!['sharp', 'chamfer', 'radius'].includes(corner)) return fail(`Point ${i + 1}: invalid corner type`)
+    if (!['line', 'g02', 'g03'].includes(type)) return fail(`Point ${i + 1}: invalid segment type`)
     if (x < 0) return fail(`Point ${i + 1}: X cannot be negative`)
     if (x > stock + EPS) return fail(`Point ${i + 1}: X ${x} is larger than the stock diameter ${stock}`)
-    if (!Number.isFinite(size) || size < 0) return fail(`Point ${i + 1}: chamfer / radius size cannot be negative`)
-    if ((i === 0 || i === raw.length - 1) && corner !== 'sharp') return fail(`Point ${i + 1}: the first and last point cannot have a chamfer or radius`)
-    pts.push({ x, z, corner, size })
+    if (type !== 'line') {
+      if (!Number.isFinite(rad) || rad <= 0) return fail(`Point ${i + 1}: enter the arc radius R (greater than 0)`)
+      if (rad > LIMITS.radiusMax) return fail(`Point ${i + 1}: arc radius cannot be larger than ${LIMITS.radiusMax}`)
+    }
+    pts.push({ x, z, type, r: type === 'line' ? 0 : rad })
   }
 
-  // Type I rules: diameter never decreases and Z never increases along the profile
-  for (let i = 1; i < pts.length; i++) {
-    if (pts[i].z > pts[i - 1].z + EPS)
-      return fail(`Point ${i + 1}: Z moves back towards the face. G71 Type I needs Z to keep going towards the chuck`)
-    if (pts[i].x < pts[i - 1].x - EPS)
-      return fail(`Point ${i + 1}: diameter gets smaller towards the chuck. That is an undercut and G71 Type I cannot rough it`)
-  }
-
+  // Also checks the Type I rules (Z never goes back, diameter never gets smaller) and every arc
   const prof = buildProfile(pts)
   if (!prof.ok) return fail(prof.error)
   if (usesComp && noseR > 0) {
-    for (const k of prof.concave) {
-      if (pts[k - 1].corner === 'radius' && pts[k - 1].size < noseR - EPS)
-        return fail(`Point ${k}: inside radius ${pts[k - 1].size} is smaller than the nose radius ${noseR}`)
+    for (const c of prof.concave) {
+      if (c.r < noseR - EPS)
+        return fail(`Point ${c.point}: inside radius ${c.r} is smaller than the nose radius ${noseR}`)
     }
   }
 
