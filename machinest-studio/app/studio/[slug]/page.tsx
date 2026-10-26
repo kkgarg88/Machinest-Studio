@@ -10,6 +10,8 @@ type Cycle = {
   code: string
   name: string
   tutorial_video_url: string | null
+  thumbnail_url?: string | null
+  description?: string | null
 }
 
 type Tool = {
@@ -113,21 +115,35 @@ export default function StudioPage() {
                     <span style={{ position: 'absolute', top: 10, right: 10, background: '#2fbf71', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10 }}>FREE</span>
                   )}
 
-                  <div style={{
-                    width: 56, height: 56, borderRadius: 12, background: 'rgba(240,128,30,0.12)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14, flexShrink: 0,
-                    opacity: unlocked ? 1 : 0.6,
-                  }}>
-                    <CycleIcon code={cycle.code} />
-                  </div>
+                  {cycle.thumbnail_url ? (
+                    <div style={{
+                      width: '100%', aspectRatio: '16 / 10', borderRadius: 8, overflow: 'hidden', background: '#1c1b19',
+                      marginBottom: 14, flexShrink: 0, opacity: unlocked ? 1 : 0.6,
+                    }}>
+                      <img src={cycle.thumbnail_url} alt={cycle.name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    </div>
+                  ) : (
+                    <div style={{
+                      width: 56, height: 56, borderRadius: 12, background: 'rgba(240,128,30,0.12)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14, flexShrink: 0,
+                      opacity: unlocked ? 1 : 0.6,
+                    }}>
+                      <CycleIcon code={cycle.code} />
+                    </div>
+                  )}
 
-                  <div style={{ minHeight: 58, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', marginBottom: 18 }}>
+                  <div style={{ minHeight: 58, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', marginBottom: 18 }}>
                     <span style={{ color: '#F0801E', fontFamily: 'Consolas, monospace', fontWeight: 800, fontSize: 13, marginBottom: 4 }}>
                       {cycle.code}
                     </span>
                     <span style={{ color: '#fff', fontSize: 14, fontWeight: 600, lineHeight: 1.3 }}>
                       {cycle.name}
                     </span>
+                    {cycle.description && (
+                      <span style={{ color: '#a9a39a', fontSize: 12, lineHeight: 1.45, marginTop: 6 }}>
+                        {cycle.description}
+                      </span>
+                    )}
                   </div>
 
                   {unlocked ? (
