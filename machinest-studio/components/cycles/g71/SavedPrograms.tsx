@@ -189,7 +189,7 @@ const SavedPrograms = forwardRef<SavedProgramsHandle, {
   return (
     <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 12, padding: 24 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
-        <h4 style={{ color: '#fff', margin: 0, fontSize: 16 }}>{t('My saved G71 programs', 'मेरे सेव किए G71 प्रोग्राम')}</h4>
+        <h4 style={{ color: '#fff', margin: 0, fontSize: 16 }}>{t(`My saved ${cycleCode} programs`, `मेरे सेव किए ${cycleCode} प्रोग्राम`)}</h4>
         <span style={{ color: '#888', fontSize: 12.5 }}>{items.length}/{MAX}</span>
         <span style={{ flex: 1 }} />
         <span style={{ color: status.c, fontSize: 12.5, fontWeight: 700 }}>{status.t}</span>

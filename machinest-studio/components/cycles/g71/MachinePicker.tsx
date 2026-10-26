@@ -7,7 +7,7 @@ const ST = '#8a8782'
 export type Machine = '' | 'rear' | 'front' | 'other'
 export type Comp = 'none' | 'g41' | 'g42'
 
-function MachinePic({ kind }: { kind: 'rear' | 'front' | 'other' }) {
+function MachinePic({ kind, mode }: { kind: 'rear' | 'front' | 'other'; mode: 'turn' | 'face' }) {
   if (kind === 'other') {
     return (
       <svg viewBox="0 0 260 150" style={{ width: '100%', height: 'auto', display: 'block', marginBottom: 6 }} aria-hidden="true">
@@ -19,7 +19,9 @@ function MachinePic({ kind }: { kind: 'rear' | 'front' | 'other' }) {
   }
   const rear = kind === 'rear'
   const my = (y: number) => (rear ? y : 150 - y) // front turret = the same picture turned upside down
-  const poly = [[152, 58], [170, 44], [170, 30], [250, 30], [250, 46], [180, 46]].map(p => `${p[0]},${my(p[1])}`).join(' ')
+  const face = mode === 'face'
+  const pts0 = face ? [[190, 58], [208, 44], [208, 30], [258, 30], [258, 46], [218, 46]] : [[152, 58], [170, 44], [170, 30], [250, 30], [250, 46], [180, 46]]
+  const poly = pts0.map(p => `${p[0]},${my(p[1])}`).join(' ')
   const ay = rear ? 52 : 98
   const id = `mp-arrow-${kind}`
   return (
@@ -29,10 +31,12 @@ function MachinePic({ kind }: { kind: 'rear' | 'front' | 'other' }) {
       <rect x="40" y="58" width="150" height="34" fill="#6f6a64" stroke={ST} />
       <line x1="2" x2="258" y1="75" y2="75" stroke="#b9b3ab" strokeDasharray="10 3 2 3" strokeWidth=".9" />
       <polygon points={poly} fill={OR} />
-      <circle cx="152" cy={my(58)} r="3" fill="#fff" />
+      <circle cx={face ? 190 : 152} cy={my(58)} r="3" fill="#fff" />
       <defs><marker id={id} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#fff" /></marker></defs>
-      <line x1="146" y1={ay} x2="84" y2={ay} stroke="#fff" strokeWidth="2" markerEnd={`url(#${id})`} />
-      <text x="115" y={rear ? 44 : 116} fill="#fff" fontSize="10" textAnchor="middle">tool path</text>
+      {face
+        ? <line x1="200" y1={my(60)} x2="200" y2={my(72)} stroke="#fff" strokeWidth="2" markerEnd={`url(#${id})`} />
+        : <line x1="146" y1={ay} x2="84" y2={ay} stroke="#fff" strokeWidth="2" markerEnd={`url(#${id})`} />}
+      <text x={face ? 150 : 115} y={rear ? (face ? 50 : 44) : (face ? 100 : 116)} fill="#fff" fontSize="10" textAnchor="middle">tool path</text>
     </svg>
   )
 }
@@ -43,13 +47,15 @@ const CARDS: { k: 'rear' | 'front' | 'other'; en: string; hi: string; subEn: str
   { k: 'other', en: 'Not sure / other', hi: 'पक्का नहीं / अन्य', subEn: 'Sliding head, gang tool post, other', subHi: 'स्लाइडिंग हेड, गैंग टूल पोस्ट, अन्य' },
 ]
 
-export default function MachinePicker({ machine, comp, onMachine, onComp }: {
+export default function MachinePicker({ machine, comp, onMachine, onComp, mode = 'turn' }: {
   machine: Machine
   comp: Comp
   onMachine: (m: 'rear' | 'front' | 'other') => void
   onComp: (c: Comp) => void
+  mode?: 'turn' | 'face' // turn = G71 (cutting towards the chuck), face = G72 (cutting towards the centre)
 }) {
-  const code = machine === 'rear' ? 'G42' : machine === 'front' ? 'G41' : ''
+  const face = mode === 'face'
+  const code = machine === 'rear' ? (face ? 'G41' : 'G42') : machine === 'front' ? (face ? 'G42' : 'G41') : ''
   const box = { background: '#171513', border: '1px solid #3a3733', borderLeft: `4px solid ${OR}`, borderRadius: 10, padding: '12px 14px', marginTop: 12, fontSize: 13.5, lineHeight: 1.5, color: '#ddd' } as const
   const hl = { color: '#FFB34D' } as const
 
@@ -67,7 +73,7 @@ export default function MachinePicker({ machine, comp, onMachine, onComp }: {
         {CARDS.map(c => (
           <button key={c.k} type="button" onClick={() => onMachine(c.k)}
             style={{ background: machine === c.k ? 'rgba(240,128,30,.1)' : '#222120', border: `2px solid ${machine === c.k ? OR : '#3a3733'}`, borderRadius: 12, padding: 10, cursor: 'pointer', textAlign: 'center', color: '#ddd' }}>
-            <MachinePic kind={c.k} />
+            <MachinePic kind={c.k} mode={mode} />
             <b style={{ display: 'block', fontSize: 13.5 }}><Bi en={c.en} hi={c.hi} /></b>
             <small style={{ display: 'block', color: '#a39d94', fontSize: 11.5, marginTop: 4 }}><Bi en={c.subEn} hi={c.subHi} /></small>
           </button>
@@ -81,10 +87,16 @@ export default function MachinePicker({ machine, comp, onMachine, onComp }: {
             hi={<>आपकी मशीन के लिए <b style={hl}>{code}</b> और सामान्य OD टर्निंग टूल के लिए टूल टाइप <b style={hl}>3</b> इस्तेमाल करें।</>} />
           <div style={{ color: '#a39d94', fontSize: 12.5, marginTop: 6 }}>
             {machine === 'rear'
-              ? <Bi en="The tool sits above the part, so it is on the RIGHT of the path when it moves towards the chuck → G42."
-                    hi="टूल पार्ट के ऊपर है, इसलिए चक की तरफ चलते समय वह पाथ के दाईं (RIGHT) तरफ रहता है → G42।" />
-              : <Bi en="The tool sits below the part, so it is on the LEFT of the path when it moves towards the chuck → G41."
-                    hi="टूल पार्ट के नीचे है, इसलिए चक की तरफ चलते समय वह पाथ के बाईं (LEFT) तरफ रहता है → G41।" />}
+              ? (face
+                  ? <Bi en="The tool sits above the part and faces towards the centre. Looking along that direction the tool is on the LEFT of the face it cuts → G41."
+                        hi="टूल पार्ट के ऊपर है और फेसिंग सेंटर की तरफ होती है। उस दिशा में देखने पर टूल कटे हुए फेस के बाईं (LEFT) तरफ रहता है → G41।" />
+                  : <Bi en="The tool sits above the part, so it is on the RIGHT of the path when it moves towards the chuck → G42."
+                        hi="टूल पार्ट के ऊपर है, इसलिए चक की तरफ चलते समय वह पाथ के दाईं (RIGHT) तरफ रहता है → G42।" />)
+              : (face
+                  ? <Bi en="The tool sits below the part and faces towards the centre. Looking along that direction the tool is on the RIGHT of the face it cuts → G42."
+                        hi="टूल पार्ट के नीचे है और फेसिंग सेंटर की तरफ होती है। उस दिशा में देखने पर टूल कटे हुए फेस के दाईं (RIGHT) तरफ रहता है → G42।" />
+                  : <Bi en="The tool sits below the part, so it is on the LEFT of the path when it moves towards the chuck → G41."
+                        hi="टूल पार्ट के नीचे है, इसलिए चक की तरफ चलते समय वह पाथ के बाईं (LEFT) तरफ रहता है → G41।" />)}
             <div style={{ marginTop: 4 }}>
               <Bi en="The tool type number is the same on both machine types; only G41 / G42 changes."
                   hi="टूल टाइप नंबर दोनों मशीनों पर एक ही रहता है; सिर्फ G41 / G42 बदलता है।" />
@@ -96,8 +108,11 @@ export default function MachinePicker({ machine, comp, onMachine, onComp }: {
         <div style={{ ...box, borderLeftStyle: 'dashed' }}>
           <b style={hl}><Bi en="Simple rule" hi="आसान नियम" /></b>
           <div style={{ marginTop: 4 }}>
-            <Bi en="Look along the way the tool moves while cutting (towards the chuck). Tool on the LEFT of the cut surface → G41. Tool on the RIGHT → G42."
-                hi="देखें कि कटिंग के समय टूल किस दिशा में चलता है (चक की तरफ)। कटे हुए सरफेस के बाईं (LEFT) तरफ टूल हो तो G41, दाईं (RIGHT) तरफ हो तो G42।" />
+            {face
+              ? <Bi en="Look along the way the tool moves while facing (towards the centre). Tool on the LEFT of the cut face → G41. Tool on the RIGHT → G42."
+                    hi="देखें कि फेसिंग के समय टूल किस दिशा में चलता है (सेंटर की तरफ)। कटे हुए फेस के बाईं (LEFT) तरफ टूल हो तो G41, दाईं (RIGHT) तरफ हो तो G42।" />
+              : <Bi en="Look along the way the tool moves while cutting (towards the chuck). Tool on the LEFT of the cut surface → G41. Tool on the RIGHT → G42."
+                    hi="देखें कि कटिंग के समय टूल किस दिशा में चलता है (चक की तरफ)। कटे हुए सरफेस के बाईं (LEFT) तरफ टूल हो तो G41, दाईं (RIGHT) तरफ हो तो G42।" />}
           </div>
         </div>
       )}

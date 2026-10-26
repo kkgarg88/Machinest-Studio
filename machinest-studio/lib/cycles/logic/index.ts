@@ -8,6 +8,7 @@ import { turningChamfer } from './turning-chamfer'
 import { turningRadius } from './turning-radius'
 import { turningOdGroove } from './turning-odgroove'
 import { turningG71 } from './turning-g71'
+import { turningG72 } from './turning-g72'
 import { millingEngrave } from './milling-engrave'
 import { millingFaceMill } from './milling-facemill'
 import { millingHelical } from './milling-helical'
@@ -24,6 +25,7 @@ const registry: Record<string, Logic> = {
   'turning-studio:RADIUS': turningRadius,
   'turning-studio:OD-GROOVE': turningOdGroove,
   'turning-studio:G71': turningG71,
+  'turning-studio:G72': turningG72,
   'milling-studio:ENGRAVE': millingEngrave,
   'milling-studio:CIRC-INTERP': millingHelical,
   'milling-studio:FACE-MILL': millingFaceMill,
