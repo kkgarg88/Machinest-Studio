@@ -11,6 +11,7 @@ import { turningG71 } from './turning-g71'
 import { turningG72 } from './turning-g72'
 import { turningFaceGroove } from './turning-facegroove'
 import { turningThread } from './turning-thread'
+import { turningDrill } from './turning-drill'
 import { millingEngrave } from './milling-engrave'
 import { millingFaceMill } from './milling-facemill'
 import { millingHelical } from './milling-helical'
@@ -30,6 +31,7 @@ const registry: Record<string, Logic> = {
   'turning-studio:G72': turningG72,
   'turning-studio:FACE-GROOVE': turningFaceGroove,
   'turning-studio:THREAD-OD': turningThread,
+  'turning-studio:G83': turningDrill,
   'milling-studio:ENGRAVE': millingEngrave,
   'milling-studio:CIRC-INTERP': millingHelical,
   'milling-studio:FACE-MILL': millingFaceMill,

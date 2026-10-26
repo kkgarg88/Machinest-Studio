@@ -12,6 +12,7 @@ import G71Tool from '@/components/cycles/G71Tool'
 import G72Tool from '@/components/cycles/G72Tool'
 import FaceGrooveTool from '@/components/cycles/FaceGrooveTool'
 import ThreadingTool from '@/components/cycles/ThreadingTool'
+import DrillingTool from '@/components/cycles/DrillingTool'
 
 const card = { background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 12, padding: 24 } as const
 const inputStyle = { width: '100%', background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 6, color: '#fff', padding: '10px 12px', fontSize: 15 } as const
@@ -619,6 +620,37 @@ async function handleFaceMillGenerate(faceMillValues: Record<string, string>) {
       </div>
     </div>
   </div>
+        ) : cycle.code === 'G83' ? (
+          <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+            <div style={{ flex: '1 1 560px', minWidth: 0 }}>
+              <DrillingTool onGenerate={handleGrooveGenerate} busy={busy} error={error} />
+            </div>
+            <div style={{ flex: '1 1 340px', minWidth: 0 }}>
+              <div style={{ background: '#0e0d0c', border: '1px solid #3a3733', borderRadius: 12, padding: 20 }}>
+                <pre style={{ margin: 0, minHeight: 200, color: '#F0801E', fontFamily: 'Consolas, monospace', fontSize: 13.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                  {gcode || '// Fill the values and click Generate'}
+                </pre>
+                {gcode && (
+                  <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+                    <button
+                      onClick={copy}
+                      style={{
+                        flex: 1, padding: 11, borderRadius: 6, fontWeight: 600, cursor: 'pointer',
+                        border: `1px solid ${copied === 'ok' ? '#2fbf71' : '#3a3733'}`,
+                        background: copied === 'ok' ? 'rgba(47,191,113,0.15)' : 'transparent',
+                        color: copied === 'ok' ? '#2fbf71' : copied === 'fail' ? '#ff6b6b' : '#ddd',
+                      }}
+                    >
+                      {copied === 'ok' ? '✓ Copied' : copied === 'fail' ? 'Copy failed' : 'Copy'}
+                    </button>
+                    <button onClick={download} style={{ flex: 1, padding: 11, borderRadius: 6, border: 'none', background: '#F0801E', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
+                      Download .nc
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         ) : cycle.code === 'THREAD-OD' ? (
           <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'flex-start' }}>
             <div style={{ flex: '1 1 560px', minWidth: 0 }}>
