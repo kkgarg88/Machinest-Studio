@@ -2,11 +2,13 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import PhoneInput from '@/components/PhoneInput'
+import { DEFAULT_PHONE, PhoneValue, checkPhone, formatForSave } from '@/lib/phone'
 
 export default function OnboardingPage() {
   const [fullName, setFullName] = useState('')
   const [companyName, setCompanyName] = useState('')
-  const [phone, setPhone] = useState('')
+  const [phone, setPhone] = useState<PhoneValue>(DEFAULT_PHONE)
   const [machineType, setMachineType] = useState('CNC Turning')
   const [experience, setExperience] = useState('')
   const [loading, setLoading] = useState(false)
@@ -17,15 +19,14 @@ export default function OnboardingPage() {
   async function handleSubmit() {
     setError('')
 
-    if (!fullName.trim() || !companyName.trim() || !phone.trim() || !experience.trim()) {
+    if (!fullName.trim() || !companyName.trim() || !phone.number.trim() || !experience.trim()) {
       setError('Please fill in all fields.')
       return
     }
 
-    const phoneRegex = /^[6-9]\d{9}$/
-    const cleanPhone = phone.replace(/\D/g, '').slice(-10)
-    if (!phoneRegex.test(cleanPhone)) {
-      setError('Please enter a valid 10-digit mobile number.')
+    const phoneError = checkPhone(phone)
+    if (phoneError) {
+      setError(phoneError)
       return
     }
 
@@ -38,7 +39,7 @@ export default function OnboardingPage() {
       email: user.email,
       full_name: fullName,
       company_name: companyName,
-      phone: cleanPhone,
+      phone: formatForSave(phone),
       machine_type: machineType,
       experience_years: experience,
     })
@@ -63,7 +64,7 @@ export default function OnboardingPage() {
         <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} style={inputStyle} placeholder="Your workshop name" />
 
         <label style={labelStyle}>Phone Number</label>
-        <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} style={inputStyle} placeholder="+91 9XXXXXXXXX" />
+        <PhoneInput value={phone} onChange={setPhone} inputStyle={inputStyle} />
 
         <label style={labelStyle}>Machine Type</label>
         <select value={machineType} onChange={(e) => setMachineType(e.target.value)} style={inputStyle}>

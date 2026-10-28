@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import PhoneInput from '@/components/PhoneInput'
+import { DEFAULT_PHONE, PhoneValue, checkPhone, formatForSave, parseSaved } from '@/lib/phone'
 
 const card = { background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 12, padding: 28 } as const
 const inputStyle = { width: '100%', background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 6, color: '#fff', padding: '11px 13px', fontSize: 14, marginBottom: 16 } as const
@@ -11,7 +13,7 @@ export default function ProfilePage() {
   const [email, setEmail] = useState('')
   const [fullName, setFullName] = useState('')
   const [companyName, setCompanyName] = useState('')
-  const [phone, setPhone] = useState('')
+  const [phone, setPhone] = useState<PhoneValue>(DEFAULT_PHONE)
   const [machineType, setMachineType] = useState('CNC Turning')
   const [experience, setExperience] = useState('')
   const [activeTools, setActiveTools] = useState<{ name: string; expiresAt: string | null }[]>([])
@@ -32,7 +34,7 @@ export default function ProfilePage() {
       if (p) {
         setFullName(p.full_name || '')
         setCompanyName(p.company_name || '')
-        setPhone(p.phone || '')
+        setPhone(parseSaved(p.phone))
         setMachineType(p.machine_type || 'CNC Turning')
         setExperience(p.experience_years || '')
       }
@@ -56,15 +58,16 @@ setActiveTools(list)
     setError('')
     setSaved(false)
 
-    if (!fullName.trim() || !companyName.trim() || !phone.trim() || !experience.trim()) {
+    if (!fullName.trim() || !companyName.trim() || !phone.number.trim() || !experience.trim()) {
       setError('Please fill in all fields.')
       return
     }
-    const cleanPhone = phone.replace(/\D/g, '').slice(-10)
-    if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
-      setError('Please enter a valid 10-digit mobile number.')
+    const phoneError = checkPhone(phone)
+    if (phoneError) {
+      setError(phoneError)
       return
     }
+    const savedPhone = formatForSave(phone)
     const exp = Number(experience)
     if (!Number.isFinite(exp) || exp < 0 || exp > 60) {
       setError('Experience must be between 0 and 60 years.')
@@ -80,13 +83,13 @@ setActiveTools(list)
       email: user.email,
       full_name: fullName.trim(),
       company_name: companyName.trim(),
-      phone: cleanPhone,
+      phone: savedPhone,
       machine_type: machineType,
       experience_years: String(exp),
     })
     setSaving(false)
     if (error) { setError(error.message); return }
-    setPhone(cleanPhone)
+    setPhone(parseSaved(savedPhone))
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
@@ -121,7 +124,7 @@ setActiveTools(list)
           <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value)} style={inputStyle} />
 
           <label style={labelStyle}>Phone Number</label>
-          <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} style={inputStyle} placeholder="10-digit mobile number" />
+          <PhoneInput value={phone} onChange={setPhone} inputStyle={inputStyle} />
 
           <label style={labelStyle}>Machine Type</label>
           <select value={machineType} onChange={e => setMachineType(e.target.value)} style={inputStyle}>
