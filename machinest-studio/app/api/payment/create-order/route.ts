@@ -65,6 +65,13 @@ export async function POST(req: Request) {
       if (!coupon) {
         return NextResponse.json({ error: 'Invalid coupon code' }, { status: 400 })
       }
+      const appliesTo: string = coupon.applies_to || 'both'
+      if (appliesTo !== 'both' && appliesTo !== cycle) {
+        return NextResponse.json(
+          { error: appliesTo === 'monthly' ? 'This coupon is valid only for monthly plans' : 'This coupon is valid only for yearly plans' },
+          { status: 400 }
+        )
+      }
       if (coupon.expires_at && new Date(coupon.expires_at).getTime() < Date.now()) {
         return NextResponse.json({ error: 'This coupon has expired' }, { status: 400 })
       }

@@ -7,7 +7,7 @@ type Profile = { id: string; full_name: string; company_name: string; phone: str
 type Tool = { id: string; name: string; slug: string; description: string; monthly_price: number; annual_price: number; features: string[] | null }
 type Sub = { user_id: string; tool_id: string; status: string; expires_at: string | null }
 type Order = { id: string; user_id: string; tool_ids: string[]; billing_cycle: string; amount: number; status: string; created_at: string }
-type Coupon = { id: string; code: string; discount_type: string; discount_value: number; max_uses: number | null; used_count: number; expires_at: string | null; active: boolean }
+type Coupon = { id: string; code: string; discount_type: string; discount_value: number; max_uses: number | null; used_count: number; expires_at: string | null; active: boolean; applies_to?: string | null }
 
 type PlanLite = { id: string; name: string; tool_ids: string[] }
 
@@ -16,7 +16,7 @@ const emptyForm = { id: '', name: '', slug: '', description: '', monthly_price: 
 export default function AdminPage() {
   const [tab, setTab] = useState<'users' | 'tools' | 'payments' | 'coupons'>('users')
   const [coupons, setCoupons] = useState<Coupon[]>([])
-  const [couponForm, setCouponForm] = useState({ code: '', discount_type: 'percent', discount_value: '', max_uses: '', expires_at: '' })
+  const [couponForm, setCouponForm] = useState({ code: '', discount_type: 'percent', discount_value: '', max_uses: '', expires_at: '', applies_to: 'both' })
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [tools, setTools] = useState<Tool[]>([])
   const [subs, setSubs] = useState<Sub[]>([])
@@ -105,8 +105,9 @@ export default function AdminPage() {
       discount_value: Number(couponForm.discount_value),
       max_uses: couponForm.max_uses ? Number(couponForm.max_uses) : null,
       expires_at: couponForm.expires_at || null,
+      applies_to: couponForm.applies_to,
     })
-    setCouponForm({ code: '', discount_type: 'percent', discount_value: '', max_uses: '', expires_at: '' })
+    setCouponForm({ code: '', discount_type: 'percent', discount_value: '', max_uses: '', expires_at: '', applies_to: 'both' })
     await loadAll()
   }
 
@@ -311,6 +312,11 @@ export default function AdminPage() {
                 <input className="adm-in" placeholder="Discount value" type="number" value={couponForm.discount_value} onChange={e => setCouponForm({ ...couponForm, discount_value: e.target.value })} />
                 <input className="adm-in" placeholder="Max uses (optional)" type="number" value={couponForm.max_uses} onChange={e => setCouponForm({ ...couponForm, max_uses: e.target.value })} />
                 <input className="adm-in" placeholder="Expiry date (optional)" type="date" value={couponForm.expires_at} onChange={e => setCouponForm({ ...couponForm, expires_at: e.target.value })} />
+                <select className="adm-in" value={couponForm.applies_to} onChange={e => setCouponForm({ ...couponForm, applies_to: e.target.value })}>
+                  <option value="both">Applies to: Monthly and Yearly orders</option>
+                  <option value="monthly">Applies to: Monthly orders only</option>
+                  <option value="annual">Applies to: Yearly orders only</option>
+                </select>
               </div>
               <button className="adm-btn" onClick={createCoupon}>Create Coupon</button>
             </div>
@@ -322,6 +328,7 @@ export default function AdminPage() {
                     <b style={{ color: '#F0801E' }}>{c.code}</b> — {c.discount_type === 'percent' ? `${c.discount_value}%` : `₹${c.discount_value}`} off
                     <span className="adm-mut">
                       {' · '}used {c.used_count}{c.max_uses ? `/${c.max_uses}` : ''}
+                      {' · '}{c.applies_to === 'monthly' ? 'monthly only' : c.applies_to === 'annual' ? 'yearly only' : 'monthly + yearly'}
                       {c.expires_at ? ` · expires ${new Date(c.expires_at).toLocaleDateString('en-IN')}` : ''}
                     </span>
                   </div>

@@ -1,6 +1,7 @@
 import 'server-only'
 import crypto from 'crypto'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendPurchaseConfirmation } from './receipt'
 
 type Admin = ReturnType<typeof createAdminClient>
 
@@ -88,6 +89,9 @@ export async function fulfilOrder(
   }
 
   if (order.coupon_code) await bumpCoupon(admin, order.coupon_code)
+
+  // Confirmation email with invoice. Only the caller that won the claim above gets here, so it is sent once.
+  await sendPurchaseConfirmation(admin, order, expiresAt)
 
   return 'done'
 }
