@@ -12,6 +12,8 @@ export type ShopRow = {
   logo_url: string | null
   public_enabled: boolean
   public_pin: string
+  shift_count?: number
+  shifts?: { name: string; start: string; end: string }[]
   created_at: string
 }
 

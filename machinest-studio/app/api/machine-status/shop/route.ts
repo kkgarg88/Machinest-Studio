@@ -2,7 +2,7 @@ import 'server-only'
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAuthedUser, getOwnerContext, hasMachineStatusAccess } from '@/lib/shop'
-import { checkSlug, PIN_RE } from '@/lib/machineStatus'
+import { checkSlug, PIN_RE, checkShifts, type Shift } from '@/lib/machineStatus'
 
 // Create the shop (owner with an active Machine Status subscription)
 export async function POST(req: Request) {
@@ -101,6 +101,17 @@ export async function PATCH(req: Request) {
     const pin = typeof body.pin === 'string' ? body.pin.trim() : ''
     if (!PIN_RE.test(pin)) return NextResponse.json({ error: 'PIN must be 4 to 6 digits' }, { status: 400 })
     updates.public_pin = pin
+  }
+
+  if (body.shifts !== undefined) {
+    const count = Number(body.shift_count)
+    const shifts: Shift[] = Array.isArray(body.shifts)
+      ? body.shifts.map((x: Partial<Shift>) => ({ name: String(x?.name ?? '').trim(), start: String(x?.start ?? ''), end: String(x?.end ?? '') }))
+      : []
+    const err = checkShifts(count, shifts)
+    if (err) return NextResponse.json({ error: err }, { status: 400 })
+    updates.shift_count = count
+    updates.shifts = shifts
   }
 
   if (Object.keys(updates).length === 0) return NextResponse.json({ error: 'Nothing to update' }, { status: 400 })

@@ -2,11 +2,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { MACHINE_TYPES, slugify, checkSlug, PIN_RE } from '@/lib/machineStatus'
+import { MACHINE_TYPES, slugify, checkSlug, PIN_RE, checkShifts, DEFAULT_SHIFTS, type PartLite, type Shift } from '@/lib/machineStatus'
 import MachineCard, { type CardMachine } from '@/components/machine-status/MachineCard'
 import StatusModal from '@/components/machine-status/StatusModal'
 
-type Shop = { id: string; name: string; slug: string; logo_url: string | null; public_enabled: boolean; public_pin: string }
+type Shop = { id: string; name: string; slug: string; logo_url: string | null; public_enabled: boolean; public_pin: string; shift_count: number; shifts: Shift[] }
 type Operator = { id: string; name: string; phone: string | null; created_at: string }
 
 type Me =
@@ -16,6 +16,7 @@ type Me =
       active: boolean
       shop: Shop
       machines: CardMachine[]
+      parts: PartLite[]
       operators: Operator[]
       limits: { machines: number; operators: number }
     }
@@ -82,6 +83,16 @@ export default function MachineStatusPage() {
   const [newPin, setNewPin] = useState('')
 
   // operators
+  // part master, shifts, off days
+  const [partName, setPartName] = useState('')
+  const [partCustomer, setPartCustomer] = useState('')
+  const [shiftCount, setShiftCount] = useState(2)
+  const [shiftRows, setShiftRows] = useState<Shift[]>(DEFAULT_SHIFTS)
+  const todayIso = new Date().toISOString().slice(0, 7)
+  const [offMonth, setOffMonth] = useState(todayIso)
+  const [offDays, setOffDays] = useState<string[]>([])
+  const [offLoaded, setOffLoaded] = useState(false)
+
   const [opName, setOpName] = useState('')
   const [opPhone, setOpPhone] = useState('')
   const [opPin, setOpPin] = useState('')
@@ -116,8 +127,23 @@ export default function MachineStatusPage() {
       setSetName(me.shop.name)
       setSetSlugVal(me.shop.slug)
       setNewPin('')
+      const n = me.shop.shift_count || 2
+      setShiftCount(n)
+      const saved = Array.isArray(me.shop.shifts) ? me.shop.shifts : DEFAULT_SHIFTS
+      setShiftRows([0, 1, 2].map(i => saved[i] || { name: `Shift ${i + 1}`, start: '08:00', end: '20:00' }))
     }
   }, [showSettings])
+
+  useEffect(() => {
+    if (!showSettings) return
+    let cancelled = false
+    setOffLoaded(false)
+    fetch(`/api/machine-status/off-days?month=${offMonth}`, { cache: 'no-store' })
+      .then(r => r.json())
+      .then(d => { if (!cancelled) { setOffDays(Array.isArray(d.days) ? d.days : []); setOffLoaded(true) } })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [showSettings, offMonth])
 
   function resetMachineForm() {
     setFName(''); setFNo(''); setFType('cnc'); setFTypeRemark(''); setFPart('')
@@ -165,7 +191,7 @@ export default function MachineStatusPage() {
     e.preventDefault()
     setBusy(true)
     const r = await api('/api/machine-status/machines', 'POST', {
-      name: fName, machine_no: fNo, machine_type: fType, type_remark: fTypeRemark, part_name: fPart,
+      name: fName, machine_no: fNo, machine_type: fType, type_remark: fTypeRemark, part_id: fPart,
     })
     setBusy(false)
     if (!r.ok) { flash(r.data.error || 'Could not add machine', false); return }
@@ -180,7 +206,7 @@ export default function MachineStatusPage() {
     setFNo(selected.machine_no || '')
     setFType(selected.machine_type)
     setFTypeRemark(selected.type_remark || '')
-    setFPart(selected.part_name || '')
+    setFPart(selected.part_id || '')
     setEditing(true)
   }
 
@@ -188,7 +214,7 @@ export default function MachineStatusPage() {
     if (!selected) return
     setBusy(true)
     const r = await api(`/api/machine-status/machines/${selected.id}`, 'PATCH', {
-      name: fName, machine_no: fNo, machine_type: fType, type_remark: fTypeRemark, part_name: fPart,
+      name: fName, machine_no: fNo, machine_type: fType, type_remark: fTypeRemark, part_id: fPart,
     })
     setBusy(false)
     if (!r.ok) { flash(r.data.error || 'Could not save', false); return }
@@ -266,6 +292,79 @@ export default function MachineStatusPage() {
     navigator.clipboard?.writeText(text).then(() => flash('Copied'), () => flash('Could not copy', false))
   }
 
+  async function addPart(e: React.FormEvent) {
+    e.preventDefault()
+    setBusy(true)
+    const r = await api('/api/machine-status/parts', 'POST', { name: partName, customer: partCustomer })
+    setBusy(false)
+    if (!r.ok) { flash(r.data.error || 'Could not add part', false); return }
+    setPartName(''); setPartCustomer('')
+    flash('Part added')
+    load()
+  }
+
+  async function renamePart(p: PartLite) {
+    const value = prompt('New name for this part', p.name)
+    if (value === null || value.trim() === p.name) return
+    const r = await api(`/api/machine-status/parts/${p.id}`, 'PATCH', { name: value })
+    if (!r.ok) { flash(r.data.error || 'Could not rename', false); return }
+    flash('Part renamed')
+    load()
+  }
+
+  async function togglePart(p: PartLite) {
+    const r = await api(`/api/machine-status/parts/${p.id}`, 'PATCH', { active: !p.active })
+    if (!r.ok) { flash(r.data.error || 'Could not update', false); return }
+    flash(p.active ? 'Part switched off. It no longer shows in the list' : 'Part switched on')
+    load()
+  }
+
+  async function deletePart(p: PartLite) {
+    if (!confirm(`Delete "${p.name}"?`)) return
+    const r = await api(`/api/machine-status/parts/${p.id}`, 'DELETE')
+    if (!r.ok) { flash(r.data.error || 'Could not delete', false); return }
+    flash('Part deleted')
+    load()
+  }
+
+  async function saveShifts() {
+    const rows = shiftRows.slice(0, shiftCount).map(s => ({ name: s.name.trim(), start: s.start, end: s.end }))
+    const err = checkShifts(shiftCount, rows)
+    if (err) { flash(err, false); return }
+    await saveSettings({ shift_count: shiftCount, shifts: rows }, 'Shifts saved')
+  }
+
+  function toggleOffDay(d: string) {
+    setOffDays(list => (list.includes(d) ? list.filter(x => x !== d) : [...list, d]))
+  }
+
+  function monthDays(month: string): string[] {
+    const [y, m] = month.split('-').map(Number)
+    const last = new Date(y, m, 0).getDate()
+    return Array.from({ length: last }, (_, i) => `${month}-${String(i + 1).padStart(2, '0')}`)
+  }
+
+  function markSundays() {
+    const sundays = monthDays(offMonth).filter(d => new Date(d + 'T00:00:00').getDay() === 0)
+    setOffDays(list => Array.from(new Set([...list, ...sundays])))
+  }
+
+  function shiftMonth(delta: number) {
+    const [y, m] = offMonth.split('-').map(Number)
+    const d = new Date(y, m - 1 + delta, 1)
+    setOffMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
+  }
+
+  async function saveOffDays() {
+    setBusy(true)
+    const r = await api('/api/machine-status/off-days', 'PUT', { month: offMonth, days: offDays })
+    setBusy(false)
+    if (!r.ok) { flash(r.data.error || 'Could not save off days', false); return }
+    flash('Off days saved')
+  }
+
+  const partOptions: PartLite[] = me && me.role === 'owner' ? me.parts.filter(p => p.active || p.id === fPart) : []
+
   const machineFields = (
     <>
       <div style={{ flex: '2 1 180px' }}>
@@ -289,8 +388,12 @@ export default function MachineStatusPage() {
         </div>
       )}
       <div style={{ flex: '2 1 180px' }}>
-        <label style={label}>Part name</label>
-        <input style={inputStyle} value={fPart} maxLength={60} required placeholder="Part being made" onChange={e => setFPart(e.target.value)} />
+        <label style={label}>Part (optional)</label>
+        <select style={inputStyle} value={fPart} onChange={e => setFPart(e.target.value)}>
+          <option value="">No part yet</option>
+          {partOptions.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
+        {partOptions.length === 0 && <div style={{ color: '#777', fontSize: 11.5, marginTop: 4 }}>Add parts in Shop settings first.</div>}
       </div>
     </>
   )
@@ -370,7 +473,7 @@ export default function MachineStatusPage() {
   }
 
   // ---------- Owner board ----------
-  const { shop, machines, operators, limits, active } = me
+  const { shop, machines, operators, limits, active, parts } = me
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://app.machinest.in'
   const publicUrl = `${origin}/${shop.slug}`
   const operatorUrl = `${origin}/${shop.slug}/operator`
@@ -496,6 +599,100 @@ export default function MachineStatusPage() {
           </div>
 
           <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #3a3733', paddingTop: 18 }}>
+            <h3 style={{ fontSize: 15, margin: '0 0 6px' }}>Part master ({parts.filter(p => p.active).length} active)</h3>
+            <p style={{ color: '#999', fontSize: 12.5, margin: '0 0 12px', lineHeight: 1.5 }}>
+              Operators pick the part from this list, so the same part is never written in two ways. Only you can add parts. Names that differ only in capital letters or spaces count as the same part.
+            </p>
+            <form onSubmit={addPart} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+              <input style={{ ...inputStyle, flex: '2 1 200px' }} value={partName} maxLength={60} required placeholder="Part name / code" onChange={e => setPartName(e.target.value)} />
+              <input style={{ ...inputStyle, flex: '1 1 160px' }} value={partCustomer} maxLength={60} placeholder="Customer (optional)" onChange={e => setPartCustomer(e.target.value)} />
+              <button type="submit" disabled={busy} style={{ ...btnPrimary, opacity: busy ? 0.6 : 1 }}>Add part</button>
+            </form>
+            {parts.length === 0 ? (
+              <p style={{ color: '#777', fontSize: 12.5, margin: 0 }}>No parts yet.</p>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 8 }}>
+                {parts.map(p => (
+                  <div key={p.id} style={{ background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 8, padding: '8px 12px', opacity: p.active ? 1 : 0.55 }}>
+                    <div style={{ fontSize: 13.5, fontWeight: 600, wordBreak: 'break-word' }}>
+                      {p.name}{!p.active && <span style={{ color: '#e0b13a', fontWeight: 400 }}> · switched off</span>}
+                    </div>
+                    {p.customer && <div style={{ color: '#888', fontSize: 12 }}>{p.customer}</div>}
+                    <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+                      <button style={{ ...btnGhost, padding: '4px 10px', fontSize: 12 }} onClick={() => renamePart(p)}>Rename</button>
+                      <button style={{ ...btnGhost, padding: '4px 10px', fontSize: 12 }} onClick={() => togglePart(p)}>{p.active ? 'Switch off' : 'Switch on'}</button>
+                      <button style={{ ...btnGhost, padding: '4px 10px', fontSize: 12, borderColor: '#ff6b6b', color: '#ff6b6b' }} onClick={() => deletePart(p)}>Delete</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <h3 style={{ fontSize: 15, margin: '0 0 6px' }}>Shifts</h3>
+            <p style={{ color: '#999', fontSize: 12.5, margin: '0 0 12px', lineHeight: 1.5 }}>
+              Reports count only time inside these shifts. A report day starts when Shift 1 starts.
+            </p>
+            <label style={label}>Number of shifts</label>
+            <select style={{ ...inputStyle, marginBottom: 12 }} value={shiftCount} onChange={e => setShiftCount(Number(e.target.value))}>
+              <option value={1}>1 shift</option>
+              <option value={2}>2 shifts</option>
+              <option value={3}>3 shifts</option>
+            </select>
+            {shiftRows.slice(0, shiftCount).map((sh, i) => (
+              <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-end', marginBottom: 8, flexWrap: 'wrap' }}>
+                <div style={{ flex: '1 1 110px' }}>
+                  <label style={label}>Shift {i + 1} name</label>
+                  <input style={inputStyle} value={sh.name} maxLength={20} onChange={e => setShiftRows(rows => rows.map((r, j) => (j === i ? { ...r, name: e.target.value } : r)))} />
+                </div>
+                <div style={{ flex: '1 1 100px' }}>
+                  <label style={label}>Starts</label>
+                  <input type="time" style={inputStyle} value={sh.start} onChange={e => setShiftRows(rows => rows.map((r, j) => (j === i ? { ...r, start: e.target.value } : r)))} />
+                </div>
+                <div style={{ flex: '1 1 100px' }}>
+                  <label style={label}>Ends</label>
+                  <input type="time" style={inputStyle} value={sh.end} onChange={e => setShiftRows(rows => rows.map((r, j) => (j === i ? { ...r, end: e.target.value } : r)))} />
+                </div>
+              </div>
+            ))}
+            <button style={{ ...btnPrimary, marginTop: 6, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={saveShifts}>Save shifts</button>
+          </div>
+
+          <div>
+            <h3 style={{ fontSize: 15, margin: '0 0 6px' }}>Off days</h3>
+            <p style={{ color: '#999', fontSize: 12.5, margin: '0 0 12px', lineHeight: 1.5 }}>
+              Tap a day to mark it off. Off days are left out when effectiveness is calculated.
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', maxWidth: 340, marginBottom: 8 }}>
+              <button style={{ ...btnGhost, padding: '4px 12px' }} onClick={() => shiftMonth(-1)}>&lsaquo;</button>
+              <b style={{ fontSize: 14 }}>{new Date(offMonth + '-01T00:00:00').toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</b>
+              <button style={{ ...btnGhost, padding: '4px 12px' }} onClick={() => shiftMonth(1)}>&rsaquo;</button>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 5, maxWidth: 340, opacity: offLoaded ? 1 : 0.5 }}>
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => <div key={d} style={{ color: '#888', fontSize: 11, textAlign: 'center' }}>{d}</div>)}
+              {Array.from({ length: (new Date(offMonth + '-01T00:00:00').getDay() + 6) % 7 }, (_, i) => <div key={'b' + i} />)}
+              {monthDays(offMonth).map(d => {
+                const off = offDays.includes(d)
+                return (
+                  <button
+                    key={d}
+                    onClick={() => toggleOffDay(d)}
+                    style={{ background: off ? '#4a2b2b' : '#33312e', color: off ? '#ff8a8a' : '#ddd', border: `1px solid ${off ? '#ff6b6b' : 'transparent'}`, borderRadius: 6, padding: '7px 0', fontSize: 12.5, cursor: 'pointer' }}
+                  >
+                    {Number(d.slice(8))}
+                  </button>
+                )
+              })}
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+              <button style={btnGhost} onClick={markSundays}>Mark all Sundays</button>
+              <button style={btnGhost} onClick={() => setOffDays(list => list.filter(d => !d.startsWith(offMonth + '-')))}>Clear month</button>
+              <button style={{ ...btnPrimary, padding: '8px 18px', opacity: busy || !offLoaded ? 0.6 : 1 }} disabled={busy || !offLoaded} onClick={saveOffDays}>Save off days</button>
+            </div>
+          </div>
+
+          <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #3a3733', paddingTop: 18 }}>
             <h3 style={{ fontSize: 15, margin: '0 0 6px', color: '#ff6b6b' }}>Danger zone</h3>
             <p style={{ color: '#999', fontSize: 12.5, margin: '0 0 12px', lineHeight: 1.5 }}>
               Deleting the shop removes all machines, status history, operators and the logo, and frees the link name. Your subscription stays active, so you can set up a new shop afterwards.
@@ -535,6 +732,7 @@ export default function MachineStatusPage() {
         <StatusModal
           key={selected.id}
           machine={selected}
+          parts={parts}
           canEdit={active}
           onClose={() => setSelected(null)}
           onDone={text => { setSelected(null); flash(text); load() }}

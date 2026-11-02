@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { STATUSES, statusInfo, typeInfo, typeBadge } from '@/lib/machineStatus'
+import { STATUSES, statusInfo, typeInfo, typeBadge, type PartLite } from '@/lib/machineStatus'
 import type { CardMachine } from './MachineCard'
 
 const inputStyle = { background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 6, color: '#fff', padding: '10px 12px', fontSize: 14, width: '100%', boxSizing: 'border-box' } as const
@@ -8,9 +8,10 @@ const labelStyle = { color: '#999', fontSize: 12, fontWeight: 600, display: 'blo
 
 // Status update box used by the owner and by operators
 export default function StatusModal({
-  machine, canEdit, onClose, onDone, onError, footer,
+  machine, parts, canEdit, onClose, onDone, onError, footer,
 }: {
   machine: CardMachine
+  parts: PartLite[]
   canEdit: boolean
   onClose: () => void
   onDone: (text: string) => void
@@ -19,16 +20,18 @@ export default function StatusModal({
 }) {
   const [status, setStatus] = useState(machine.status)
   const [remark, setRemark] = useState(machine.remark || '')
-  const [part, setPart] = useState(machine.part_name || '')
+  const [partId, setPartId] = useState(machine.part_id || '')
+  // parts the operator can pick: active ones, plus this machine's current part even if switched off
+  const options = parts.filter(p => p.active || p.id === machine.part_id)
   const [busy, setBusy] = useState(false)
 
   async function save() {
-    if (!part.trim()) { onError('Part name is required'); return }
+    if (!partId) { onError('Choose the part from the list'); return }
     if (status === 'other' && !remark.trim()) { onError('Please write a remark for "Other"'); return }
     setBusy(true)
     const res = await fetch(`/api/machine-status/machines/${machine.id}/status`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status, remark, part_name: part }),
+      body: JSON.stringify({ status, remark, part_id: partId }),
     }).catch(() => null)
     setBusy(false)
     if (!res) { onError('Network error. Please try again'); return }
@@ -63,8 +66,14 @@ export default function StatusModal({
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Part name</label>
-              <input style={inputStyle} value={part} maxLength={60} onChange={e => setPart(e.target.value)} placeholder="Part being made" />
+              <label style={labelStyle}>Part</label>
+              <select style={inputStyle} value={partId} onChange={e => setPartId(e.target.value)}>
+                <option value="">Choose the part being made</option>
+                {options.map(p => <option key={p.id} value={p.id}>{p.name}{p.customer ? ` (${p.customer})` : ''}</option>)}
+              </select>
+              {options.length === 0 && (
+                <div style={{ color: '#e0b13a', fontSize: 12, marginTop: 6 }}>No parts in the list yet. The shop owner adds parts in Shop settings.</div>
+              )}
             </div>
             <div>
               <label style={labelStyle}>Remark {status === 'other' ? '(required)' : '(optional)'}</label>

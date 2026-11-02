@@ -13,7 +13,7 @@ async function requireOwner() {
   return { ok: true as const, shop: ctx.shop }
 }
 
-// Owner edits a machine's name, number, type or part name
+// Owner edits a machine's name, number, type or part
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireOwner()
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status })
@@ -34,10 +34,19 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (no.length < 1 || no.length > 30) return NextResponse.json({ error: 'Machine number is required' }, { status: 400 })
     updates.machine_no = no
   }
-  if (body.part_name !== undefined) {
-    const part = typeof body.part_name === 'string' ? body.part_name.trim() : ''
-    if (part.length < 1 || part.length > 60) return NextResponse.json({ error: 'Part name is required' }, { status: 400 })
-    updates.part_name = part
+  if (body.part_id !== undefined) {
+    const partId = typeof body.part_id === 'string' ? body.part_id : ''
+    if (!partId) {
+      updates.part_id = null
+      updates.part_name = null
+    } else {
+      const adminP = createAdminClient()
+      const { data: cur } = await adminP.from('machines').select('part_id').eq('id', id).eq('shop_id', auth.shop.id).maybeSingle()
+      const { data: part } = await adminP.from('parts').select('id, name, active').eq('id', partId).eq('shop_id', auth.shop.id).maybeSingle()
+      if (!part || (!part.active && cur?.part_id !== part.id)) return NextResponse.json({ error: 'Choose a part from the list' }, { status: 400 })
+      updates.part_id = part.id
+      updates.part_name = part.name
+    }
   }
   if (body.machine_type !== undefined) {
     if (!TYPE_KEYS.includes(body.machine_type)) return NextResponse.json({ error: 'Invalid machine type' }, { status: 400 })

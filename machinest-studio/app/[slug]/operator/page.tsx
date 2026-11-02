@@ -3,12 +3,13 @@ import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import MachineCard, { type CardMachine } from '@/components/machine-status/MachineCard'
 import StatusModal from '@/components/machine-status/StatusModal'
+import type { PartLite } from '@/lib/machineStatus'
 
 type View =
   | { state: 'loading' }
   | { state: 'not_found' }
   | { state: 'login'; shopName: string; logoUrl: string | null; operators: { id: string; name: string }[] }
-  | { state: 'ok'; shopName: string; logoUrl: string | null; operatorName: string; active: boolean; machines: CardMachine[] }
+  | { state: 'ok'; shopName: string; logoUrl: string | null; operatorName: string; active: boolean; machines: CardMachine[]; parts: PartLite[] }
 
 const page = { minHeight: '100vh', background: 'linear-gradient(180deg, #262421 0%, #302d29 100%)', fontFamily: 'Segoe UI, sans-serif', color: '#fff' } as const
 const inputStyle = { background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 8, color: '#fff', padding: '12px', fontSize: 15, width: '100%', boxSizing: 'border-box' } as const
@@ -162,6 +163,7 @@ export default function OperatorPage() {
         <StatusModal
           key={selected.id}
           machine={selected}
+          parts={view.parts || []}
           canEdit={view.active}
           onClose={() => setSelected(null)}
           onDone={text => { setSelected(null); flash(text); load() }}

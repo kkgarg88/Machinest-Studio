@@ -47,6 +47,7 @@ export default function PublicShopBoard() {
   const [busy, setBusy] = useState(false)
   const [tv, setTv] = useState(false)
   const [filter, setFilter] = useState<string | null>(null)
+  const [autoScroll, setAutoScroll] = useState(true)
   const boardRef = useRef<HTMLDivElement>(null)
 
   const load = useCallback(async () => {
@@ -69,6 +70,53 @@ export default function PublicShopBoard() {
     document.addEventListener('fullscreenchange', onChange)
     return () => document.removeEventListener('fullscreenchange', onChange)
   }, [])
+
+  // TV auto-scroll: slowly scrolls down, waits at the bottom, then starts again from the top.
+  // Touching or scrolling by hand pauses it for 10 seconds.
+  useEffect(() => {
+    if (!autoScroll || view.state !== 'ok') return
+    let raf = 0
+    let last = performance.now()
+    let pos = 0
+    let pauseUntil = last + 4000
+    let atBottom = false
+    let lastTouch = 0
+    const touch = () => { lastTouch = performance.now() }
+    const events = ['wheel', 'touchstart', 'mousedown', 'keydown']
+    events.forEach(ev => window.addEventListener(ev, touch, { passive: true }))
+
+    const step = (t: number) => {
+      const dt = Math.min((t - last) / 1000, 0.1)
+      last = t
+      const el = (document.fullscreenElement === boardRef.current ? boardRef.current : document.scrollingElement) as HTMLElement | null
+      if (el && t > pauseUntil && t - lastTouch > 10000) {
+        const max = el.scrollHeight - el.clientHeight
+        if (max > 4) {
+          if (atBottom) {
+            el.scrollTop = 0
+            pos = 0
+            atBottom = false
+            pauseUntil = t + 4000
+          } else {
+            if (Math.abs(el.scrollTop - pos) > 2) pos = el.scrollTop
+            pos += 40 * dt
+            if (pos >= max) {
+              pos = max
+              atBottom = true
+              pauseUntil = t + 5000
+            }
+            el.scrollTop = pos
+          }
+        }
+      }
+      raf = requestAnimationFrame(step)
+    }
+    raf = requestAnimationFrame(step)
+    return () => {
+      cancelAnimationFrame(raf)
+      events.forEach(ev => window.removeEventListener(ev, touch))
+    }
+  }, [autoScroll, view.state])
 
   async function submitPin(e: React.FormEvent) {
     e.preventDefault()
@@ -174,9 +222,17 @@ export default function PublicShopBoard() {
               </div>
             </div>
           </div>
-          <button onClick={toggleTv} style={{ background: 'transparent', border: '1px solid #3a3733', color: '#ddd', borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-            {tv ? 'Exit full screen' : '📺 Full screen'}
-          </button>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setAutoScroll(a => !a)}
+              style={{ background: autoScroll ? '#2b2a28' : 'transparent', border: `1px solid ${autoScroll ? '#F0801E' : '#3a3733'}`, color: autoScroll ? '#F0801E' : '#ddd', borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            >
+              ⏬ Auto-scroll: {autoScroll ? 'On' : 'Off'}
+            </button>
+            <button onClick={toggleTv} style={{ background: 'transparent', border: '1px solid #3a3733', color: '#ddd', borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              {tv ? 'Exit full screen' : '📺 Full screen'}
+            </button>
+          </div>
         </div>
 
         {counts.length > 0 && (

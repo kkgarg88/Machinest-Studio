@@ -29,10 +29,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
   if (session && session.shop.id === shop.id) {
     const { data: machines } = await admin
       .from('machines')
-      .select('id, name, machine_no, machine_type, type_remark, part_name, status, remark, status_since, updated_by_name')
+      .select('id, name, machine_no, machine_type, type_remark, part_name, part_id, status, remark, status_since, updated_at, updated_by_name')
       .eq('shop_id', shop.id)
       .order('position', { ascending: true })
       .order('created_at', { ascending: true })
+
+    const { data: parts } = await admin.from('parts').select('id, name, customer, active').eq('shop_id', shop.id).eq('active', true).order('name', { ascending: true })
 
     return NextResponse.json({
       state: 'ok',
@@ -41,6 +43,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
       operatorName: session.operator.name,
       active: session.active,
       machines: machines || [],
+      parts: parts || [],
     })
   }
 

@@ -16,21 +16,27 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const body = await req.json().catch(() => null)
   const status = typeof body?.status === 'string' ? body.status : ''
   const remark = typeof body?.remark === 'string' ? body.remark.trim().slice(0, 200) : ''
-  const partName = typeof body?.part_name === 'string' ? body.part_name.trim() : ''
+  const partId = typeof body?.part_id === 'string' ? body.part_id : ''
 
   if (!STATUS_KEYS.includes(status)) return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
   if (status === 'other' && !remark) return NextResponse.json({ error: 'Please write a remark for "Other"' }, { status: 400 })
-  if (partName.length < 1 || partName.length > 60) return NextResponse.json({ error: 'Part name is required' }, { status: 400 })
+  if (!partId) return NextResponse.json({ error: 'Choose the part from the list' }, { status: 400 })
 
   const admin = createAdminClient()
-  const { data: machine } = await admin.from('machines').select('id, status').eq('id', id).eq('shop_id', actor.shop.id).maybeSingle()
+  const { data: machine } = await admin.from('machines').select('id, status, part_id').eq('id', id).eq('shop_id', actor.shop.id).maybeSingle()
   if (!machine) return NextResponse.json({ error: 'Machine not found' }, { status: 404 })
+
+  const { data: part } = await admin.from('parts').select('id, name, active').eq('id', partId).eq('shop_id', actor.shop.id).maybeSingle()
+  if (!part || (!part.active && part.id !== machine.part_id)) {
+    return NextResponse.json({ error: 'This part is not in the list. Ask the owner to add it' }, { status: 400 })
+  }
 
   const now = new Date().toISOString()
   const updates: Record<string, unknown> = {
     status,
     remark: remark || null,
-    part_name: partName,
+    part_name: part.name,
+    part_id: part.id,
     updated_at: now,
     updated_by: actor.kind === 'owner' ? actor.userId : null,
     updated_by_name: actor.name,
@@ -46,7 +52,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     shop_id: actor.shop.id,
     status,
     remark: remark || null,
-    part_name: partName,
+    part_name: part.name,
+    part_id: part.id,
     changed_by: actor.kind === 'owner' ? actor.userId : null,
     changed_by_name: actor.name,
   })

@@ -55,7 +55,7 @@ export const RESERVED_SLUGS = [
   'machine-status', 'machine-icons', 'machinest', 'privacy', 'privacy-policy', 'terms', 'terms-and-conditions', 'about',
   'contact', 'pricing', 'refund', 'refund-policy', 'shipping', 'cancellation', 'support', 'help',
   'callback', 'static', 'public', 'favicon', 'robots', 'sitemap', 'app', 'www', 'status', 'tutorial',
-  'generate', 'payment', 'webhook', 'test', 'demo', 'shop', 'shops', 'home', 'index', 'new', 'operator', 'tools',
+  'generate', 'payment', 'webhook', 'test', 'demo', 'shop', 'shops', 'home', 'index', 'new', 'operator',
 ]
 
 // 3 to 30 characters: lowercase letters, digits and hyphens; no hyphen at the ends
@@ -87,4 +87,68 @@ export function cleanPhone(raw: unknown): string | null {
   if (typeof raw !== 'string') return null
   const digits = raw.replace(/\D/g, '')
   return digits.length >= 10 && digits.length <= 15 ? digits : null
+}
+
+
+// ---------- Part master ----------
+export type PartLite = { id: string; name: string; customer: string | null; active: boolean }
+
+// Two names that differ only in capital letters or spaces are the same part
+export function partKey(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, '')
+}
+
+// ---------- Stale status warning ----------
+export const STALE_HOURS_RUNNING = 48
+export const STALE_HOURS_OTHER = 12
+
+// Returns the number of hours since the last update if it is overdue, otherwise null
+export function staleHours(status: string, updatedAt: string | null | undefined, now = Date.now()): number | null {
+  if (!updatedAt) return null
+  const hours = (now - new Date(updatedAt).getTime()) / 3600000
+  const limit = status === 'running' ? STALE_HOURS_RUNNING : STALE_HOURS_OTHER
+  return hours >= limit ? Math.floor(hours) : null
+}
+
+export function staleLabel(hours: number): string {
+  return hours >= 48 ? `${Math.floor(hours / 24)} days` : `${hours} h`
+}
+
+// ---------- Shifts ----------
+export type Shift = { name: string; start: string; end: string }
+
+export const DEFAULT_SHIFTS: Shift[] = [
+  { name: 'Day', start: '08:00', end: '20:00' },
+  { name: 'Night', start: '20:00', end: '08:00' },
+]
+
+const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/
+
+function toMin(t: string): number {
+  const [h, m] = t.split(':').map(Number)
+  return h * 60 + m
+}
+
+export function shiftMinutes(sh: Shift): number {
+  const s = toMin(sh.start), e = toMin(sh.end)
+  return e > s ? e - s : e + 1440 - s
+}
+
+// Returns an error message, or null when the shifts are fine
+export function checkShifts(count: number, shifts: Shift[]): string | null {
+  if (![1, 2, 3].includes(count)) return 'Choose 1, 2 or 3 shifts'
+  if (!Array.isArray(shifts) || shifts.length !== count) return 'Fill every shift'
+  for (const sh of shifts) {
+    if (!sh || typeof sh.name !== 'string' || sh.name.trim().length < 1 || sh.name.trim().length > 20) return 'Each shift needs a name (up to 20 characters)'
+    if (!HHMM.test(sh.start || '') || !HHMM.test(sh.end || '')) return 'Shift times must look like 08:00'
+    if (sh.start === sh.end) return 'A shift cannot start and end at the same time'
+  }
+  for (let i = 0; i < count; i++) {
+    for (let j = i + 1; j < count; j++) {
+      const a = toMin(shifts[i].start), b = toMin(shifts[j].start)
+      const da = shiftMinutes(shifts[i]), db = shiftMinutes(shifts[j])
+      if (((b - a + 1440) % 1440) < da || ((a - b + 1440) % 1440) < db) return `${shifts[i].name.trim()} and ${shifts[j].name.trim()} overlap. Change the times`
+    }
+  }
+  return null
 }

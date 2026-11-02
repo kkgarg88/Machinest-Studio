@@ -33,7 +33,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
   const admin = createAdminClient()
   const { data: machines } = await admin
     .from('machines')
-    .select('id, name, machine_no, machine_type, type_remark, part_name, status, remark, status_since, updated_by_name')
+    .select('id, name, machine_no, machine_type, type_remark, part_name, part_id, status, remark, status_since, updated_at, updated_by_name')
     .eq('shop_id', shop.id)
     .order('position', { ascending: true })
     .order('created_at', { ascending: true })
