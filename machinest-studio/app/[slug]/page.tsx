@@ -229,6 +229,7 @@ export default function PublicShopBoard() {
             >
               ⏬ Auto-scroll: {autoScroll ? 'On' : 'Off'}
             </button>
+            <a href={`/${slug}/reports`} style={{ background: 'transparent', border: '1px solid #3a3733', color: '#ddd', borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>📊 Reports</a>
             <button onClick={toggleTv} style={{ background: 'transparent', border: '1px solid #3a3733', color: '#ddd', borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
               {tv ? 'Exit full screen' : '📺 Full screen'}
             </button>

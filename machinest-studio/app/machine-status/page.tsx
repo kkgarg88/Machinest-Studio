@@ -492,6 +492,7 @@ export default function MachineStatusPage() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button style={btnGhost} onClick={() => router.push('/machine-status/reports')}>📊 Reports</button>
           <button style={btnGhost} onClick={() => setShowSettings(s => !s)}>⚙️ Shop settings</button>
           <button style={btnGhost} onClick={() => router.push('/dashboard')}>&larr; Dashboard</button>
         </div>
