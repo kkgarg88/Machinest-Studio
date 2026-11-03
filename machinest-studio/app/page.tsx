@@ -12,6 +12,7 @@ export default function HomePage() {
   const supabase = createClient()
   const router = useRouter()
   const [info, setInfo] = useState('')
+  const [heardFrom, setHeardFrom] = useState('')
 useEffect(() => {
   async function checkSession() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -27,7 +28,7 @@ useEffect(() => {
   setInfo('')
 
   if (isSignUp) {
-    const { data, error } = await supabase.auth.signUp({ email, password })
+    const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { heard_from: heardFrom || null } } })
     setLoading(false)
     if (error) { setError(error.message); return }
     if (!data.session) {
@@ -113,6 +114,22 @@ router.push(profile ? '/dashboard' : '/onboarding')
          <input type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} style={{ width: '100%', background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 6, color: '#fff', padding: '12px 14px', fontSize: 14, marginBottom: 16 }} />
           <label style={{ display: 'block', fontSize: 13, color: '#ccc', marginBottom: 6, fontWeight: 600 }}>Password</label>
           <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} style={{ width: '100%', background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 6, color: '#fff', padding: '12px 14px', fontSize: 14, marginBottom: 16 }} />
+          {isSignUp && (
+            <>
+              <label style={{ display: 'block', fontSize: 13, color: '#ccc', marginBottom: 6, fontWeight: 600 }}>How did you hear about us? <span style={{ color: '#777', fontWeight: 400 }}>(optional)</span></label>
+              <select value={heardFrom} onChange={(e) => setHeardFrom(e.target.value)} style={{ width: '100%', background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 6, color: heardFrom ? '#fff' : '#888', padding: '12px 14px', fontSize: 14, marginBottom: 20 }}>
+                <option value="">Select one</option>
+                <option value="google">Google search</option>
+                <option value="youtube">YouTube</option>
+                <option value="linkedin">LinkedIn</option>
+                <option value="whatsapp">WhatsApp group or message</option>
+                <option value="facebook">Facebook</option>
+                <option value="instagram">Instagram</option>
+                <option value="friend">Friend or colleague</option>
+                <option value="other">Other</option>
+              </select>
+            </>
+          )}
           {!isSignUp && (
   <div style={{ textAlign: 'right', fontSize: 12, margin: '-8px 0 20px' }}>
     <a href="/forgot-password" style={{ color: '#F0801E', textDecoration: 'none' }}>Forgot password?</a>
