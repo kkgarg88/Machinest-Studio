@@ -98,11 +98,13 @@ export default function ResourcesPage() {
   const supabase = createClient()
   const [resources, setResources] = useState<Resource[]>([])
   const [loading, setLoading] = useState(true)
+  const [loggedIn, setLoggedIn] = useState(false)
 
   useEffect(() => {
     async function load() {
+      // Visitors can browse the free resources without logging in
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/'); return }
+      setLoggedIn(!!user)
 
       const { data } = await supabase
         .from('resources')
@@ -130,14 +132,14 @@ export default function ResourcesPage() {
           <img src="/logo-icon.png" alt="Machinest Studio" style={{ height: 40, width: 'auto' }} />
           <span style={{ fontSize: 19, fontWeight: 800, color: '#fff' }}>Machinest <span style={{ color: '#F0801E' }}>Studio</span></span>
         </div>
-        <button onClick={() => router.push('/dashboard')} style={{ background: '#F0801E', color: '#fff', border: 'none', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-          &larr; Dashboard
+        <button onClick={() => router.push(loggedIn ? '/dashboard' : '/')} style={{ background: '#F0801E', color: '#fff', border: 'none', borderRadius: 999, padding: '9px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+          {loggedIn ? '\u2190 Dashboard' : 'Login / Sign up'}
         </button>
       </header>
 
       <div style={{ padding: '32px 24px', maxWidth: 1100, margin: '0 auto' }}>
         <h2 style={{ color: '#fff', fontSize: 24, margin: '0 0 6px', fontWeight: 800 }}>Free Resources</h2>
-        <p style={{ color: '#999', fontSize: 14, margin: '0 0 28px' }}>Videos, Excel sheets, PDFs and calculators — free for every Machinest Studio member.</p>
+        <p style={{ color: '#999', fontSize: 14, margin: '0 0 28px' }}>Videos, Excel sheets, PDFs and calculators — free for everyone. Sign up to use the Machinest Studio tools.</p>
 
         {loading ? (
           <p style={{ color: '#999' }}>Loading...</p>

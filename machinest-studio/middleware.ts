@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
-const PROTECTED = ['/dashboard', '/studio', '/cycle', '/profile', '/membership', '/admin', '/resources']
+// /membership (plans and pricing) and /resources (free resources) are public so visitors and Google can see them.
+const PROTECTED = ['/dashboard', '/studio', '/cycle', '/profile', '/admin']
 
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next()
@@ -42,5 +43,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/studio/:path*', '/cycle/:path*', '/profile/:path*', '/membership/:path*', '/admin/:path*', '/resources/:path*'],
+  matcher: ['/dashboard/:path*', '/studio/:path*', '/cycle/:path*', '/profile/:path*', '/admin/:path*'],
 }

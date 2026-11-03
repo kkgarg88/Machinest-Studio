@@ -37,6 +37,7 @@ export default function MembershipPage() {
   const [paying, setPaying] = useState(false)
   const [error, setError] = useState('')
   const [couponCode, setCouponCode] = useState('')
+  const [loggedIn, setLoggedIn] = useState(true)
   const supabase = createClient()
   const router = useRouter()
 
@@ -53,6 +54,7 @@ export default function MembershipPage() {
       setTools((toolData || []) as Tool[])
 
       const { data: { user } } = await supabase.auth.getUser()
+      setLoggedIn(!!user)
       if (user) {
         const nowIso = new Date().toISOString()
         const { data: subs } = await supabase
@@ -89,13 +91,18 @@ export default function MembershipPage() {
   }
 
   function handleSkip() {
-    router.push('/dashboard')
+    router.push(loggedIn ? '/dashboard' : '/')
   }
 
   async function handlePay() {
     setError('')
     if (!selected) {
       handleSkip()
+      return
+    }
+    if (!loggedIn) {
+      setError('Please sign up or log in first, then choose your plan.')
+      setTimeout(() => router.push('/'), 1600)
       return
     }
     const plan = plans.find(p => p.id === selected)
@@ -159,6 +166,12 @@ export default function MembershipPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(180deg, #211f1d 0%, #2a2724 100%)', padding: '48px 24px', fontFamily: 'Segoe UI, sans-serif' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+        {!loggedIn && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+            <a href="/" style={{ color: '#fff', fontWeight: 800, fontSize: 17, textDecoration: 'none' }}>Machinest <span style={{ color: '#F0801E' }}>Studio</span></a>
+            <a href="/" style={{ background: '#F0801E', color: '#fff', borderRadius: 999, padding: '8px 18px', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Login / Sign up</a>
+          </div>
+        )}
         <div style={{ textAlign: 'center', marginBottom: 30 }}>
           <h2 style={{ color: '#fff', fontSize: 30, margin: '0 0 8px', fontWeight: 800 }}>Choose your plan</h2>
           <p style={{ color: '#999', fontSize: 15 }}>Pick the plan that fits your shop, or skip for now and upgrade later</p>
