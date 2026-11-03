@@ -192,6 +192,18 @@ export default function MembershipPage() {
           </div>
         </div>
 
+        <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 14, padding: '20px 24px', marginBottom: 22, display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ flex: '1 1 320px' }}>
+            <div style={{ color: '#fff', fontSize: 17, fontWeight: 800, marginBottom: 8 }}>Free plan <span style={{ color: '#2fbf71', fontSize: 12, fontWeight: 700, marginLeft: 8 }}>NO PAYMENT NEEDED</span></div>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {['All free resources: videos, Excel sheets, PDFs and calculators', 'One generator each in Turning Studio and Milling Studio', 'Ready-to-run programs with program simulation'].map(f => (
+                <li key={f} style={{ display: 'flex', gap: 8, fontSize: 13, color: '#ddd' }}><span style={{ color: '#2fbf71', fontWeight: 700 }}>{'\u2713'}</span>{f}</li>
+              ))}
+            </ul>
+          </div>
+          <div style={{ color: '#999', fontSize: 13, flex: '1 1 220px' }}>Paid plans below unlock more. Start free, upgrade when your shop needs it.</div>
+        </div>
+
         {plans.length === 0 ? (
           <p style={{ color: '#999', textAlign: 'center', marginBottom: 28 }}>No plans are available right now. Please check back soon.</p>
         ) : (
