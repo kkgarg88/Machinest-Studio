@@ -83,7 +83,7 @@ router.push(profile ? '/dashboard' : '/onboarding')
           </p>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 28 }}>
-            {['Turning Studio', 'Milling Studio', 'Calibration Tracker', 'Maintenance Tracker', 'KPI Dashboard'].map(tag => (
+            {['Turning Studio', 'Milling Studio', 'Machine Status', 'Calibration Tracker', 'Maintenance Tracker', 'KPI Dashboard'].map(tag => (
               <span key={tag} style={{ background: '#2a2723', border: '1px solid #3a3733', color: '#ddd', fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 20 }}>{tag}</span>
             ))}
             <span style={{ color: '#F0801E', border: '1px solid #F0801E', fontSize: 12, fontWeight: 600, padding: '6px 12px', borderRadius: 20 }}>+ more tools coming</span>
@@ -131,12 +131,16 @@ router.push(profile ? '/dashboard' : '/onboarding')
             {isSignUp ? 'Already have an account? ' : 'New to Machinest Studio? '}
             <span onClick={() => setIsSignUp(!isSignUp)} style={{ color: '#F0801E', cursor: 'pointer', fontWeight: 600 }}>
               {isSignUp ? 'Login' : 'Create an account'}
-              <div style={{ textAlign: 'center', fontSize: 11, color: '#666', marginTop: 24 }}>
-  <a href="/terms" style={{ color: '#888', marginRight: 12 }}>Terms</a>
-  <a href="/privacy" style={{ color: '#888', marginRight: 12 }}>Privacy</a>
-  <a href="/refund" style={{ color: '#888' }}>Refund Policy</a>
-</div>
             </span>
+          </div>
+          <div style={{ textAlign: 'center', fontSize: 12, color: '#888', marginTop: 20 }}>
+            <a href="/resources" style={{ color: '#F0801E', marginRight: 12, textDecoration: 'none', fontWeight: 600 }}>Free resources</a>
+            <a href="/membership" style={{ color: '#F0801E', textDecoration: 'none', fontWeight: 600 }}>Plans &amp; pricing</a>
+          </div>
+          <div style={{ textAlign: 'center', fontSize: 11, color: '#666', marginTop: 16 }}>
+            <a href="/terms" style={{ color: '#888', marginRight: 12 }}>Terms</a>
+            <a href="/privacy" style={{ color: '#888', marginRight: 12 }}>Privacy</a>
+            <a href="/refund" style={{ color: '#888' }}>Refund Policy</a>
           </div>
         </div>
       </div>
