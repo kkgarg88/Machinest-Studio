@@ -87,19 +87,18 @@ export default function AdminPage() {
       description: form.description,
       features: form.features.split('\n').map(f => f.trim()).filter(Boolean),
     }
-    if (form.id) {
-      await supabase.from('tools').update(payload).eq('id', form.id)
-    } else {
+    const { error } = form.id
+      ? await supabase.from('tools').update(payload).eq('id', form.id)
       // Prices now live on Plans; keep the old columns filled so the database stays valid
-      await supabase.from('tools').insert({ ...payload, monthly_price: 0, annual_price: null })
-    }
+      : await supabase.from('tools').insert({ ...payload, monthly_price: 0, annual_price: null })
+    if (error) { alert('Could not save tool: ' + error.message); return }
     setForm(emptyForm)
     await loadAll()
   }
 
   async function createCoupon() {
     if (!couponForm.code || !couponForm.discount_value) return
-    await supabase.from('coupons').insert({
+    const { error } = await supabase.from('coupons').insert({
       code: couponForm.code.toUpperCase(),
       discount_type: couponForm.discount_type,
       discount_value: Number(couponForm.discount_value),
@@ -107,12 +106,14 @@ export default function AdminPage() {
       expires_at: couponForm.expires_at || null,
       applies_to: couponForm.applies_to,
     })
+    if (error) { alert('Could not create coupon: ' + error.message); return }
     setCouponForm({ code: '', discount_type: 'percent', discount_value: '', max_uses: '', expires_at: '', applies_to: 'both' })
     await loadAll()
   }
 
   async function toggleCoupon(id: string, active: boolean) {
-    await supabase.from('coupons').update({ active }).eq('id', id)
+    const { error } = await supabase.from('coupons').update({ active }).eq('id', id)
+    if (error) { alert('Could not update coupon: ' + error.message); return }
     await loadAll()
   }
 

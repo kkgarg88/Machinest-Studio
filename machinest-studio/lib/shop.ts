@@ -31,7 +31,9 @@ export type Actor =
   | { kind: 'operator'; shop: ShopRow; active: boolean; operatorId: string; name: string }
 
 function secret(): string {
-  return process.env.LEAD_SALT || process.env.SUPABASE_SERVICE_ROLE_KEY || 'machinest'
+  const key = process.env.LEAD_SALT || process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!key) throw new Error('Server secret is not configured')
+  return key
 }
 
 export async function getAuthedUser() {

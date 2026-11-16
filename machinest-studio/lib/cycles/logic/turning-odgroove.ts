@@ -1,7 +1,7 @@
 import 'server-only'
 import { CycleResult, fail, num } from './common'
 
-const LIMITS = { progMax: 7999, feedMax: 5, rpmMax: 4000, diaMax: 500 }
+const LIMITS = { progMax: 7999, feedMax: 5, rpmMax: 4000, diaMax: 500, insertMin: 0.1, peckMin: 0.01, maxTargets: 5000, maxMoves: 100000 }
 const OFFSETS = ['G54', 'G55', 'G56', 'G57', 'G58', 'G59']
 const SPINDLE = ['G96', 'G97']
 const EDGE_TYPES = ['plain', '1', '2', '3']
@@ -68,13 +68,13 @@ export function turningOdGroove(v: Record<string, unknown>): CycleResult {
   if (!Number.isFinite(D) || D <= 0 || D > LIMITS.diaMax) return fail(`R.M. diameter (D) must be between 0 and ${LIMITS.diaMax} mm`)
   if (!Number.isFinite(A) || A <= 0) return fail('Groove diameter (A) must be greater than 0')
   if (A >= D) return fail('Groove diameter (A) must be smaller than the R.M. diameter (D)')
-  if (!Number.isFinite(B) || B <= 0) return fail('Distance from Z0 (B) must be greater than 0')
-  if (!Number.isFinite(W) || W <= 0) return fail('Groove width (W) must be greater than 0')
-  if (!Number.isFinite(Wt) || Wt <= 0) return fail('Insert width must be greater than 0')
+  if (!Number.isFinite(B) || B <= 0 || B > 5000) return fail('Distance from Z0 (B) must be greater than 0 and up to 5000 mm')
+  if (!Number.isFinite(W) || W <= 0 || W > LIMITS.diaMax) return fail(`Groove width (W) must be between 0 and ${LIMITS.diaMax} mm`)
+  if (!Number.isFinite(Wt) || Wt < LIMITS.insertMin) return fail(`Insert width must be at least ${LIMITS.insertMin} mm`)
   if (Wt > W + EPS) return fail('Insert width cannot be wider than the groove width')
   if (!EDGE_TYPES.includes(edgeType)) return fail('Invalid edge type')
   if (!METHODS.includes(methodIn)) return fail('Invalid cutting method')
-  if (!Number.isFinite(peck) || peck <= 0) return fail('Peck depth must be greater than 0')
+  if (!Number.isFinite(peck) || peck < LIMITS.peckMin) return fail(`Peck depth must be at least ${LIMITS.peckMin} mm`)
   if (!Number.isFinite(retract) || retract < 0) return fail('Peck retract cannot be negative')
   if (!Number.isFinite(dwell) || dwell < 0 || dwell > 10) return fail('Dwell must be between 0 and 10 seconds')
 
@@ -139,9 +139,13 @@ export function turningOdGroove(v: Record<string, unknown>): CycleResult {
   }
 
   // peck targets (diameter values)
+  if (Math.ceil((D - bottomX) / (2 * peck)) > LIMITS.maxTargets)
+    return fail('Peck depth is too small for this groove depth. Increase the peck depth.')
   const targets: number[] = []
   for (let t = D - 2 * peck; t > bottomX + EPS; t -= 2 * peck) targets.push(t)
   targets.push(bottomX)
+  if (positions.length * targets.length > LIMITS.maxMoves)
+    return fail('Program would be too large. Use a wider insert or a larger peck depth.')
 
   const clearX = D + 2 * safeX
   const apX = D + 1 // approach: 0.5 mm per side above the OD

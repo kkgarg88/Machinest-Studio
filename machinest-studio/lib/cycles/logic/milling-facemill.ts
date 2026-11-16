@@ -2,7 +2,7 @@ import 'server-only'
 import { CycleResult, fail, num } from './common'
 import { buildFaceMillRectSvg, buildFaceMillRoundSvg } from './facemill-svg'
 
-const LIMITS = { progMax: 7999, stockMax: 3000, cutterMax: 500, rpmMin: 50, rpmMax: 15000, feedMax: 5000 }
+const LIMITS = { progMax: 7999, stockMax: 3000, cutterMax: 500, rpmMin: 50, rpmMax: 15000, feedMax: 5000, cutterMin: 1, depthMax: 500, dppMin: 0.01, maxPasses: 500, maxRows: 5000, maxLines: 200000 }
 const OFFSETS = ['G54', 'G55', 'G56', 'G57', 'G58', 'G59']
 const CORNERS = ['FL', 'FR', 'BL', 'BR']
 
@@ -26,14 +26,15 @@ function checkCommon(v: Record<string, unknown>) {
 
   if (!Number.isInteger(progNum) || progNum < 1 || progNum > LIMITS.progMax)
     return fail(`Program number must be a whole number between 0001 and ${LIMITS.progMax}`)
-  if (!Number.isFinite(cutterDia) || cutterDia <= 0 || cutterDia > LIMITS.cutterMax)
-    return fail(`Cutter diameter must be between 0 and ${LIMITS.cutterMax} mm`)
-  if (!Number.isFinite(stepoverPct) || stepoverPct <= 0 || stepoverPct > 100)
+  if (!Number.isFinite(cutterDia) || cutterDia < LIMITS.cutterMin || cutterDia > LIMITS.cutterMax)
+    return fail(`Cutter diameter must be between ${LIMITS.cutterMin} and ${LIMITS.cutterMax} mm`)
+  if (!Number.isFinite(stepoverPct) || stepoverPct < 1 || stepoverPct > 100)
     return fail('Stepover must be between 1% and 100%')
   if (!Number.isFinite(overtravelPct) || overtravelPct < 0 || overtravelPct > 100)
     return fail('Overtravel % must be between 0 and 100')
   if (!Number.isFinite(depth) || depth >= 0) return fail('Depth of cut must be a negative value')
-  if (!Number.isFinite(depthPerPass) || depthPerPass <= 0) return fail('Depth per pass must be greater than 0')
+  if (depth < -LIMITS.depthMax) return fail(`Depth of cut cannot be deeper than ${LIMITS.depthMax} mm`)
+  if (!Number.isFinite(depthPerPass) || depthPerPass < LIMITS.dppMin) return fail(`Depth per pass must be at least ${LIMITS.dppMin} mm`)
   if (!Number.isFinite(rlevel) || rlevel < 0) return fail('Retract level (R) must be Z0 or above')
   if (!Number.isFinite(safeZ)) return fail('Enter a valid Safe Z')
   if (!Number.isFinite(feed) || feed <= 0 || feed > LIMITS.feedMax) return fail(`Cutting feed must be greater than 0 and up to ${LIMITS.feedMax}`)
@@ -55,6 +56,8 @@ function checkCommon(v: Record<string, unknown>) {
 
   const roughZLevels: number[] = []
   const numRoughPasses = roughDepthTarget > 0 ? Math.ceil(roughDepthTarget / depthPerPass) : 0
+  if (numRoughPasses > LIMITS.maxPasses)
+    return fail(`Too many depth passes (${numRoughPasses}). Increase depth per pass or reduce total depth.`)
   for (let i = 1; i <= numRoughPasses; i++) roughZLevels.push(-Math.min(i * depthPerPass, roughDepthTarget))
 
   return {
@@ -62,6 +65,14 @@ function checkCommon(v: Record<string, unknown>) {
     finishCut, finishMargin, finishFeed, finishRpm, workOffset, feed, plungeFeed, rpm,
     roughZLevels, numRoughPasses,
   }
+}
+
+function checkSize(estRows: number, numRoughPasses: number): CycleResult | null {
+  if (estRows > LIMITS.maxRows)
+    return fail(`Too many toolpath rows (${estRows}). Increase stepover % or cutter diameter.`)
+  if (estRows * (numRoughPasses + 1) > LIMITS.maxLines)
+    return fail('Program would be too large. Increase stepover %, depth per pass or cutter diameter.')
+  return null
 }
 
 function buildRows(stockY: number, stepoverDist: number): number[] {
@@ -119,6 +130,9 @@ function faceMillRect(v: Record<string, unknown>): CycleResult {
   const xLow = xLowStock - overtravelMM, xHigh = xHighStock + overtravelMM
   const xNear = signX > 0 ? xLow : xHigh
   const xFar = signX > 0 ? xHigh : xLow
+
+  const sizeErr = checkSize(Math.ceil(stockY / stepoverDist) + 2, c.numRoughPasses)
+  if (sizeErr) return sizeErr
 
   const rowsRawY = buildRows(stockY, stepoverDist)
   const rowsY = rowsRawY.map(val => signY * val)
@@ -240,6 +254,9 @@ function faceMillRound(v: Record<string, unknown>): CycleResult {
   const stepoverDist = c.cutterDia * (c.stepoverPct / 100)
   const effectiveRadius = diameter / 2 + overtravelMM
   const cutterRadius = c.cutterDia / 2
+
+  const sizeErr = checkSize(Math.ceil((2 * effectiveRadius) / stepoverDist) + 2, c.numRoughPasses)
+  if (sizeErr) return sizeErr
 
   let radii: number[] = [], rowsY: number[] = [], startX: number, startY: number
 

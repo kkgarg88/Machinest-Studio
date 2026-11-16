@@ -1,7 +1,7 @@
 import 'server-only'
 import { CycleResult, fail, num } from './common'
 
-const LIMITS = { progMax: 7999, feedMax: 5, rpmMax: 4000, diaMax: 500 }
+const LIMITS = { progMax: 7999, feedMax: 5, rpmMax: 4000, diaMax: 500, insertMin: 0.1, peckMin: 0.01, maxTargets: 5000, maxMoves: 100000 }
 const OFFSETS = ['G54', 'G55', 'G56', 'G57', 'G58', 'G59']
 const SPINDLE = ['G96', 'G97']
 const EDGE_TYPES = ['plain', '1', '2', '3']
@@ -69,12 +69,12 @@ export function turningFaceGroove(v: Record<string, unknown>): CycleResult {
   if (!Number.isFinite(Di) || Di <= 0) return fail('Inner groove diameter (Di) must be greater than 0')
   if (!Number.isFinite(W) || W <= 0) return fail('Groove width (W) must be greater than 0')
   if (Di + 2 * W > LIMITS.diaMax) return fail(`Outer groove diameter cannot be larger than ${LIMITS.diaMax} mm`)
-  if (!Number.isFinite(H) || H <= 0) return fail('Groove depth must be greater than 0')
-  if (!Number.isFinite(Wt) || Wt <= 0) return fail('Insert width must be greater than 0')
+  if (!Number.isFinite(H) || H <= 0 || H > LIMITS.diaMax) return fail(`Groove depth must be between 0 and ${LIMITS.diaMax} mm`)
+  if (!Number.isFinite(Wt) || Wt < LIMITS.insertMin) return fail(`Insert width must be at least ${LIMITS.insertMin} mm`)
   if (Wt > W + EPS) return fail('Insert width cannot be wider than the groove width')
   if (!EDGE_TYPES.includes(edgeType)) return fail('Invalid edge type')
   if (!METHODS.includes(methodIn)) return fail('Invalid cutting method')
-  if (!Number.isFinite(peck) || peck <= 0) return fail('Peck depth must be greater than 0')
+  if (!Number.isFinite(peck) || peck < LIMITS.peckMin) return fail(`Peck depth must be at least ${LIMITS.peckMin} mm`)
   if (!Number.isFinite(retract) || retract < 0) return fail('Peck retract cannot be negative')
   if (!Number.isFinite(dwell) || dwell < 0 || dwell > 10) return fail('Dwell must be between 0 and 10 seconds')
 
@@ -139,9 +139,13 @@ export function turningFaceGroove(v: Record<string, unknown>): CycleResult {
   }
 
   // peck targets (Z values)
+  if (Math.ceil((H - fDepth) / peck) > LIMITS.maxTargets)
+    return fail('Peck depth is too small for this groove depth. Increase the peck depth.')
   const targets: number[] = []
   for (let t = faceZ - peck; t > bottomZ + EPS; t -= peck) targets.push(t)
   targets.push(bottomZ)
+  if (positions.length * targets.length > LIMITS.maxMoves)
+    return fail('Program would be too large. Use a wider insert or a larger peck depth.')
 
   const apZ = faceZ + 0.5 // approach: 0.5 mm above the face
   const safeTop = faceZ + safeZ
