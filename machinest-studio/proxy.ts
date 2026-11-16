@@ -4,7 +4,7 @@ import { createServerClient } from '@supabase/ssr'
 // /membership (plans and pricing) and /resources (free resources) are public so visitors and Google can see them.
 const PROTECTED = ['/dashboard', '/studio', '/cycle', '/profile', '/admin']
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const response = NextResponse.next()
 
   const isProtected = PROTECTED.some(p => request.nextUrl.pathname.startsWith(p))
