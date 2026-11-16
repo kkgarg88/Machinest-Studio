@@ -29,7 +29,19 @@ export async function POST(req: Request) {
   }
   if (body.status === 'active') {
     const days = Number.isInteger(body.days) && body.days >= 1 && body.days <= 3650 ? body.days : DEFAULT_GRANT_DAYS
-    row.expires_at = new Date(Date.now() + days * 86400000).toISOString()
+    let expiry = Date.now() + days * 86400000
+    // Never shorten access: if the user already has a later expiry (e.g. a paid year), keep it
+    const { data: existing } = await createAdminClient()
+      .from('subscriptions')
+      .select('expires_at')
+      .eq('user_id', body.userId)
+      .eq('tool_id', body.toolId)
+      .maybeSingle()
+    if (existing?.expires_at) {
+      const old = new Date(existing.expires_at).getTime()
+      if (Number.isFinite(old) && old > expiry) expiry = old
+    }
+    row.expires_at = new Date(expiry).toISOString()
   }
 
   const admin = createAdminClient()
