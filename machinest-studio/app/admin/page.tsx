@@ -138,6 +138,7 @@ export default function AdminPage() {
     { key: 'coupons', label: 'Coupons' },
   ]
   const PAGES: { href: string; icon: string; label: string; note: string }[] = [
+    { href: '/admin/insights', icon: '📈', label: 'Growth Insights', note: 'Signups, funnel, where users come from' },
     { href: '/admin/plans', icon: '💳', label: 'Plans', note: 'Prices and tools in each plan' },
     { href: '/admin/cycle-media', icon: '🖼️', label: 'Cycle Media', note: 'Thumbnails and descriptions' },
     { href: '/admin/resources', icon: '📚', label: 'Resources', note: 'Free PDFs, videos, web tools' },
