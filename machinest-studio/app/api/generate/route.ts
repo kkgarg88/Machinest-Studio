@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getCycleLogic, getCycleIntro } from '@/lib/cycles/logic'
 import { generateLimiter } from '@/lib/rate-limit'
 import { hasCycleAccess } from '@/lib/access'
+import { trackFirst } from '@/lib/trackEvent'
 
 export async function POST(req: Request) {
   const supabase = await createClient()
@@ -49,6 +50,9 @@ export async function POST(req: Request) {
 
   const result = logic(body.values)
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 422 })
+
+  // Count the user's first successful program (used only for the admin growth page)
+  await trackFirst(user.id, 'first_cycle_generated', { cycle: key })
 
   return NextResponse.json({ gcode: result.gcode, svg: result.svg, programName: result.programName })
 }
