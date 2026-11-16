@@ -192,6 +192,11 @@ export default function MembershipPage() {
           </div>
         </div>
 
+        <div style={{ background: 'rgba(240,128,30,0.10)', border: '1px solid #F0801E', borderRadius: 14, padding: '16px 22px', marginBottom: 22, textAlign: 'center' }}>
+          <div style={{ color: '#fff', fontSize: 16, fontWeight: 800, marginBottom: 4 }}>Why it pays for itself</div>
+          <div style={{ color: '#ddd', fontSize: 14, lineHeight: 1.55 }}>A semi-trained programmer often costs about ₹25,000 a month less than a fully trained one. With Machinest, they can produce tested, ready-to-run programs with simulation, for a small fraction of that.</div>
+        </div>
+
         <div style={{ background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 14, padding: '20px 24px', marginBottom: 22, display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ flex: '1 1 320px' }}>
             <div style={{ color: '#fff', fontSize: 17, fontWeight: 800, marginBottom: 8 }}>Free plan <span style={{ color: '#2fbf71', fontSize: 12, fontWeight: 700, marginLeft: 8 }}>NO PAYMENT NEEDED</span></div>

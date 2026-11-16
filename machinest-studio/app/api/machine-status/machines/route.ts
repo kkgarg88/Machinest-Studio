@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAuthedUser, getOwnerContext } from '@/lib/shop'
 import { TYPE_KEYS, MAX_MACHINES } from '@/lib/machineStatus'
+import { trackFirst } from '@/lib/trackEvent'
 
 // Owner adds a machine. Name, number and type are required. The part is optional and comes from the part master.
 export async function POST(req: Request) {
@@ -56,5 +57,6 @@ export async function POST(req: Request) {
   })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  await trackFirst(user.id, 'first_machine_added')
   return NextResponse.json({ success: true })
 }
