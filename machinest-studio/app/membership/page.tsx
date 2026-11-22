@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { track } from '@/lib/analytics'
 
 type Tool = {
   id: string
@@ -121,6 +122,9 @@ export default function MembershipPage() {
     }
 
     const { data: { user } } = await supabase.auth.getUser()
+    const orderValue = Number(data.amount) / 100
+    const planName = plan?.name || 'Membership'
+    track('begin_checkout', { currency: 'INR', value: orderValue, plan_name: planName, billing: cycle, items: [{ item_name: planName, price: orderValue }] })
 
     const rzp = new window.Razorpay({
       key: data.keyId,
@@ -143,6 +147,7 @@ export default function MembershipPage() {
           setError(verifyData.error || 'Payment verification failed')
           return
         }
+        track('purchase', { transaction_id: response.razorpay_payment_id, currency: 'INR', value: orderValue, plan_name: planName, billing: cycle, items: [{ item_name: planName, price: orderValue }] })
         router.push('/dashboard')
       },
       modal: {
@@ -151,6 +156,7 @@ export default function MembershipPage() {
     })
 
     rzp.on('payment.failed', () => {
+      track('payment_failed', { plan_name: planName, billing: cycle })
       setPaying(false)
       setError('Payment failed. Please try again.')
     })

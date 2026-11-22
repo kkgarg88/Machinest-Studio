@@ -1,6 +1,7 @@
 'use client'
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
+import { track } from '@/lib/analytics'
 
 type ResourceType = 'video' | 'pdf' | 'excel' | 'calculator' | 'link'
 export type Resource = {
@@ -91,7 +92,7 @@ function ResourceCard({ r }: { r: Resource }) {
   const [failed, setFailed] = useState(false)
   const thumb = failed ? null : getThumb(r)
   return (
-    <a href={r.url} target="_blank" rel="noopener noreferrer" className="rs-card">
+    <a href={r.url} target="_blank" rel="noopener noreferrer" className="rs-card" onClick={() => track('resource_click', { resource_type: r.resource_type, resource_title: r.title })}>
       <div className="rs-thumb">
         {thumb ? (
           // eslint-disable-next-line @next/next/no-img-element

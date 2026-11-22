@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { track } from '@/lib/analytics'
 
 const inputStyle = { width: '100%', background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 6, color: '#fff', padding: '11px 12px', fontSize: 14 } as const
 const labelStyle = { display: 'block', fontSize: 13, color: '#ccc', marginBottom: 6, fontWeight: 600 } as const
@@ -74,6 +75,7 @@ export default function ServicesPage() {
     const data = await res.json().catch(() => ({}))
     setBusy(false)
     if (!res.ok) { setError(data.error || 'Something went wrong. Please try again.'); return }
+    track('generate_lead', { service_type: String(service) })
     setDone(true)
   }
 

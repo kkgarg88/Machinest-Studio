@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { track } from '@/lib/analytics'
 
 export default function HomePage() {
   const [isSignUp, setIsSignUp] = useState(false)
@@ -31,6 +32,7 @@ useEffect(() => {
     const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { heard_from: heardFrom || null } } })
     setLoading(false)
     if (error) { setError(error.message); return }
+    track('sign_up', { method: 'email', heard_from: heardFrom || 'not_said' })
     if (!data.session) {
       setInfo('Account created. Please check your email and click the verification link, then log in.')
       setIsSignUp(false)
@@ -43,6 +45,7 @@ useEffect(() => {
 const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 setLoading(false)
 if (error) { setError(error.message); return }
+track('login', { method: 'email' })
 
 const { data: profile } = await supabase.from('profiles').select('id').eq('id', data.user.id).maybeSingle()
 router.push(profile ? '/dashboard' : '/onboarding')

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { track } from '@/lib/analytics'
 
 const card = { background: '#2b2a28', border: '1px solid #3a3733', borderRadius: 12, padding: 24 } as const
 const inputStyle = { width: '100%', background: '#1c1b19', border: '1px solid #3a3733', borderRadius: 6, color: '#fff', padding: '10px 12px', fontSize: 14 } as const
@@ -82,6 +83,7 @@ export default function AskPage() {
     setBusy(false)
     if (!res.ok) { flash(data.error || 'Something went wrong', false); return }
 
+    track('submit_question', { category: String(category) })
     setSubject('')
     setMessage('')
     flash('Question sent. We will reply to your email.')

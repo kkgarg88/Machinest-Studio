@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { track } from '@/lib/analytics'
 import { useRouter, useParams } from 'next/navigation'
 import { definitions, Field } from '@/lib/cycles/definitions'
 import ChamferTool from '@/components/cycles/ChamferTool'
@@ -83,6 +84,7 @@ async function handleTapGenerate(tapValues: Record<string, string>) {
   setBusy(false)
   if (!res.ok) { setError(data.error || 'Something went wrong'); return }
   setGcode(data.gcode)
+  track('generate_program', { cycle_id: String(id) })
   setSvg(data.svg)
   setProgramName(data.programName)
 }
@@ -98,6 +100,7 @@ async function handleTapGenerate(tapValues: Record<string, string>) {
     setBusy(false)
     if (!res.ok) { setError(data.error || 'Something went wrong'); return }
     setGcode(data.gcode)
+    track('generate_program', { cycle_id: String(id) })
     setSvg(data.svg)
     setProgramName(data.programName)
   }
@@ -114,6 +117,7 @@ async function handleTapGenerate(tapValues: Record<string, string>) {
     setBusy(false)
     if (!res.ok) { setError(data.error || 'Something went wrong'); return }
     setGcode(data.gcode)
+    track('generate_program', { cycle_id: String(id) })
     setSvg(data.svg)
     setProgramName(data.programName)
   }
@@ -130,6 +134,7 @@ async function handleTapGenerate(tapValues: Record<string, string>) {
     setBusy(false)
     if (!res.ok) { setError(data.error || 'Something went wrong'); return }
     setGcode(data.gcode)
+    track('generate_program', { cycle_id: String(id) })
     setProgramName(data.programName)
   }
   async function handleGrooveGenerate(grooveValues: Record<string, string>) {
@@ -144,6 +149,7 @@ async function handleTapGenerate(tapValues: Record<string, string>) {
     setBusy(false)
     if (!res.ok) { setError(data.error || 'Something went wrong'); return }
     setGcode(data.gcode)
+    track('generate_program', { cycle_id: String(id) })
     setProgramName(data.programName)
   }
 async function handleFaceMillGenerate(faceMillValues: Record<string, string>) {
@@ -158,12 +164,14 @@ async function handleFaceMillGenerate(faceMillValues: Record<string, string>) {
   setBusy(false)
   if (!res.ok) { setError(data.error || 'Something went wrong'); return }
   setGcode(data.gcode)
+  track('generate_program', { cycle_id: String(id) })
   setSvg(data.svg)
   setProgramName(data.programName)
 }
   async function copy() {
     try {
       await navigator.clipboard.writeText(gcode)
+      track('copy_gcode', { cycle_id: String(id) })
       setCopied('ok')
     } catch {
       setCopied('fail')
@@ -172,6 +180,7 @@ async function handleFaceMillGenerate(faceMillValues: Record<string, string>) {
   }
 
   function download() {
+    track('download_gcode', { cycle_id: String(id) })
     const blob = new Blob([gcode], { type: 'text/plain' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
