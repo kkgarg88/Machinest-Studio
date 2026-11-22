@@ -21,7 +21,7 @@ export default async function ResourcesPage() {
     '@type': 'CollectionPage',
     name: 'Free CNC Resources',
     url: 'https://app.machinest.in/resources',
-    description: 'Free CNC machining videos, Excel sheets, PDFs and calculators for programmers, setters and machine shops.',
+    description: 'Free videos, Excel sheets, PDFs and calculators for everyone in manufacturing: CNC programmers, setters, operators, quality and maintenance teams, and students.',
     isPartOf: { '@type': 'WebSite', name: 'Machinest Studio', url: 'https://app.machinest.in' },
     mainEntity: {
       '@type': 'ItemList',
